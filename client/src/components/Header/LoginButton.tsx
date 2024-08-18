@@ -1,0 +1,12 @@
+import React from 'react'
+import { Link } from 'react-router-dom'
+
+const LoginButton: React.FC = () => {
+  return (
+    <div>
+      <button className='bg-red-500 px-4 py-2 text-lg rounded-lg font-bold text-white shadow-xl btn-5 w-40'><Link to='/login'>Login</Link></button>
+    </div>
+  )
+}
+
+export default LoginButton
