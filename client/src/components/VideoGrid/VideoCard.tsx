@@ -49,7 +49,7 @@ const VideoCard: React.FC<VideoCardTemplate> = ({
         {isHovered ? (
           <video
             src={video}
-            className='aspect-video w-full object-fit rounded-xl bg-gray-900'
+            className='aspect-video w-full object-fit rounded-md bg-gray-900'
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
             autoPlay
@@ -59,7 +59,7 @@ const VideoCard: React.FC<VideoCardTemplate> = ({
         ) : (
           <img
             src={thumbnail}
-            className='aspect-video w-full object-fit rounded-xl'
+            className='aspect-video w-full object-fit rounded-md'
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
           />

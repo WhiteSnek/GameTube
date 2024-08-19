@@ -10,7 +10,7 @@ const Sidebar: React.FC = () => {
         { name: "Subscriptions", icon: Subscriptions, link: "/subscriptions" },
         { name: "Your Channel", icon: Home, link: "/channel" },
         { name: "History", icon: History, link: "/history" },
-        { name: "Playlist", icon: PlaylistPlay, link: "/playlist" },
+        { name: "Playlists", icon: PlaylistPlay, link: "/playlists" },
         { name: "Watch Later", icon: WatchLater, link: "/watch-later" },
         { name: "Liked Videos", icon: ThumbUp, link: "/liked-videos" }
     ];

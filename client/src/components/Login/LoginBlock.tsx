@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LoginTemplate } from '../../templates/login_template';
+import { LoginTemplate } from '../../templates/user_template';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { Link } from 'react-router-dom';
@@ -19,8 +19,8 @@ const LoginBlock: React.FC = () => {
     }
 
     return (
-        <div className="flex justify-center items-center ml-[16.67%] my-[10rem] h-[calc(100vh - 4rem)] bg-zinc-900">
-            <form className="bg-zinc-800 p-8 rounded-lg border border-red-500 w-full max-w-sm" onSubmit={login}>
+        <div className="flex justify-center items-center ml-[16.67%] mt-[10rem]  bg-zinc-900">
+            <form className="bg-zinc-800 p-8 rounded-lg border border-red-500 w-full max-w-xl" onSubmit={login}>
                 <h1 className="text-3xl text-red-500 mb-6 font-bold text-center">Login</h1>
                 <div className="mb-6">
                     <label className="block text-white mb-2">Username or Email:</label>

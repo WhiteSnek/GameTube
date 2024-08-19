@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
 import { Route, createBrowserRouter, createRoutesFromElements, RouterProvider } from 'react-router-dom'
-import { Home, Login, Register } from './pages'
+import { Home, Login, Playlists, Register, Subscriptions } from './pages'
 
 const Layout: React.FC = () => {
   const router = createBrowserRouter(
@@ -12,6 +12,8 @@ const Layout: React.FC = () => {
         <Route path='' element={<Home />} />
         <Route path='login' element={<Login />} />
         <Route path='register' element={<Register />} />
+        <Route path='subscriptions' element={<Subscriptions />} />
+        <Route path='playlists' element={<Playlists />} />
       </Route>
     )
   )

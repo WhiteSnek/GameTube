@@ -9,7 +9,7 @@ export interface VideoCardTemplate {
     duration: number;
 }
 
-interface UserVideoCard {
+export interface UserVideoCard {
     name: string;
     avatar: string;
     userId: string;
