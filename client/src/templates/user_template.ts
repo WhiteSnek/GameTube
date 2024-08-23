@@ -15,3 +15,16 @@ export interface RegisterTemplate {
     coverImage: File | null;
     coverImageUrl: string;
 }
+
+export interface UserCard {
+    name: string;
+    avatar: string;
+    userId: string;
+}
+
+export interface UserComment {
+    name: string;
+    avatar: string;
+    userRole: string;
+    userId: string;
+}

@@ -1,5 +1,7 @@
 import { VideoCardTemplate } from "../../templates/video_templates";
 import { PlayListsTemplate } from "../../templates/playlist_template";
+import { OnePlaylist } from "../../templates/playlist_template";
+import { Comment } from "../../templates/comment_template";
 
 export const dummyVideos: VideoCardTemplate[] = [
     {
@@ -66,34 +68,180 @@ export const dummyPlaylists: PlayListsTemplate[] = [
         name: 'Chill Vibes',
         thumbnail: 'https://miro.medium.com/v2/resize:fit:1400/1*Xca2Kg9G-aTTczNlAcaQnQ.jpeg',
         length: 12,
-        owner: 'John Doe'
+        owner: 'John Doe',
+        videoId: 'video1'
     },
     {
         id: '2',
         name: 'Workout Hits',
         thumbnail: 'https://miro.medium.com/v2/resize:fit:1400/1*Xca2Kg9G-aTTczNlAcaQnQ.jpeg',
         length: 15,
-        owner: 'Jane Smith'
+        owner: 'Jane Smith',
+        videoId: 'video5'
     },
     {
         id: '3',
         name: 'Top 50 Songs',
         thumbnail: 'https://miro.medium.com/v2/resize:fit:1400/1*Xca2Kg9G-aTTczNlAcaQnQ.jpeg',
         length: 50,
-        owner: 'Music Lover'
+        owner: 'Music Lover',
+        videoId: 'video2'
     },
     {
         id: '4',
         name: 'Classic Rock',
         thumbnail: 'https://miro.medium.com/v2/resize:fit:1400/1*Xca2Kg9G-aTTczNlAcaQnQ.jpeg',
         length: 20,
-        owner: 'Rock Enthusiast'
+        owner: 'Rock Enthusiast',
+        videoId: 'video3'
     },
     {
         id: '5',
         name: 'Indie Hits',
         thumbnail: 'https://miro.medium.com/v2/resize:fit:1400/1*Xca2Kg9G-aTTczNlAcaQnQ.jpeg',
         length: 10,
-        owner: 'Indie Fan'
+        owner: 'Indie Fan',
+        videoId: 'video4'
+    }
+];
+
+export const playlistDummyData: OnePlaylist = {
+    id: "playlist1",
+    name: "My Favorite Videos",
+    thumbnail: "https://miro.medium.com/v2/resize:fit:1400/1*Xca2Kg9G-aTTczNlAcaQnQ.jpeg",
+    length: 5,
+    owner: "user123",
+    description: "A collection of my favorite videos covering topics like JavaScript, CSS, React, and Python.",  // Added description
+    videos: [
+        {
+            videoId: "video1",
+            title: "Learn JavaScript in 10 Minutes",
+            userDetails: {
+                name: "John Doe",
+                avatar: "https://www.svgrepo.com/show/384674/account-avatar-profile-user-11.svg",
+                userId: "user1"
+            },
+            views: 1200,
+            uploadTime: new Date("2024-08-01T10:00:00Z"),
+            thumbnail: "https://miro.medium.com/v2/resize:fit:1400/1*Xca2Kg9G-aTTczNlAcaQnQ.jpeg",
+            video: "https://example.com/video1.mp4",
+            duration: 600
+        },
+        {
+            videoId: "video2",
+            title: "CSS Tricks for Beginners",
+            userDetails: {
+                name: "Jane Smith",
+                avatar: "https://www.svgrepo.com/show/384674/account-avatar-profile-user-11.svg",
+                userId: "user2"
+            },
+            views: 950,
+            uploadTime: new Date("2024-08-05T14:00:00Z"),
+            thumbnail: "https://miro.medium.com/v2/resize:fit:1400/1*Xca2Kg9G-aTTczNlAcaQnQ.jpeg",
+            video: "https://example.com/video2.mp4",
+            duration: 720
+        },
+        {
+            videoId: "video3",
+            title: "React vs Angular: A Detailed Comparison",
+            userDetails: {
+                name: "Alice Johnson",
+                avatar: "https://www.svgrepo.com/show/384674/account-avatar-profile-user-11.svg",
+                userId: "user3"
+            },
+            views: 3000,
+            uploadTime: new Date("2024-08-10T09:30:00Z"),
+            thumbnail: "https://miro.medium.com/v2/resize:fit:1400/1*Xca2Kg9G-aTTczNlAcaQnQ.jpeg",
+            video: "https://example.com/video3.mp4",
+            duration: 900
+        },
+        {
+            videoId: "video4",
+            title: "Understanding TypeScript",
+            userDetails: {
+                name: "Bob Brown",
+                avatar: "https://www.svgrepo.com/show/384674/account-avatar-profile-user-11.svg",
+                userId: "user4"
+            },
+            views: 1800,
+            uploadTime: new Date("2024-08-12T11:00:00Z"),
+            thumbnail: "https://miro.medium.com/v2/resize:fit:1400/1*Xca2Kg9G-aTTczNlAcaQnQ.jpeg",
+            video: "https://example.com/video4.mp4",
+            duration: 840
+        },
+        {
+            videoId: "video5",
+            title: "Advanced Python Programming",
+            userDetails: {
+                name: "Carol White",
+                avatar: "https://example.com/user5-avatar.jpg",
+                userId: "user5"
+            },
+            views: 2200,
+            uploadTime: new Date("2024-08-15T16:00:00Z"),
+            thumbnail: "https://miro.medium.com/v2/resize:fit:1400/1*Xca2Kg9G-aTTczNlAcaQnQ.jpeg",
+            video: "https://example.com/video5.mp4",
+            duration: 1080
+        }
+    ],
+    views: 9150,
+    createdAt: new Date("2024-08-01T08:00:00Z")
+};
+
+export const dummyComments: Comment[] = [
+    {
+        id: 1,
+        message: "This is an amazing video! I learned so much.",
+        user: {
+            name: "John Doe",
+            avatar: "https://www.svgrepo.com/show/384674/account-avatar-profile-user-11.svg",
+            userRole: "Admin",
+            userId: "user123"
+        },
+        createdAt: new Date("2024-08-20T10:30:00")
+    },
+    {
+        id: 2,
+        message: "Great content! Looking forward to more.",
+        user: {
+            name: "Jane Smith",
+            avatar: "https://www.svgrepo.com/show/384674/account-avatar-profile-user-11.svg",
+            userRole: "Member",
+            userId: "user456"
+        },
+        createdAt: new Date("2024-08-20T11:00:00")
+    },
+    {
+        id: 3,
+        message: "I disagree with some points, but overall it's good.",
+        user: {
+            name: "Alice Johnson",
+            avatar: "https://www.svgrepo.com/show/384674/account-avatar-profile-user-11.svg",
+            userRole: "Moderator",
+            userId: "user789"
+        },
+        createdAt: new Date("2024-08-20T11:30:00")
+    },
+    {
+        id: 4,
+        message: "Can you make a video on a similar topic?",
+        user: {
+            name: "Bob Brown",
+            avatar: "https://www.svgrepo.com/show/384674/account-avatar-profile-user-11.svg",
+            userRole: "Member",
+            userId: "user012"
+        },
+        createdAt: new Date("2024-08-20T12:00:00")
+    },
+    {
+        id: 5,
+        message: "Awesome video! Keep up the good work.",
+        user: {
+            name: "Charlie Davis",
+            avatar: "https://www.svgrepo.com/show/384674/account-avatar-profile-user-11.svg",
+            userRole: "Member",
+            userId: "user345"
+        },
+        createdAt: new Date("2024-08-20T12:30:00")
     }
 ];

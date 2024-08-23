@@ -1,7 +1,8 @@
+import { UserCard } from "./user_template";
 export interface VideoCardTemplate {
     videoId: string;
     title: string;
-    userDetails: UserVideoCard;
+    userDetails: UserCard;
     views: number;
     uploadTime: Date;
     thumbnail: string;
@@ -9,8 +10,4 @@ export interface VideoCardTemplate {
     duration: number;
 }
 
-export interface UserVideoCard {
-    name: string;
-    avatar: string;
-    userId: string;
-}
+

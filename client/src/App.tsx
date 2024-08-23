@@ -1,14 +1,15 @@
 import { Outlet } from "react-router-dom";
 import Header from "./components/Header/Header";
-import SidebarProvider from "./providers/SidebarProvider";
+import { useSidebar } from "./providers/SidebarProvider";
 
 const App: React.FC = () => {
+  const {showSidebar} = useSidebar()
   return (
     <>
-      <SidebarProvider>
         <Header />
-        <Outlet />
-      </SidebarProvider>
+        <div className={`${showSidebar ?'ml-[16.67%]' : ''} mt-[5rem]`}>
+          <Outlet />
+        </div>
     </>
   );
 };

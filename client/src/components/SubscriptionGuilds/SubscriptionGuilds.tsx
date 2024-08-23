@@ -1,9 +1,9 @@
 import React from 'react'
-import { UserVideoCard } from '../../templates/video_templates'
+import { UserCard } from '../../templates/user_template';
 import { Link } from 'react-router-dom';
 
 interface SubscriptionChannelProps {
-    userDetails: UserVideoCard[];
+    userDetails: UserCard[];
 
 }
 const SubscriptionChannels:React.FC<SubscriptionChannelProps> = ({userDetails}) => {

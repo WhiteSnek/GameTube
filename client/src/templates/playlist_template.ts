@@ -6,11 +6,13 @@ export interface PlayListsTemplate{
     thumbnail: string;
     length: number;
     owner: string;
+    videoId: string;
 }
 
 export interface OnePlaylist{
     id: string;
     name: string;
+    description: string;
     thumbnail: string;
     length: number;
     owner: string;

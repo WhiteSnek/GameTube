@@ -1,6 +1,6 @@
 import React from 'react';
 import { SidebarItems } from '../../templates/sidebar_template';
-import { Home, Subscriptions, History, PlaylistPlay, WatchLater, ThumbUp } from '@mui/icons-material';
+import { Home, Subscriptions, History, PlaylistPlay, WatchLater, ThumbUp, Castle } from '@mui/icons-material';
 import { NavLink } from 'react-router-dom';
 import { IconButton } from '@mui/material';
 
@@ -8,7 +8,7 @@ const Sidebar: React.FC = () => {
     const list_items: SidebarItems[] = [
         { name: "Home", icon: Home, link: "/" },
         { name: "Subscriptions", icon: Subscriptions, link: "/subscriptions" },
-        { name: "Your Channel", icon: Home, link: "/channel" },
+        { name: "Your Guild", icon: Castle, link: "/guild" },
         { name: "History", icon: History, link: "/history" },
         { name: "Playlists", icon: PlaylistPlay, link: "/playlists" },
         { name: "Watch Later", icon: WatchLater, link: "/watch-later" },
@@ -22,7 +22,7 @@ const Sidebar: React.FC = () => {
                     key={index}
                     to={item.link}
                     className={({ isActive }) => 
-                        `flex items-center gap-3 p-2 text-white ${isActive ? 'bg-red-500' : ''}  hover:bg-red-500 hover:text-zinc-900 rounded-md`
+                        `flex items-center gap-3 p-2 text-white ${isActive ? 'bg-red-500' : ''}  hover:bg-red-500 hover:text-white transition-all rounded-md`
                     }
                     aria-label={item.name}
                 >

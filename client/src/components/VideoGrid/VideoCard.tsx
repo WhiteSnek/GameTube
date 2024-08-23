@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { VideoCardTemplate } from "../../templates/video_templates";
 import formatDate from "../../utils/formatDate";
-import formatDuration from "../../utils/formateDuration";
 import formatViews from "../../utils/formatViews";
 import truncateText from "../../utils/truncate_text";
+import { Link } from "react-router-dom";
+import HoverThumbnail from "../utilities/HoverThumbnail";
 
 const VideoCard: React.FC<VideoCardTemplate> = ({
   videoId,
@@ -15,59 +16,9 @@ const VideoCard: React.FC<VideoCardTemplate> = ({
   video,
   duration,
 }) => {
-  const [isHovered, setIsHovered] = useState<boolean>(false);
-  const [currentDuration, setCurrentDuration] = useState<number>(duration);
-
-  useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
-
-    if (isHovered) {
-      interval = setInterval(() => {
-        setCurrentDuration((prevDuration) => {
-          if (prevDuration <= 0) {
-            clearInterval(interval!);
-            return 0;
-          }
-          return Math.max(prevDuration - 1, 0);
-        });
-      }, 1000);
-    } else {
-      setCurrentDuration(duration);
-      if (interval) {
-        clearInterval(interval);
-      }
-    }
-
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [isHovered, duration]);
-
   return (
-    <div className="text-white" key={videoId}>
-      <div className="relative">
-        {isHovered ? (
-          <video
-            src={video}
-            className='aspect-video w-full object-fit rounded-md bg-gray-900'
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
-            autoPlay
-            muted
-            loop
-          />
-        ) : (
-          <img
-            src={thumbnail}
-            className='aspect-video w-full object-fit rounded-md'
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
-          />
-        )}
-        <span className="absolute bottom-0 right-0 px-2 text-xs py-1 m-2 font-semibold bg-black opacity-70 rounded-md">
-          {formatDuration(currentDuration)}
-        </span>
-      </div>
+    <Link to={`/videos/${videoId}`} className="text-white" key={videoId}>
+      <HoverThumbnail duration={duration} video={video} thumbnail={thumbnail} />
       <div className='flex gap-4 mt-4'>
         <img src={userDetails.avatar} alt='avatar' className='h-8 w-8 rounded-full object-cover' />
         <div>
@@ -79,7 +30,7 @@ const VideoCard: React.FC<VideoCardTemplate> = ({
           </div>
         </div>
       </div>
-    </div>
+    </Link>
   );
 };
 
