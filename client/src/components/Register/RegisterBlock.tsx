@@ -20,7 +20,7 @@ const RegisterBlock: React.FC = () => {
     });
     const [activeTab, setActiveTab] = useState<number>(1)
     return (
-        <div className="flex justify-center items-center ml-[16.67%] mt-[4.5rem] h-[calc(100vh - 4rem)] bg-zinc-900">
+        <div className="flex justify-center items-center bg-zinc-900">
             <div className='bg-zinc-800 p-8 rounded-lg border border-red-500 w-full max-w-xl'>
             <h1 className="text-3xl text-red-500 mb-6 font-bold text-center">Register</h1>
             <div className='grid grid-cols-3 items-center text-red-400 font-bold text-lg'>

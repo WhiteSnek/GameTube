@@ -18,6 +18,7 @@ const Page1: React.FC<RegisterProps> = ({
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [showConfirmPassword, setShowConfirmPassword] =
     useState<boolean>(false);
+  const [error,setError] = useState<string>('');
   const togglePasswordVisibility = (
     e: React.FormEvent<HTMLButtonElement>,
     field: "password" | "confirmPassword"
@@ -32,12 +33,17 @@ const Page1: React.FC<RegisterProps> = ({
 
   const handleNext = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (userInfo.password !== confirmPassword) {
-      alert("Passwords do not match");
+    if(userInfo.username === '' || userInfo.password === '' || userInfo.email === '') setError("Please fill all the fields!!")
+    else if (userInfo.password !== confirmPassword) {
+      setError("Passwords do not match");
       return;
     }
-    setActiveTab((prev) => prev + 1);
-    console.log(userInfo);
+    else {
+      setActiveTab((prev) => prev + 1);
+      console.log(userInfo);
+      setError('');
+    }
+    
   };
 
   return (
@@ -99,7 +105,7 @@ const Page1: React.FC<RegisterProps> = ({
           {showConfirmPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
         </button>
       </div>
-
+      {error !== '' && <p className='text-sm text-red-600 pb-2'>{error}</p>}
       <button
         type="submit"
         className="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-3 rounded focus:outline-none focus:ring-2 focus:ring-red-500"

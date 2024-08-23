@@ -7,7 +7,7 @@ import { Link } from 'react-router-dom';
 const LoginBlock: React.FC = () => {
     const [userInfo, setUserInfo] = useState<LoginTemplate>({ username: '', password: '' });
     const [showPassword, setShowPassword] = useState<boolean>(false);
-
+    const [error,setError] = useState<string>('');
     const togglePasswordVisibility = (e: React.FormEvent<HTMLButtonElement>) => {
         e.preventDefault();
         setShowPassword(!showPassword);
@@ -15,11 +15,18 @@ const LoginBlock: React.FC = () => {
 
     const login = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        console.log(userInfo);
+        if(userInfo.username === '' && userInfo.password === '') setError('Username and password is required!!');
+        else if(userInfo.password === '') setError('Password is required!!')
+        else if(userInfo.username === '') setError('Username is required!!')
+        else{
+            console.log(userInfo);
+            setError('');
+        }
+        
     }
 
     return (
-        <div className="flex justify-center items-center ml-[16.67%] mt-[10rem]  bg-zinc-900">
+        <div className="flex justify-center items-center mt-36 bg-zinc-900">
             <form className="bg-zinc-800 p-8 rounded-lg border border-red-500 w-full max-w-xl" onSubmit={login}>
                 <h1 className="text-3xl text-red-500 mb-6 font-bold text-center">Login</h1>
                 <div className="mb-6">
@@ -47,13 +54,14 @@ const LoginBlock: React.FC = () => {
                         {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
                     </button>
                 </div>
-                
+                {error !== '' && <p className='text-sm text-red-600 pb-2'>{error}</p>}
                 <button 
                     type="submit" 
                     className="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-3 rounded focus:outline-none focus:ring-2 focus:ring-red-500"
                 >
                     Login
                 </button>
+                
                 <div className='flex flex-col gap-2 py-3 text-sm text-white'>
                 <Link to="/" className=" hover:text-gray-400">
               Forgot password?
