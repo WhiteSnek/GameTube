@@ -21,7 +21,7 @@ type User struct {
     CoverImage string    `json:"cover_image"`
     Dob        time.Time `json:"dob"`
     Gender     string    `json:"gender"`
-    GoogleID   string    `json:"googleId"`
+    GoogleID   *string    `json:"googleId"`
     Guild      *uuid.UUID   `json:"guild,omitempty"`
     CreatedAt  time.Time `json:"created_at"`
     UpdatedAt  time.Time `json:"updated_at"`

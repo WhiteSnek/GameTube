@@ -9,39 +9,82 @@ import (
     "github.com/google/uuid"
     "time"
     "log"
+    "github.com/WhiteSnek/GameTube/src/utils"
 )
 
 func RegisterUser(db *sql.DB) http.HandlerFunc {
-    return func(w http.ResponseWriter, r *http.Request) {
-        var user models.User
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Parse the form data, including files
+		err := r.ParseMultipartForm(10 << 20) // Limit the size to 10 MB
+		if err != nil {
+			http.Error(w, "Failed to parse form data: "+err.Error(), http.StatusBadRequest)
+			return
+		}
 
-        // Decode the JSON request body into the user variable
-        if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-            http.Error(w, "Invalid input", http.StatusBadRequest)
-            return
-        }
+		// Get file uploads from the form
+		avatarFile, _, err := r.FormFile("avatar")
+		if err != nil {
+			http.Error(w, "Failed to get avatar file: "+err.Error(), http.StatusBadRequest)
+			return
+		}
+		coverImageFile, _, err := r.FormFile("coverImage")
+		if err != nil {
+			http.Error(w, "Failed to get cover image file: "+err.Error(), http.StatusBadRequest)
+			return
+		}
 
-        // Hash the password before saving to the database
-        if err := user.HashPassword(); err != nil {
-            http.Error(w, "Failed to hash password", http.StatusInternalServerError)
-            return
-        }
+		// Upload files and get file paths
+		avatarPath, err := utils.UploadFile(avatarFile, "avatar")
+		if err != nil {
+			http.Error(w, "Failed to upload avatar: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		coverImagePath, err := utils.UploadFile(coverImageFile, "coverImage")
+		if err != nil {
+			http.Error(w, "Failed to upload cover image: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
 
-        // Insert user into the database
-        query := `INSERT INTO users (id, username, email, password, fullname, avatar, cover_image, dob, gender, google_id, guild, created_at, updated_at) 
-                  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) RETURNING id`
-        id := uuid.New()
-        err := db.QueryRow(query, id, user.Username, user.Email, user.Password, user.FullName, user.Avatar, user.CoverImage, user.Dob, user.Gender, user.GoogleID, user.Guild).Scan(&id)
-        if err != nil {
-            http.Error(w, "Failed to create user: "+err.Error(), http.StatusInternalServerError)
-            return
-        }
+		// Extract form fields from the multipart form
+		username := r.FormValue("username")
+		email := r.FormValue("email")
+		password := r.FormValue("password")
+		fullName := r.FormValue("fullname")
+		dob := r.FormValue("dob")
+		gender := r.FormValue("gender")
 
-        // Respond with the newly created user's ID
-        response := map[string]string{"id": id.String()}
-        w.Header().Set("Content-Type", "application/json")
-        json.NewEncoder(w).Encode(response)
-    }
+		// Create the user model and assign values
+		var user models.User
+		user.Username = username
+		user.Email = email
+		user.Password = password
+		user.FullName = fullName
+		user.Avatar = avatarPath
+		user.CoverImage = coverImagePath
+		user.Dob, _ = time.Parse("2006-01-02", dob) // Assume date format "yyyy-mm-dd"
+		user.Gender = gender
+
+		// Hash the password before saving to the database
+		if err := user.HashPassword(); err != nil {
+			http.Error(w, "Failed to hash password", http.StatusInternalServerError)
+			return
+		}
+
+		// Insert user into the database
+		query := `INSERT INTO users (id, username, email, password, fullname, avatar, cover_image, dob, gender, google_id, guild, created_at, updated_at) 
+				  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NULL, NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) RETURNING id`
+		id := uuid.New()
+		err = db.QueryRow(query, id, user.Username, user.Email, user.Password, user.FullName, user.Avatar, user.CoverImage, user.Dob, user.Gender).Scan(&id)
+		if err != nil {
+			http.Error(w, "Failed to create user: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		// Respond with the newly created user's ID
+		response := map[string]string{"id": id.String()}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(response)
+	}
 }
 
 func LoginUser(db *sql.DB) http.HandlerFunc {
