@@ -2,29 +2,31 @@ package middlewares
 
 import (
 	"context"
+	"database/sql"
+	"fmt"
 	"net/http"
-	"github.com/dgrijalva/jwt-go"
+
+	"github.com/WhiteSnek/GameTube/src/contextkeys"
 	"github.com/WhiteSnek/GameTube/src/models"
 	"github.com/WhiteSnek/GameTube/src/utils"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/google/uuid"
-	"database/sql"
-	"github.com/WhiteSnek/GameTube/src/contextkeys" // Import the contextkeys package
 )
 
 // AuthMiddleware verifies JWT tokens from cookies
 func AuthMiddleware(db *sql.DB) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// Get the token from cookies
+			// Retrieve the token from cookies
 			cookie, err := r.Cookie("accessToken")
 			if err != nil {
-				http.Error(w, "Unauthorized request", http.StatusUnauthorized)
+				http.Error(w, "Unauthorized request: No access token provided", http.StatusUnauthorized)
 				return
 			}
 
 			tokenStr := cookie.Value
 			if tokenStr == "" {
-				http.Error(w, "Unauthorized request", http.StatusUnauthorized)
+				http.Error(w, "Unauthorized request: Empty access token", http.StatusUnauthorized)
 				return
 			}
 
@@ -32,10 +34,14 @@ func AuthMiddleware(db *sql.DB) func(next http.Handler) http.Handler {
 			token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
 				// Validate the token's signing method
 				if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-					return nil, http.ErrNotSupported
+					return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 				}
-				// Return the key for validation
-				return []byte(utils.GetEnv("ACCESS_TOKEN_SECRET", "")), nil
+				// Return the secret key for validation
+				secret := utils.GetEnv("ACCESS_TOKEN_SECRET", "")
+				if secret == "" {
+					return nil, fmt.Errorf("Secret key not found in environment")
+				}
+				return []byte(secret), nil
 			})
 
 			if err != nil || !token.Valid {
@@ -45,29 +51,29 @@ func AuthMiddleware(db *sql.DB) func(next http.Handler) http.Handler {
 
 			// Extract claims
 			claims, ok := token.Claims.(jwt.MapClaims)
-			if !ok || !token.Valid {
-				http.Error(w, "Invalid access token", http.StatusUnauthorized)
+			if !ok {
+				http.Error(w, "Invalid access token claims", http.StatusUnauthorized)
 				return
 			}
 
 			// Extract user ID from claims
 			userID, ok := claims["id"].(string)
 			if !ok {
-				http.Error(w, "Invalid access token", http.StatusUnauthorized)
+				http.Error(w, "Invalid access token: No user ID found", http.StatusUnauthorized)
 				return
 			}
 
 			// Convert userID to UUID
 			id, err := uuid.Parse(userID)
 			if err != nil {
-				http.Error(w, "Invalid user ID", http.StatusUnauthorized)
+				http.Error(w, "Invalid user ID format", http.StatusUnauthorized)
 				return
 			}
 
 			// Fetch user from the database
 			user, err := models.GetUserByID(db, id)
 			if err != nil || user == nil {
-				http.Error(w, "Invalid access token", http.StatusUnauthorized)
+				http.Error(w, "Unauthorized request: User not found", http.StatusUnauthorized)
 				return
 			}
 

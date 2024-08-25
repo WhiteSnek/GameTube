@@ -8,6 +8,7 @@ import (
     "github.com/gorilla/mux"
     "github.com/google/uuid"
     "time"
+    "log"
 )
 
 func RegisterUser(db *sql.DB) http.HandlerFunc {
@@ -50,22 +51,37 @@ func LoginUser(db *sql.DB) http.HandlerFunc {
             Password string `json:"password"`
         }
 
+        // Decode the request body
         if err := json.NewDecoder(r.Body).Decode(&credentials); err != nil {
             http.Error(w, "Invalid input", http.StatusBadRequest)
             return
         }
 
         // Retrieve user from the database
-        query := `SELECT id, username, password, fullname FROM users WHERE email = $1`
+        query := `SELECT id, username, password, fullname, avatar, cover_image, dob, gender, google_id, guild, created_at, updated_at FROM users WHERE email = $1`
         var user models.User
         row := db.QueryRow(query, credentials.Email)
-        err := row.Scan(&user.ID, &user.Username, &user.Password, &user.FullName)
+        err := row.Scan(
+            &user.ID,
+            &user.Username,
+            &user.Password,
+            &user.FullName,
+            &user.Avatar,
+            &user.CoverImage,
+            &user.Dob,
+            &user.Gender,
+            &user.GoogleID,
+            &user.Guild,
+            &user.CreatedAt,
+            &user.UpdatedAt,
+        )
         if err != nil {
             if err == sql.ErrNoRows {
                 http.Error(w, "User not found", http.StatusNotFound)
-            } else {
-                http.Error(w, "Failed to retrieve user", http.StatusInternalServerError)
+                return
             }
+            log.Printf("Failed to retrieve user: %v", err) // Log the actual error
+            http.Error(w, "Failed to retrieve user", http.StatusInternalServerError)
             return
         }
 
@@ -108,9 +124,33 @@ func LoginUser(db *sql.DB) http.HandlerFunc {
             Expires:  time.Now().Add(time.Hour * 24 * 7), // Set expiration as needed
         })
 
-        // Respond with success message
+        // Prepare the response with user info and tokens
+        response := map[string]interface{}{
+            "user": map[string]interface{}{
+                "id":          user.ID,
+                "username":    user.Username,
+                "fullname":    user.FullName,
+                "avatar":      user.Avatar,
+                "cover_image": user.CoverImage,
+                "dob":         user.Dob,
+                "gender":      user.Gender,
+                "google_id":   user.GoogleID,
+                "guild":       user.Guild,
+                "created_at":  user.CreatedAt,
+                "updated_at":  user.UpdatedAt,
+            },
+            "tokens": map[string]string{
+                "accessToken":  accessToken,
+                "refreshToken": refreshToken,
+            },
+        }
+
+        // Send the response as JSON
+        w.Header().Set("Content-Type", "application/json")
         w.WriteHeader(http.StatusOK)
-        w.Write([]byte("Login successful"))
+        if err := json.NewEncoder(w).Encode(response); err != nil {
+            http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+        }
     }
 }
 
@@ -170,5 +210,87 @@ func GetUserByID(db *sql.DB) http.HandlerFunc {
         // Respond with the user's details
         w.Header().Set("Content-Type", "application/json")
         json.NewEncoder(w).Encode(user)
+    }
+}
+
+func CreateGuild(db *sql.DB) http.HandlerFunc {
+    return func(w http.ResponseWriter, r *http.Request) {
+        var guild models.Guild
+        vars := mux.Vars(r)
+        userIDStr := vars["id"]
+
+        // Parse the user ID from the URL
+        userID, err := uuid.Parse(userIDStr)
+        if err != nil {
+            http.Error(w, "Invalid user ID", http.StatusBadRequest)
+            return
+        }
+
+        // Decode the request body into the guild struct
+        if err := json.NewDecoder(r.Body).Decode(&guild); err != nil {
+            http.Error(w, "Invalid input", http.StatusBadRequest)
+            return
+        }
+
+        // Generate a new UUID for the guild
+        guildID := uuid.New()
+
+        // Insert the new guild into the guilds table
+        guildQuery := `INSERT INTO guilds (id, name) VALUES ($1, $2)`
+        _, err = db.Exec(guildQuery, guildID, guild.Name)
+        if err != nil {
+            http.Error(w, "Failed to create guild: "+err.Error(), http.StatusInternalServerError)
+            return
+        }
+
+        // Update the user's guild field with the new guild ID
+        userQuery := `UPDATE users SET guild = $1 WHERE id = $2`
+        _, err = db.Exec(userQuery, guildID, userID)
+        if err != nil {
+            http.Error(w, "Failed to update user's guild: "+err.Error(), http.StatusInternalServerError)
+            return
+        }
+
+        // Set the guild ID in the response
+        guild.ID = guildID
+
+        // Send the guild information as JSON response
+        w.Header().Set("Content-Type", "application/json")
+        if err := json.NewEncoder(w).Encode(guild); err != nil {
+            http.Error(w, "Failed to encode response: "+err.Error(), http.StatusInternalServerError)
+        }
+    }
+}
+
+func GetGuildInfo(db *sql.DB) http.HandlerFunc {
+    return func(w http.ResponseWriter, r *http.Request) {
+        var guild models.Guild
+        vars := mux.Vars(r)
+        id := vars["id"]
+        guildId, err := uuid.Parse(id)
+        if err != nil {
+            http.Error(w, "Invalid guild ID", http.StatusBadRequest)
+            return
+        }
+
+        query := `SELECT id, name FROM guilds WHERE id = $1`
+        row := db.QueryRow(query, guildId)
+
+        // Check for errors and retrieve data
+        err = row.Scan(&guild.ID, &guild.Name)
+        if err != nil {
+            if err == sql.ErrNoRows {
+                http.Error(w, "Guild not found", http.StatusNotFound)
+            } else {
+                http.Error(w, "Failed to retrieve guild info: "+err.Error(), http.StatusInternalServerError)
+            }
+            return
+        }
+
+        // Send the guild information as JSON response
+        w.Header().Set("Content-Type", "application/json")
+        if err := json.NewEncoder(w).Encode(guild); err != nil {
+            http.Error(w, "Failed to encode response: "+err.Error(), http.StatusInternalServerError)
+        }
     }
 }
