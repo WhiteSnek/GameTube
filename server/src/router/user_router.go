@@ -16,15 +16,14 @@ func NewRouter(db *sql.DB) *mux.Router {
 	// Register public routes
 	r.HandleFunc("/users/addUser", controllers.RegisterUser(db)).Methods("POST")
 	r.HandleFunc("/users/{id:[0-9]+}", controllers.GetUserByID(db)).Methods("GET")
-
+	r.HandleFunc("/users/login",controllers.LoginUser(db)).Methods("POST")
 	// Apply the middleware to protected routes
 	protected := r.PathPrefix("/protected").Subrouter()
 	protected.Use(authMiddleware) // Apply the middleware to this subrouter
+	protected.HandleFunc("/logout", controllers.LogoutUser()).Methods("POST")
+	protected.HandleFunc("/create-guild/{id:[a-fA-F0-9-]+}", controllers.CreateGuild(db)).Methods("POST")
+	protected.HandleFunc("/guilds/{id:[a-fA-F0-9-]+}", controllers.GetGuildInfo(db)).Methods("GET")
 
-	// Example protected route
-	protected.HandleFunc("/profile", controllers.LogoutUser()).Methods("GET")
-
-	// Add more routes as needed
 
 	return r
 }

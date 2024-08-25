@@ -7,6 +7,8 @@ import (
     "golang.org/x/crypto/bcrypt"
 	"database/sql"
 	"os"
+    "log"
+    "github.com/joho/godotenv"
 )
 
 type User struct {
@@ -19,18 +21,30 @@ type User struct {
     CoverImage string    `json:"cover_image"`
     Dob        time.Time `json:"dob"`
     Gender     string    `json:"gender"`
-    GoogleID   string    `json:"googleId"`
-    Guild      *string   `json:"guild,omitempty"`
+    GoogleID   *string    `json:"googleId"`
+    Guild      *uuid.UUID   `json:"guild,omitempty"`
     CreatedAt  time.Time `json:"created_at"`
     UpdatedAt  time.Time `json:"updated_at"`
 }
 
+var accessTokenSecret []byte
+var refreshTokenSecret []byte
+
 var (
-    accessTokenSecret  = []byte(os.Getenv("ACCESS_TOKEN_SECRET"))
-    refreshTokenSecret = []byte(os.Getenv("REFRESH_TOKEN_SECRET"))
     accessTokenExpiry  = 15 * time.Minute // Adjust as needed
     refreshTokenExpiry = 7 * 24 * time.Hour // Adjust as needed
 )
+
+func init() {
+    if err := godotenv.Load(); err != nil {
+        log.Fatalf("Error loading .env file: %v", err)
+    }
+    accessTokenSecret = []byte(os.Getenv("ACCESS_TOKEN_SECRET"))
+    refreshTokenSecret = []byte(os.Getenv("REFRESH_TOKEN_SECRET"))
+    if len(accessTokenSecret) == 0 || len(refreshTokenSecret) == 0 {
+        log.Fatalf("Token secrets must be set in environment variables")
+    }
+}
 
 // Hash the password before saving it to the database
 func (u *User) HashPassword() error {

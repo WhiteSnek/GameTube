@@ -9,7 +9,7 @@ export const dummyVideos: VideoCardTemplate[] = [
         title: "Exploring the Universe",
         userDetails: {
             name: "Alice Johnson",
-            avatar: "https://www.svgrepo.com/show/384674/account-avatar-profile-user-11.svg",
+            avatar: "https://my-gametube-bucket.s3.amazonaws.com/a40d1616-91ba-4688-bdde-186bab2ddb16/fbb5da69-b798-422d-b09c-0c55378b2e75.png ",
             userId: "user1"
         },
         views: 1532,
