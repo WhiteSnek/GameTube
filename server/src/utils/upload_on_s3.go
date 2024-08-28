@@ -46,11 +46,11 @@ func init() {
 }
 
 // SaveFile uploads a file to S3 and returns its URL.
-func SaveFile(file multipart.File, fileHeader *multipart.FileHeader, userID uuid.UUID) (string, error) {
+func SaveFile(file multipart.File, fileHeader *multipart.FileHeader, userID uuid.UUID, pathType string) (string, error) {
 	// Generate a unique filename using user ID and a new UUID
 	originalFileName := fileHeader.Filename
 	ext := filepath.Ext(originalFileName)
-	fileName := fmt.Sprintf("profiles/%s/%s%s", userID.String(), uuid.New().String(), ext)
+	fileName := fmt.Sprintf("%s/%s/%s%s", pathType, userID.String(), uuid.New().String(), ext)
 
 	// Upload the file to S3
 	_, err := uploader.Upload(&s3manager.UploadInput{

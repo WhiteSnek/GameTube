@@ -19,7 +19,7 @@ type User struct {
     FullName   string    `json:"fullname"`
     Avatar     string    `json:"avatar"`
     CoverImage string    `json:"cover_image"`
-    Dob        time.Time `json:"dob"`
+    Dob        string `json:"dob"`
     Gender     string    `json:"gender"`
     GoogleID   *string    `json:"googleId"`
     Guild      *uuid.UUID   `json:"guild,omitempty"`

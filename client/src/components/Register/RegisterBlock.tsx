@@ -11,7 +11,7 @@ const RegisterBlock: React.FC = () => {
         password: '',
         email: '',
         name: '',
-        dob: new Date(),
+        dob: '',
         gender: '',
         avatar: null,
         avatarUrl: '',

@@ -3,8 +3,11 @@ import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
 import { Route, createBrowserRouter, createRoutesFromElements, RouterProvider } from 'react-router-dom'
-import { Home, Login, Playlists, Register, Search, SpecificPlaylist, Subscriptions,VideoPage } from './pages'
+import { Home, Login, Playlists, Register, Search, SpecificPlaylist, Subscriptions,VideoPage, YourGuild } from './pages'
 import SidebarProvider from './providers/SidebarProvider.tsx'
+import axios from 'axios'
+
+axios.defaults.baseURL = import.meta.env.VITE_SERVER;
 
 const Layout: React.FC = () => {
   const router = createBrowserRouter(
@@ -18,6 +21,7 @@ const Layout: React.FC = () => {
         <Route path='playlist/:id' element={<SpecificPlaylist />} />
         <Route path='videos/:id' element={<VideoPage />} />
         <Route path='search' element={<Search />} />
+        <Route path='guild' element={<YourGuild />} />
       </Route>
     )
   )

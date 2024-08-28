@@ -8,6 +8,7 @@ import (
     "github.com/WhiteSnek/GameTube/src/db"
     "github.com/WhiteSnek/GameTube/src/router"
     "github.com/joho/godotenv"
+    "github.com/rs/cors"
 )
 
 func main() {
@@ -26,6 +27,17 @@ func main() {
     // Create a new router
     r := router.NewRouter(dbConn)
 
+    // Setup CORS
+    c := cors.New(cors.Options{
+        AllowedOrigins: []string{"http://localhost:5173"}, // Replace with specific domains if needed
+        AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+        AllowedHeaders: []string{"Content-Type", "Authorization"},
+        AllowCredentials: true,
+    })
+
+    // Wrap the router with the CORS middleware
+    handler := c.Handler(r)
+
     // Get the port from environment variable or default to 8080
     port := os.Getenv("PORT")
     if port == "" {
@@ -34,7 +46,7 @@ func main() {
 
     // Start the HTTP server
     log.Printf("Server starting on port %s\n", port)
-    if err := http.ListenAndServe(":"+port, r); err != nil {
+    if err := http.ListenAndServe(":"+port, handler); err != nil {
         log.Fatalf("Server failed: %v", err)
     }
 }

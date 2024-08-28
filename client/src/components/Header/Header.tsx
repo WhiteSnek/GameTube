@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
-import { Search, LoginButton } from './index';
+import { Search, LoginButton, UserDP } from './index';
 import Sidebar from '../Sidebar/Sidebar';
 import MenuIcon from '@mui/icons-material/Menu';
 import SearchIcon from '@mui/icons-material/Search';
 import { useSidebar } from '../../providers/SidebarProvider';
+import { useUser } from '../../providers/UserProvider';
 
 const Header: React.FC = () => {
     const { showSidebar, setShowSidebar } = useSidebar();
     const [showSearch, setShowSearch] = useState<boolean>(false);
+    const {user} = useUser()
 
     const toggleSidebar = () => {
         setShowSidebar(prev => !prev);
@@ -41,7 +43,7 @@ const Header: React.FC = () => {
             </div>
 
             <div className='col-span-10 md:col-span-2 mt-4 md:mt-0 flex justify-end space-x-4'>
-                <LoginButton />
+                {user ? <UserDP/> :<LoginButton />}
             </div>
 
             <div className={`fixed top-0 left-0 h-full bg-zinc-800 border-r mt-[4rem] border-zinc-700 z-30 transition-transform ${showSidebar ? 'translate-x-0' : '-translate-x-full'} md:w-2/12 md:block`}>

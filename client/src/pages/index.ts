@@ -6,6 +6,7 @@ import Playlists from "./Playlists";
 import SpecificPlaylist from "./SpecificPlaylist";
 import VideoPage from "./VideoPage";
 import Search from "./Search";
+import YourGuild from "./YourGuild";
 
 export {
     Home,
@@ -15,5 +16,6 @@ export {
     Playlists,
     SpecificPlaylist,
     VideoPage,
-    Search
+    Search,
+    YourGuild
 }
