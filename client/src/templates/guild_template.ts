@@ -10,11 +10,9 @@ export interface CreateGuildTemplate {
 
 export interface GuildDetails {
     id: string;
-    name: string;
-    description: string;
-    avatar: File | null;
-    avatarUrl: string;
-    coverImage: File | null;
-    coverImageUrl: string;
-    private: boolean;
+    guild_name: string;
+    guild_description: string;
+    avatar: string;
+    cover_image: string;
+    privacy: boolean;
 }

@@ -6,6 +6,7 @@ interface GuildContextType {
   guild: GuildDetails | null;
   setGuild: React.Dispatch<React.SetStateAction<GuildDetails | null>>;
   createGuild: ({formData, userId}: CreateGuildProps) => Promise<boolean>;
+  getGuildInfo: (guildId: string) => Promise<boolean>;
 }
 
 const GuildContext = createContext<GuildContextType | undefined>(undefined);
@@ -49,8 +50,24 @@ const GuildProvider: React.FC<GuildProviderProps> = ({ children }) => {
     }
   };
 
+
+  const getGuildInfo = async(guildId: string): Promise<boolean> => {
+    try {
+      const response: AxiosResponse<GuildDetails> = await axios.get(
+        `/protected/guilds/${guildId}`,
+        { withCredentials: true }
+      );
+      setGuild(response.data);
+
+      return true;
+    } catch (error) {
+      console.error("Failed to fetch guild:", error);
+      return false;
+    }
+  }
+
   return (
-    <GuildContext.Provider value={{ guild, setGuild, createGuild }}>
+    <GuildContext.Provider value={{ guild, setGuild, createGuild, getGuildInfo }}>
       {children}
     </GuildContext.Provider>
   );
