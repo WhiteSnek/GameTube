@@ -15,7 +15,7 @@ export const dummyVideos: VideoCardTemplate[] = [
         views: 1532,
         uploadTime: new Date("2024-03-01T12:00:00Z"),
         thumbnail: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSY2BjiU9dOjulhGreAkzSEhpN7nLZPDdJiyA&s",
-        video: "https://videos.pexels.com/video-files/27300951/12115045_2560_1440_60fps.mp4",
+        video: "https://gametube-video-transcoded.s3.amazonaws.com/360p/index.m3u8",
         duration: 3600 // 1 hour
     },
     {

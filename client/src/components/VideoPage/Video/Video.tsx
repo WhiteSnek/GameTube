@@ -3,8 +3,8 @@ import videojs from 'video.js';
 import 'video.js/dist/video-js.css';
 
 interface VideoProps {
-    video: string;
-    thumbnail: string;
+    video: string;  // URL of the HLS stream or MP4 file
+    thumbnail: string;  // URL of the thumbnail image
 }
 
 interface Source {
@@ -34,7 +34,7 @@ const Video: React.FC<VideoProps> = ({ video, thumbnail }) => {
     sources: [
       {
         src: video,
-        type: 'video/mp4',
+        type: 'application/x-mpegURL',  // For HLS streams, use application/x-mpegURL
       },
     ],
   };
@@ -61,7 +61,7 @@ const Video: React.FC<VideoProps> = ({ video, thumbnail }) => {
         videojs.log('Player will dispose');
       });
     } else if (playerRef.current) {
-      playerRef.current.src([{ src: video, type: 'video/mp4' }]);
+      playerRef.current.src([{ src: video, type: 'application/x-mpegURL' }]);
     }
 
     return () => {
@@ -74,7 +74,7 @@ const Video: React.FC<VideoProps> = ({ video, thumbnail }) => {
 
   return (
     <div data-vjs-player style={{ width: '100%', height: '100%' }} >
-      <div ref={videoRef} style={{ width: '100%', height: '100%' }}/>
+      <div ref={videoRef} style={{ width: '100%', height: '100%' }} />
     </div>
   );
 }
