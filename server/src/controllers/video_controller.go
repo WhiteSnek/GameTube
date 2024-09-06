@@ -3,13 +3,33 @@ package controllers
 import (
 	"database/sql"
 	"encoding/json"
-	"net/http"
-
 	"github.com/WhiteSnek/GameTube/src/models"
 	"github.com/WhiteSnek/GameTube/src/utils"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
+	"net/http"
+	"time"
 )
+
+type VideoWithOwnerAndGuild struct {
+	Id          uuid.UUID `json:"id"`
+	Title       string    `json:"title"`
+	Description string    `json:"description"`
+	Url         string    `json:"video"`
+	Thumbnail   string    `json:"thumbnail"`
+	Owner       struct {
+		Id       uuid.UUID `json:"id"`
+		Username string    `json:"username"`
+		Avatar   string    `json:"avatar"`
+	} `json:"owner"`
+	Guild struct {
+		Id       uuid.UUID `json:"id"`
+		Name     string    `json:"name"`
+		Avatar   string    `json:"avatar"`
+	} `json:"guild"`
+	Views       int       `json:"views"`
+	CreatedAt   time.Time `json:"created_at"`
+}
 
 func UploadVideo(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -91,14 +111,43 @@ func GetVideoDetails(db *sql.DB) http.HandlerFunc {
 		// Get the video ID from the URL parameters
 		videoId, err := uuid.Parse(mux.Vars(r)["id"])
 		if err != nil {
-			http.Error(w, "Invalid video ID"+err.Error(), http.StatusBadRequest)
+			http.Error(w, "Invalid video ID: "+err.Error(), http.StatusBadRequest)
 			return
 		}
-		query := `SELECT id,title,description,video,thumbnail,owner,guild,views,created_at from videos where id= $1`
-		var video models.Video
+
+		// Define the query with joins to get owner and guild details
+		query := `
+			SELECT 
+				v.id, 
+				v.title, 
+				v.description, 
+				v.video, 
+				v.thumbnail, 
+				v.views, 
+				v.created_at,
+				u.id AS owner_id,
+				u.username AS owner_username,
+				u.avatar AS owner_avatar,
+				g.id AS guild_id,
+				g.guild_name AS guild_name,
+				g.avatar AS guild_avatar
+			FROM 
+				videos v
+			JOIN 
+				users u ON v.owner = u.id
+			LEFT JOIN 
+				guilds g ON v.guild = g.id
+			WHERE 
+				v.id = $1
+		`
+		var video VideoWithOwnerAndGuild
+
+		// Execute the query
 		row := db.QueryRow(query, videoId)
 		err = row.Scan(&video.Id, &video.Title, &video.Description, &video.Url,
-			&video.Thumbnail, &video.Owner, &video.GuildId, &video.Views, &video.CreatedAt)
+			&video.Thumbnail, &video.Views, &video.CreatedAt, &video.Owner.Id,
+			&video.Owner.Username, &video.Owner.Avatar, &video.Guild.Id,
+			&video.Guild.Name, &video.Guild.Avatar)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				http.Error(w, "Video not found", http.StatusNotFound)
@@ -107,10 +156,13 @@ func GetVideoDetails(db *sql.DB) http.HandlerFunc {
 			}
 			return
 		}
+
+		// Set the content type and encode the video details as JSON
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(video)
 	}
 }
+
 
 func GetUserVideos(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -121,8 +173,30 @@ func GetUserVideos(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		// Query to get all videos for the user
-		query := `SELECT id, title, description, video, thumbnail, owner, guild, views, created_at FROM videos WHERE owner = $1`
+		// Define the query to include owner and guild details
+		query := `
+			SELECT 
+				v.id, 
+				v.title, 
+				v.video, 
+				v.thumbnail, 
+				v.views, 
+				v.created_at,
+				u.id AS owner_id,
+				u.username AS owner_username,
+				u.avatar AS owner_avatar,
+				g.id AS guild_id,
+				g.guild_name AS guild_name,
+				g.avatar AS guild_avatar
+			FROM 
+				videos v
+			JOIN 
+				users u ON v.owner = u.id
+			LEFT JOIN 
+				guilds g ON v.guild = g.id
+			WHERE 
+				v.owner = $1
+		`
 		rows, err := db.Query(query, userID)
 		if err != nil {
 			http.Error(w, "Failed to retrieve videos: "+err.Error(), http.StatusInternalServerError)
@@ -130,13 +204,15 @@ func GetUserVideos(db *sql.DB) http.HandlerFunc {
 		}
 		defer rows.Close()
 
-		var videos []models.Video
+		var videos []VideoWithOwnerAndGuild
 
 		// Loop through the rows and scan into the video model
 		for rows.Next() {
-			var video models.Video
-			err := rows.Scan(&video.Id, &video.Title, &video.Description, &video.Url,
-				&video.Thumbnail, &video.Owner, &video.GuildId, &video.Views, &video.CreatedAt)
+			var video VideoWithOwnerAndGuild
+			err := rows.Scan(&video.Id, &video.Title, &video.Url,
+				&video.Thumbnail, &video.Views, &video.CreatedAt, &video.Owner.Id,
+				&video.Owner.Username, &video.Owner.Avatar, &video.Guild.Id,
+				&video.Guild.Name, &video.Guild.Avatar)
 			if err != nil {
 				http.Error(w, "Failed to scan video details: "+err.Error(), http.StatusInternalServerError)
 				return
@@ -158,15 +234,37 @@ func GetUserVideos(db *sql.DB) http.HandlerFunc {
 
 func GetGuildVideos(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Get the user ID from the URL parameters
+		// Get the guild ID from the URL parameters
 		guildId, err := uuid.Parse(mux.Vars(r)["id"])
 		if err != nil {
-			http.Error(w, "Invalid user ID: "+err.Error(), http.StatusBadRequest)
+			http.Error(w, "Invalid guild ID: "+err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		// Query to get all videos for the user
-		query := `SELECT id, title, description, video, thumbnail, owner, guild, views, created_at FROM videos WHERE guild = $1`
+		// Define the query to include owner and guild details
+		query := `
+			SELECT 
+				v.id, 
+				v.title, 
+				v.video, 
+				v.thumbnail, 
+				v.views, 
+				v.created_at,
+				u.id AS owner_id,
+				u.username AS owner_username,
+				u.avatar AS owner_avatar,
+				g.id AS guild_id,
+				g.guild_name AS guild_name,
+				g.avatar AS guild_avatar
+			FROM 
+				videos v
+			JOIN 
+				users u ON v.owner = u.id
+			LEFT JOIN 
+				guilds g ON v.guild = g.id
+			WHERE 
+				v.guild = $1
+		`
 		rows, err := db.Query(query, guildId)
 		if err != nil {
 			http.Error(w, "Failed to retrieve videos: "+err.Error(), http.StatusInternalServerError)
@@ -174,13 +272,15 @@ func GetGuildVideos(db *sql.DB) http.HandlerFunc {
 		}
 		defer rows.Close()
 
-		var videos []models.Video
+		var videos []VideoWithOwnerAndGuild
 
 		// Loop through the rows and scan into the video model
 		for rows.Next() {
-			var video models.Video
-			err := rows.Scan(&video.Id, &video.Title, &video.Description, &video.Url,
-				&video.Thumbnail, &video.Owner, &video.GuildId, &video.Views, &video.CreatedAt)
+			var video VideoWithOwnerAndGuild
+			err := rows.Scan(&video.Id, &video.Title, &video.Url,
+				&video.Thumbnail, &video.Views, &video.CreatedAt, &video.Owner.Id,
+				&video.Owner.Username, &video.Owner.Avatar, &video.Guild.Id,
+				&video.Guild.Name, &video.Guild.Avatar)
 			if err != nil {
 				http.Error(w, "Failed to scan video details: "+err.Error(), http.StatusInternalServerError)
 				return
