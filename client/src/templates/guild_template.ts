@@ -16,3 +16,9 @@ export interface GuildDetails {
     cover_image: string;
     privacy: boolean;
 }
+
+export interface GuildCard {
+    id: string;
+    name: string;
+    avatar: string;
+}

@@ -9,20 +9,20 @@ interface VideoGridProps {
 
 const VideoGrid: React.FC<VideoGridProps> = ({ videos }) => {
     const { showSidebar } = useSidebar();
-
+    console.log(videos)
     return (
         <div className={`grid grid-cols-1 gap-4 p-6 ${showSidebar ? 'sm:grid-cols-4' : 'sm:grid-cols-5'}  pt-6 transition-all`}>
             {videos?.map((video) => (
                 <VideoCard
-                    key={video.videoId}
-                    videoId={video.videoId}
+                    key={video.id}
+                    id={video.id}
                     title={video.title}
-                    userDetails={video.userDetails}
+                    owner={video.owner}
                     views={video.views}
-                    uploadTime={video.uploadTime}
+                    created_at={video.created_at}
                     thumbnail={video.thumbnail}
                     video={video.video}
-                    duration={video.duration}
+                    guild={video.guild}
                 />
             ))}
         </div>

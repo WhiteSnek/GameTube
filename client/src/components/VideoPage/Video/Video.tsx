@@ -33,7 +33,7 @@ const Video: React.FC<VideoProps> = ({ video, thumbnail }) => {
     poster: thumbnail,  // Set the video thumbnail here
     sources: [
       {
-        src: video,
+        src: 'https://gametube-video-transcoded.s3.amazonaws.com/6edc0bd0-8429-4192-b01e-50b185ac700d/f9bb071e-19f2-4495-900c-7ca4f2afc8f2/87eb738e-9548-4abc-b904-739c32fdffc3.mp4/720p/index.m3u8',
         type: 'application/x-mpegURL',  // For HLS streams, use application/x-mpegURL
       },
     ],

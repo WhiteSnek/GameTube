@@ -7,13 +7,14 @@ import BookmarkBorderIcon from '@mui/icons-material/BookmarkBorder';
 import BookmarkIcon from '@mui/icons-material/Bookmark';
 import ShareOutlinedIcon from '@mui/icons-material/ShareOutlined';
 import DownloadOutlinedIcon from '@mui/icons-material/DownloadOutlined';
-import formatDate from '../../../utils/formatDate';
+// import formatDate from '../../../utils/formatDate';
 import formatViews from '../../../utils/formatViews';
 interface DetailsProps {
     video: VideoCardTemplate
 }
 
 const Details:React.FC<DetailsProps> = ({video}) => {
+  console.log(video)
     const [liked,setLiked] = useState<boolean>(false);
     const [saved,setSaved] = useState<boolean>(false);
     const toggleLike = () => {
@@ -27,10 +28,10 @@ const Details:React.FC<DetailsProps> = ({video}) => {
       <h1 className='text-3xl text-white font-bold py-5'>{video.title}</h1>
       <div className='flex items-center justify-between gap-4'>
       <div className='flex items-center gap-4'>
-      <Link to={`/guild/${video.userDetails.userId}`} className='flex items-center gap-3'>
-        <img src={video.userDetails.avatar} alt={video.userDetails.name} className='h-8'/>
+      <Link to={`/guild/${video.owner.userId}`} className='flex items-center gap-3'>
+        <img src={video.owner.avatar} alt={video.owner.name} className='h-8'/>
         <div className=''>
-        <h3 className='text-white font-semibold text-lg'>{video.userDetails.name}</h3>
+        <h3 className='text-white font-semibold text-lg'>{video.owner.name}</h3>
         <p className='text-sm text-gray-300'>Guild members</p>
         </div>
       </Link>
@@ -47,7 +48,7 @@ const Details:React.FC<DetailsProps> = ({video}) => {
       <div className='p-4 m-4 bg-zinc-800 rounded-lg'>
         <div className='flex text-white gap-3 text-sm font-bold'>
             <p>{formatViews(video.views)} views</p>
-            <p>{formatDate(video.uploadTime)}</p>
+            {/* <p>{formatDate(video.uploadTime)}</p> */}
         </div>
         <p className='text-white '>Description</p>
       </div>

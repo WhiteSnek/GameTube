@@ -1,13 +1,14 @@
+import { GuildCard } from "./guild_template";
 import { UserCard } from "./user_template";
 export interface VideoCardTemplate {
-    videoId: string;
+    id: string;
     title: string;
-    userDetails: UserCard;
-    views: number;
-    uploadTime: Date;
-    thumbnail: string;
+    description: string;
     video: string;
-    duration: number;
+    thumbnail: string;
+    owner: UserCard;
+    guild: GuildCard;
+    views: number;
+    created_at: Date;
 }
-
 
