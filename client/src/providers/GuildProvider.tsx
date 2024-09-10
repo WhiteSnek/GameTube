@@ -54,7 +54,7 @@ const GuildProvider: React.FC<GuildProviderProps> = ({ children }) => {
   const getGuildInfo = async(guildId: string): Promise<boolean> => {
     try {
       const response: AxiosResponse<GuildDetails> = await axios.get(
-        `/protected/guilds/${guildId}`,
+        `/guilds/${guildId}`,
         { withCredentials: true }
       );
       setGuild(response.data);

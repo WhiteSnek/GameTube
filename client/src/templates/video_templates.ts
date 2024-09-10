@@ -10,5 +10,6 @@ export interface VideoCardTemplate {
     guild: GuildCard;
     views: number;
     created_at: Date;
+    tags: string[];
 }
 

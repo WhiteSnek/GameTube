@@ -2,15 +2,12 @@ import React, { useEffect } from 'react';
 import VideoGrid from '../components/VideoGrid/VideoGrid';
 import TagList from '../components/TagList/TagList';
 import { useVideo } from '../providers/VideoProvider';
-import { useUser } from '../providers/UserProvider';
 
 const Home: React.FC = () => {
-  const {user} = useUser();
-  const {video, getUserVideos} = useVideo();
+  const {video, getAllVideos} = useVideo();
   useEffect(()=>{
     const getVideos = async () => {
-    const userId: string = user ? user.id : "";
-    const success:boolean = await getUserVideos(userId);
+    const success:boolean = await getAllVideos();
     if(success){
       console.log('Successfully fetched videos');
     } else {

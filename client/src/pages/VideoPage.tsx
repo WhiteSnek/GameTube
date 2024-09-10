@@ -1,36 +1,44 @@
-import React, { useEffect } from 'react'
-import VideoDetails from '../components/VideoPage/Video/VideoDetails'
-import Recommended from '../components/VideoPage/Recommended/Recommended'
-import Comments from '../components/VideoPage/Comments/Comments'
-import { useParams } from 'react-router-dom'
-import { useVideo } from '../providers/VideoProvider'
+import React, { useEffect, useState } from "react";
+import VideoDetails from "../components/VideoPage/Video/VideoDetails";
+import Recommended from "../components/VideoPage/Recommended/Recommended";
+import Comments from "../components/VideoPage/Comments/Comments";
+import { useParams } from "react-router-dom";
+import { useVideo } from "../providers/VideoProvider";
+import { VideoCardTemplate } from "../templates/video_templates";
+import CommentProvider from "../providers/CommentProvider";
 
-const VideoPage:React.FC = () => {
-  const {id} = useParams()
-  const {video, getVideoDetails} = useVideo();
-  useEffect(()=>{
-    const getVideo = async() => {
-      const videoId = id? id : ""
-      const success = await getVideoDetails(videoId);
-      if(success){
-        console.log('Video fetched successfully');
+const VideoPage: React.FC = () => {
+  const { id } = useParams();
+  const { getVideoDetails } = useVideo();
+  const [video, setVideo] = useState<VideoCardTemplate | null>(null);
+  const videoId = id ? id : "";
+  useEffect(() => {
+    const getVideo = async () => {
+      
+      const response = await getVideoDetails(videoId);
+      if (response) {
+        console.log("Video fetched successfully");
+        setVideo(response);
       } else {
-        console.log('Error loading video')
+        console.log("Error loading video");
       }
-    }
-    getVideo()
-  },[])
+    };
+    getVideo();
+  }, []);
+  if (!video) return <div>Loading...</div>;
   return (
-    <div className='grid grid-cols-12'>
-        <div className='col-span-8'>
-            <VideoDetails video={video[0]}  />
-            <Comments />
-        </div>
-        <div className='col-span-4'>
-            <Recommended />
-        </div>
+    <div className="grid grid-cols-12">
+      <div className="col-span-8">
+        <VideoDetails video={video} />
+        <CommentProvider>
+          <Comments videoId={videoId} />
+        </CommentProvider>
+      </div>
+      <div className="col-span-4">
+        <Recommended />
+      </div>
     </div>
-  )
-}
+  );
+};
 
-export default VideoPage
+export default VideoPage;

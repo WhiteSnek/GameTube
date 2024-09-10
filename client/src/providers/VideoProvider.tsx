@@ -5,8 +5,10 @@ import axios, { AxiosResponse } from "axios";
 interface VideoContextType {
   video: VideoCardTemplate[];
   setVideo: React.Dispatch<React.SetStateAction<VideoCardTemplate[]>>;
-  getVideoDetails: (videoId: string) => Promise<boolean>
+  getVideoDetails: (videoId: string) => Promise<VideoCardTemplate | null>
   getUserVideos: (userId: string) => Promise<boolean>
+  getGuildVideos: (guildId: string) => Promise<boolean>
+  getAllVideos: () => Promise<boolean>
 }
 
 const VideoContext = createContext<VideoContextType | undefined>(undefined);
@@ -26,14 +28,13 @@ interface VideoProviderProps {
 const VideoProvider: React.FC<VideoProviderProps> = ({ children }) => {
   const [video, setVideo] = useState<VideoCardTemplate[]>([]);
 
-  const getVideoDetails = async(videoId: string): Promise<boolean> => {
+  const getVideoDetails = async (videoId: string): Promise<VideoCardTemplate | null> => {
     try {
-        const response: AxiosResponse<VideoCardTemplate> = await axios.get(`/videos/${videoId}`, {withCredentials: true});
-        setVideo([response.data])
-        return true;
+      const response: AxiosResponse<VideoCardTemplate> = await axios.get(`/videos/${videoId}`, { withCredentials: true });
+      return response.data; 
     } catch (error) {
-        console.log(error)
-        return false;
+      console.error(error);
+      return null; 
     }
   }
 
@@ -48,8 +49,31 @@ const VideoProvider: React.FC<VideoProviderProps> = ({ children }) => {
     }
   }
 
+  const getGuildVideos = async(guildId: string): Promise<boolean> => {
+    try {
+        const response: AxiosResponse<VideoCardTemplate[]> = await axios.get(`/guilds/videos/${guildId}`, {withCredentials: true});
+        setVideo(response.data)
+        return true;
+    } catch (error) {
+        console.log(error)
+        return false;
+    }
+  }
+
+  const getAllVideos = async(): Promise<boolean> => {
+    try {
+        const response: AxiosResponse<VideoCardTemplate[]> = await axios.get(`/videos`, {withCredentials: true});
+        
+        setVideo(response.data)
+        return true;
+    } catch (error) {
+        console.log(error)
+        return false;
+    }
+  }
+
   return (
-    <VideoContext.Provider value={{ video, setVideo, getVideoDetails, getUserVideos }}>
+    <VideoContext.Provider value={{ video, setVideo, getVideoDetails, getUserVideos,getAllVideos, getGuildVideos}}>
       {children}
     </VideoContext.Provider>
   );

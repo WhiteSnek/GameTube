@@ -2,6 +2,7 @@ package models
 
 import (
 	"github.com/google/uuid"
+	"time"
 )
 
 type Guild struct {
@@ -11,4 +12,5 @@ type Guild struct {
 	Private bool `json:"privacy"`
 	Avatar     string    `json:"avatar"`
     CoverImage string    `json:"cover_image"`
+	CreatedAt  time.Time `json:"created_at"`
 }

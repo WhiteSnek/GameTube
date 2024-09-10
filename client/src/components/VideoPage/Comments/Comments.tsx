@@ -1,16 +1,33 @@
 import React, { useEffect, useState } from 'react'
-import { Comment } from '../../../templates/comment_template'
 import SingleComment from './Comment';
-import { dummyComments } from '../../constants';
+import { useComment } from '../../../providers/CommentProvider';
+import { CommentTemplate } from '../../../templates/comment_template';
+import AddComment from './AddComment';
 
-const Comments:React.FC = () => {
-  const [comments,setComments] = useState<Comment[]>([]);
+interface CommentProps {
+  videoId: string
+}
+
+const Comments:React.FC<CommentProps> = ({videoId}) => {
+  const [comments, setComments] = useState<CommentTemplate[]>([])
+  const { getVideoComments} = useComment()
+  console.log(videoId)
   useEffect(()=>{
-    setComments(dummyComments)
+    const getComments = async () => {
+      const response = await getVideoComments(videoId);
+      if(response){
+        setComments(response)
+      } else {
+        console.log('Something went wrong!')
+      }
+    }
+    getComments();
   },[])
+  if(!comments) return <div>No comments yet</div>
   return (
     <div className='px-10'>
       <h1 className='text-xl text-white font-bold'>{comments.length} Comments</h1>
+      <AddComment videoId={videoId} />
       {comments.map((comment)=>(
         <SingleComment comment={comment} />
       ))}

@@ -19,7 +19,7 @@ const VideoGrid: React.FC<VideoGridProps> = ({ videos }) => {
                     title={video.title}
                     owner={video.owner}
                     views={video.views}
-                    created_at={video.created_at}
+                    // created_at={video.created_at}
                     thumbnail={video.thumbnail}
                     video={video.video}
                     guild={video.guild}

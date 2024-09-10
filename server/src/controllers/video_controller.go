@@ -9,6 +9,9 @@ import (
 	"github.com/gorilla/mux"
 	"net/http"
 	"time"
+	"log"
+	"strconv"
+	"github.com/lib/pq"
 )
 
 type VideoWithOwnerAndGuild struct {
@@ -28,6 +31,7 @@ type VideoWithOwnerAndGuild struct {
 		Avatar   string    `json:"avatar"`
 	} `json:"guild"`
 	Views       int       `json:"views"`
+	Tags        []string  `json:"tags"` // Add Tags field
 	CreatedAt   time.Time `json:"created_at"`
 }
 
@@ -58,6 +62,7 @@ func UploadVideo(db *sql.DB) http.HandlerFunc {
 		description := r.FormValue("description")
 		owner := r.FormValue("owner")
 		guild := r.FormValue("guild")
+		tags := r.Form["tags[]"] // Retrieve tags from form data
 		// Parse owner id as uuid
 		ownerId, err := uuid.Parse(owner)
 		if err != nil {
@@ -90,21 +95,25 @@ func UploadVideo(db *sql.DB) http.HandlerFunc {
 		video.Url = videoFileUrl
 		video.Thumbnail = thumbnailUrl
 		video.Views = 0
+		video.Tags = tags // Set tags
 
 		// build query
-		query := `INSERT INTO videos (id,title,description,video,thumbnail,owner,guild,views, created_at, updated_at) values ($1,$2,$3,$4,$5,$6,$7,$8,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP) returning id`
-		err = db.QueryRow(query, videoId, video.Title, video.Description, video.Url, video.Thumbnail, video.Owner, video.GuildId, video.Views).Scan(&videoId)
+		query := `INSERT INTO videos (id,title,description,video,thumbnail,owner,guild,views,tags, created_at, updated_at) 
+				  VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP) 
+				  RETURNING id`
+		err = db.QueryRow(query, videoId, video.Title, video.Description, video.Url, video.Thumbnail, video.Owner, video.GuildId, video.Views, pq.Array(video.Tags)).Scan(&videoId)
 		if err != nil {
 			http.Error(w, "Failed to upload video: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		// Respond with the newly created user's ID
+		// Respond with the newly created video's ID
 		response := map[string]string{"id": videoId.String()}
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(response)
 	}
 }
+
 
 func GetVideoDetails(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -130,7 +139,8 @@ func GetVideoDetails(db *sql.DB) http.HandlerFunc {
 				u.avatar AS owner_avatar,
 				g.id AS guild_id,
 				g.guild_name AS guild_name,
-				g.avatar AS guild_avatar
+				g.avatar AS guild_avatar,
+				v.tags
 			FROM 
 				videos v
 			JOIN 
@@ -147,7 +157,7 @@ func GetVideoDetails(db *sql.DB) http.HandlerFunc {
 		err = row.Scan(&video.Id, &video.Title, &video.Description, &video.Url,
 			&video.Thumbnail, &video.Views, &video.CreatedAt, &video.Owner.Id,
 			&video.Owner.Username, &video.Owner.Avatar, &video.Guild.Id,
-			&video.Guild.Name, &video.Guild.Avatar)
+			&video.Guild.Name, &video.Guild.Avatar, pq.Array(&video.Tags)) // Scan tags
 		if err != nil {
 			if err == sql.ErrNoRows {
 				http.Error(w, "Video not found", http.StatusNotFound)
@@ -187,7 +197,8 @@ func GetUserVideos(db *sql.DB) http.HandlerFunc {
 				u.avatar AS owner_avatar,
 				g.id AS guild_id,
 				g.guild_name AS guild_name,
-				g.avatar AS guild_avatar
+				g.avatar AS guild_avatar,
+				v.tags
 			FROM 
 				videos v
 			JOIN 
@@ -212,30 +223,31 @@ func GetUserVideos(db *sql.DB) http.HandlerFunc {
 			err := rows.Scan(&video.Id, &video.Title, &video.Url,
 				&video.Thumbnail, &video.Views, &video.CreatedAt, &video.Owner.Id,
 				&video.Owner.Username, &video.Owner.Avatar, &video.Guild.Id,
-				&video.Guild.Name, &video.Guild.Avatar)
+				&video.Guild.Name, &video.Guild.Avatar, pq.Array(&video.Tags)) // Scan tags
 			if err != nil {
 				http.Error(w, "Failed to scan video details: "+err.Error(), http.StatusInternalServerError)
 				return
-			}
+			 }
 			videos = append(videos, video)
 		}
 
-		// Check for any error encountered during iteration
+		// Check for errors from iterating over rows
 		if err = rows.Err(); err != nil {
 			http.Error(w, "Failed to retrieve videos: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		// Return the array of videos as JSON
+		// Set the content type and encode the videos list as JSON
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(videos)
 	}
 }
 
+
 func GetGuildVideos(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Get the guild ID from the URL parameters
-		guildId, err := uuid.Parse(mux.Vars(r)["id"])
+		guildID, err := uuid.Parse(mux.Vars(r)["id"])
 		if err != nil {
 			http.Error(w, "Invalid guild ID: "+err.Error(), http.StatusBadRequest)
 			return
@@ -255,7 +267,8 @@ func GetGuildVideos(db *sql.DB) http.HandlerFunc {
 				u.avatar AS owner_avatar,
 				g.id AS guild_id,
 				g.guild_name AS guild_name,
-				g.avatar AS guild_avatar
+				g.avatar AS guild_avatar,
+				v.tags
 			FROM 
 				videos v
 			JOIN 
@@ -265,7 +278,7 @@ func GetGuildVideos(db *sql.DB) http.HandlerFunc {
 			WHERE 
 				v.guild = $1
 		`
-		rows, err := db.Query(query, guildId)
+		rows, err := db.Query(query, guildID)
 		if err != nil {
 			http.Error(w, "Failed to retrieve videos: "+err.Error(), http.StatusInternalServerError)
 			return
@@ -280,7 +293,7 @@ func GetGuildVideos(db *sql.DB) http.HandlerFunc {
 			err := rows.Scan(&video.Id, &video.Title, &video.Url,
 				&video.Thumbnail, &video.Views, &video.CreatedAt, &video.Owner.Id,
 				&video.Owner.Username, &video.Owner.Avatar, &video.Guild.Id,
-				&video.Guild.Name, &video.Guild.Avatar)
+				&video.Guild.Name, &video.Guild.Avatar, pq.Array(&video.Tags)) // Scan tags
 			if err != nil {
 				http.Error(w, "Failed to scan video details: "+err.Error(), http.StatusInternalServerError)
 				return
@@ -288,14 +301,120 @@ func GetGuildVideos(db *sql.DB) http.HandlerFunc {
 			videos = append(videos, video)
 		}
 
-		// Check for any error encountered during iteration
+		// Check for errors from iterating over rows
 		if err = rows.Err(); err != nil {
 			http.Error(w, "Failed to retrieve videos: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		// Return the array of videos as JSON
+		// Set the content type and encode the videos list as JSON
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(videos)
+	}
+}
+
+func GetAllVideos(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Get query parameters
+		queryParams := r.URL.Query()
+		nameFilter := queryParams.Get("name")
+		descriptionFilter := queryParams.Get("description")
+		guildNameFilter := queryParams.Get("guildname")
+		ownerNameFilter := queryParams.Get("ownername")
+		tagFilter := queryParams.Get("tags") // Get the tags filter
+
+		// Base query
+		query := `
+			SELECT 
+				v.id, 
+				v.title, 
+				v.video, 
+				v.thumbnail, 
+				v.views, 
+				v.created_at,
+				u.id AS owner_id,
+				u.username AS owner_username,
+				u.avatar AS owner_avatar,
+				g.id AS guild_id,
+				g.guild_name AS guild_name,
+				g.avatar AS guild_avatar,
+				v.tags
+			FROM 
+				videos v
+			JOIN 
+				users u ON v.owner = u.id
+			LEFT JOIN 
+				guilds g ON v.guild = g.id
+			WHERE 
+				1=1
+		`
+
+		// Build query based on filters
+		var args []interface{}
+		argCount := 1
+
+		if nameFilter != "" {
+			query += " AND v.title ILIKE $" + strconv.Itoa(argCount)
+			args = append(args, "%"+nameFilter+"%")
+			argCount++
+		}
+		if descriptionFilter != "" {
+			query += " AND v.description ILIKE $" + strconv.Itoa(argCount)
+			args = append(args, "%"+descriptionFilter+"%")
+			argCount++
+		}
+		if guildNameFilter != "" {
+			query += " AND g.guild_name ILIKE $" + strconv.Itoa(argCount)
+			args = append(args, "%"+guildNameFilter+"%")
+			argCount++
+		}
+		if ownerNameFilter != "" {
+			query += " AND u.username ILIKE $" + strconv.Itoa(argCount)
+			args = append(args, "%"+ownerNameFilter+"%")
+			argCount++
+		}
+		if tagFilter != "" {
+			query += " AND $"+strconv.Itoa(argCount)+" = ANY(v.tags)"
+			args = append(args, tagFilter)
+		}
+
+		rows, err := db.Query(query, args...)
+		if err != nil {
+			http.Error(w, "Failed to retrieve videos", http.StatusInternalServerError)
+			log.Printf("Failed to retrieve videos: %v", err)
+			return
+		}
+		defer rows.Close()
+
+		var videos []VideoWithOwnerAndGuild
+
+		// Loop through the rows and scan into the video model
+		for rows.Next() {
+			var video VideoWithOwnerAndGuild
+			err := rows.Scan(&video.Id, &video.Title, &video.Url,
+				&video.Thumbnail, &video.Views, &video.CreatedAt, &video.Owner.Id,
+				&video.Owner.Username, &video.Owner.Avatar, &video.Guild.Id,
+				&video.Guild.Name, &video.Guild.Avatar, pq.Array(&video.Tags)) // Scan tags
+			if err != nil {
+				http.Error(w, "Failed to process video details", http.StatusInternalServerError)
+				log.Printf("Failed to scan video details: %v", err)
+				return
+			}
+			videos = append(videos, video)
+		}
+
+		// Check for any error encountered during iteration
+		if err = rows.Err(); err != nil {
+			http.Error(w, "Failed to retrieve videos", http.StatusInternalServerError)
+			log.Printf("Failed to retrieve videos: %v", err)
+			return
+		}
+
+		// Return the array of videos as JSON
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(videos); err != nil {
+			http.Error(w, "Failed to encode videos", http.StatusInternalServerError)
+			log.Printf("Failed to encode videos: %v", err)
+		}
 	}
 }
