@@ -13,5 +13,6 @@ func NewRouter(db *sql.DB) *mux.Router {
 	r.PathPrefix("/videos").Handler(VideosRouter(db))
 	r.PathPrefix("/comments").Handler(CommentsRouter(db))
 	r.PathPrefix("/replies").Handler(RepliesRouter(db))
+	r.PathPrefix("/members").Handler(MemberRouter(db))
 	return r
 }

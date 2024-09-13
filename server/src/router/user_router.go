@@ -15,6 +15,7 @@ func UsersRouter(db *sql.DB) *mux.Router {
 	r.HandleFunc("/users/{id:[a-fA-F0-9-]+}", controllers.GetUserByID(db)).Methods("GET")
 	r.HandleFunc("/users/login", controllers.LoginUser(db)).Methods("POST")
 	r.HandleFunc("/users/videos/{id:[a-fA-F0-9-]+}", controllers.GetUserVideos(db)).Methods("GET")
+	r.HandleFunc("/users/guilds/{id:[a-fA-F0-9-]+}", controllers.GetUserGuilds(db)).Methods("GET")
 
 	// Create a subrouter for protected routes
 	protected := r.PathPrefix("/users/protected").Subrouter()
@@ -22,6 +23,7 @@ func UsersRouter(db *sql.DB) *mux.Router {
 	protected.Use(authMiddleware) // Apply the middleware to this subrouter
 
 	protected.HandleFunc("/logout", controllers.LogoutUser()).Methods("POST")
-
+	protected.HandleFunc("/join-guild", controllers.JoinGuild(db)).Methods("POST")
+	protected.HandleFunc("/leave-guild", controllers.LeaveGuild(db)).Methods("POST")
 	return r
 }

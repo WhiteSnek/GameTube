@@ -51,7 +51,6 @@ func GetVideoComments(db *sql.DB) http.HandlerFunc {
 			JOIN users u ON c.ownerId = u.id
 			WHERE c.videoId = $1
 		`
-
 		rows, err := db.Query(query, videoId)
 		if err != nil {
 			http.Error(w, "Failed to retrieve comments: "+err.Error(), http.StatusInternalServerError)

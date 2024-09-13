@@ -65,7 +65,7 @@ func CreateGuild(db *sql.DB) http.HandlerFunc {
 			http.Error(w, "Invalid user ID", http.StatusBadRequest)
 			return
 		}		
-
+		
 		// Insert the new guild into the guilds table
 		guildQuery := `INSERT INTO guilds (id, guild_name, guild_description, privacy, avatar, cover_image) VALUES ($1, $2, $3, $4, $5, $6)`
 		_, err = db.Exec(guildQuery, guildID, guild.Name, guild.Description, guild.Private, guild.Avatar, guild.CoverImage)
@@ -73,7 +73,13 @@ func CreateGuild(db *sql.DB) http.HandlerFunc {
 			http.Error(w, "Failed to create guild: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
-
+		// add the user as guild leader
+		memberQuery := `INSERT INTO members (userId, guildId, memberRole) VALUES ($1,$2, $3)`
+		_, err = db.Exec(memberQuery,userID, guildID, "leader")
+		if err != nil {
+			http.Error(w, "Failed to add member role: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
 		// Update the user's guild field with the new guild ID
 		userQuery := `UPDATE users SET guild = $1 WHERE id = $2`
 		_, err = db.Exec(userQuery, guildID, userID)

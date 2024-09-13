@@ -31,7 +31,7 @@ const GuildDetails: React.FC<GuildDetailsProps> = ({ guildId }) => {
     };
     getGuild();
     fetchGuildVideos();
-  }, [guildId, getGuildInfo]);
+  }, []);
 
   if (!guild) return <p>Loading guild details...</p>;
 

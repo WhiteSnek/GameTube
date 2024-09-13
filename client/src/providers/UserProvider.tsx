@@ -66,7 +66,7 @@ const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
 
   const logout = async (): Promise<boolean> => {
     try {
-        const response: AxiosResponse<string> = await axios.post('/protected/logout',{},{withCredentials: true});
+        const response: AxiosResponse<string> = await axios.post('/users/protected/logout',{},{withCredentials: true});
         console.log(response)
         setUser(null)
         return true;
