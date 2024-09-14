@@ -12,4 +12,3 @@ export interface VideoCardTemplate {
     created_at: Date;
     tags: string[];
 }
-

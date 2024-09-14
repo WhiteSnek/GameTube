@@ -1,5 +1,5 @@
 import React, { createContext, ReactNode, useContext, useState } from 'react';
-import { GuildDetails } from '../templates/guild_template';
+import { GuildDetails, GuildMembers } from '../templates/guild_template';
 import axios, { AxiosResponse } from 'axios';
 
 interface GuildContextType {
@@ -7,6 +7,7 @@ interface GuildContextType {
   setGuild: React.Dispatch<React.SetStateAction<GuildDetails | null>>;
   createGuild: ({formData, userId}: CreateGuildProps) => Promise<boolean>;
   getGuildInfo: (guildId: string) => Promise<boolean>;
+  getGuildMembers: (guildId: string) => Promise<GuildMembers[] | null>;
 }
 
 const GuildContext = createContext<GuildContextType | undefined>(undefined);
@@ -66,8 +67,20 @@ const GuildProvider: React.FC<GuildProviderProps> = ({ children }) => {
     }
   }
 
+  
+
+  const getGuildMembers = async (guildId: string): Promise<GuildMembers[] | null> => {
+    try {
+      const response: AxiosResponse<GuildMembers[]> = await axios.get(`/guilds/members/${guildId}`, {withCredentials: true});
+      return response.data;
+    } catch (error) {
+      return null
+    }
+  }
+
+
   return (
-    <GuildContext.Provider value={{ guild, setGuild, createGuild, getGuildInfo }}>
+    <GuildContext.Provider value={{ guild, setGuild, createGuild, getGuildInfo, getGuildMembers }}>
       {children}
     </GuildContext.Provider>
   );

@@ -33,7 +33,7 @@ export interface UserDetails {
 }
 
 export interface UserCard {
-    name: string;
+    username: string;
     avatar: string;
     userId: string;
 }

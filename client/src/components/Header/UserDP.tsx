@@ -1,9 +1,14 @@
 import React, { useState } from "react";
 import { useUser } from "../../providers/UserProvider";
 import LogoutButton from "./LogoutButton";
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import { Link } from "react-router-dom";
 const Dropdown: React.FC = () => {
+  const {user} = useUser()
   return (
-    <div className="absolute z-50 top-16 right-0 bg-zinc-800 p-4">
+    <div className="absolute z-50 top-16 right-0 bg-zinc-800 p-4 flex flex-col">
+      <Link to={`/profile/${user?.id}`} className="text-white text-lg p-2 mb-4 hover:bg-zinc-900 transition-colors rounded-lg flex items-center gap-3">
+      <AccountCircleIcon/> Profile</Link>
       <LogoutButton />
     </div>
   );

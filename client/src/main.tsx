@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
 import { Route, createBrowserRouter, createRoutesFromElements, RouterProvider } from 'react-router-dom'
-import { Home, Login, Playlists, Register, Search, SpecificPlaylist, Subscriptions,VideoPage, YourGuild } from './pages'
+import { Home, Login, Playlists, Register, Search, SpecificPlaylist, Subscriptions,VideoPage, Guild, Profile } from './pages'
 import SidebarProvider from './providers/SidebarProvider.tsx'
 import axios from 'axios'
 
@@ -21,7 +21,8 @@ const Layout: React.FC = () => {
         <Route path='playlist/:id' element={<SpecificPlaylist />} />
         <Route path='videos/:id' element={<VideoPage />} />
         <Route path='search' element={<Search />} />
-        <Route path='guild' element={<YourGuild />} />
+        <Route path='guilds/:id' element={<Guild />} />
+        <Route path='profile/:id' element={<Profile />} />
       </Route>
     )
   )

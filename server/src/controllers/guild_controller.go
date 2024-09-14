@@ -74,7 +74,7 @@ func CreateGuild(db *sql.DB) http.HandlerFunc {
 			return
 		}
 		// add the user as guild leader
-		memberQuery := `INSERT INTO members (userId, guildId, memberRole) VALUES ($1,$2, $3)`
+		memberQuery := `INSERT INTO members (userId, guildId, userRole) VALUES ($1,$2, $3)`
 		_, err = db.Exec(memberQuery,userID, guildID, "leader")
 		if err != nil {
 			http.Error(w, "Failed to add member role: "+err.Error(), http.StatusInternalServerError)

@@ -1,20 +1,20 @@
 import React from 'react'
-import { UserCard } from '../../templates/user_template';
 import { Link } from 'react-router-dom';
+import { GetGuilds } from '../../templates/guild_template';
 
 interface SubscriptionChannelProps {
-    userDetails: UserCard[];
+    guilds: GetGuilds[]|null
 
 }
-const SubscriptionChannels:React.FC<SubscriptionChannelProps> = ({userDetails}) => {
+const SubscriptionChannels:React.FC<SubscriptionChannelProps> = ({guilds}) => {
   return (
     <div className='flex items-center gap-4 px-8 overflow-x-auto w-full'>
-       {userDetails.map((user)=>(
+       {guilds?.map((guild)=>(
         <div className='flex flex-col items-center justify-center'>
-            <Link to={`/channel/${user.userId}`}>
-                <img src={user.avatar} alt={user.name} className='h-16 aspect-square rounded-full object-cover' />
+            <Link to={`/guilds/${guild.guildId}`}>
+                <img src={guild.guildAvatar} alt={guild.guildName} className='h-16 aspect-square rounded-full object-cover' />
             </Link>
-            <h1 className='text-white font-thin '>{user.name}</h1>
+            <h1 className='text-white font-thin '>{guild.guildName}</h1>
         </div>
        ))}
     </div>

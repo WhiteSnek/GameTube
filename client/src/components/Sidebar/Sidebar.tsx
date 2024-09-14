@@ -3,12 +3,14 @@ import { SidebarItems } from '../../templates/sidebar_template';
 import { Home, Subscriptions, History, PlaylistPlay, WatchLater, ThumbUp, Castle } from '@mui/icons-material';
 import { NavLink } from 'react-router-dom';
 import { IconButton } from '@mui/material';
+import { useUser } from '../../providers/UserProvider';
 
 const Sidebar: React.FC = () => {
+    const {user} = useUser()
     const list_items: SidebarItems[] = [
         { name: "Home", icon: Home, link: "/" },
         { name: "Subscriptions", icon: Subscriptions, link: "/subscriptions" },
-        { name: "Your Guild", icon: Castle, link: "/guild" },
+        { name: "Your Guild", icon: Castle, link: user ? `/guilds/${user?.guild}` : '/login' },
         { name: "History", icon: History, link: "/history" },
         { name: "Playlists", icon: PlaylistPlay, link: "/playlists" },
         { name: "Watch Later", icon: WatchLater, link: "/watch-later" },

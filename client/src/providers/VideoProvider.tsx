@@ -7,7 +7,7 @@ interface VideoContextType {
   setVideo: React.Dispatch<React.SetStateAction<VideoCardTemplate[]>>;
   getVideoDetails: (videoId: string) => Promise<VideoCardTemplate | null>
   getUserVideos: (userId: string) => Promise<boolean>
-  getGuildVideos: (guildId: string) => Promise<boolean>
+  getGuildVideos: (guildId: string) => Promise<VideoCardTemplate[]|null>
   getAllVideos: () => Promise<boolean>
 }
 
@@ -49,21 +49,19 @@ const VideoProvider: React.FC<VideoProviderProps> = ({ children }) => {
     }
   }
 
-  const getGuildVideos = async(guildId: string): Promise<boolean> => {
+  const getGuildVideos = async(guildId: string): Promise<VideoCardTemplate[] | null> => {
     try {
         const response: AxiosResponse<VideoCardTemplate[]> = await axios.get(`/guilds/videos/${guildId}`, {withCredentials: true});
-        setVideo(response.data)
-        return true;
+        return response.data;
     } catch (error) {
         console.log(error)
-        return false;
+        return null;
     }
   }
 
   const getAllVideos = async(): Promise<boolean> => {
     try {
         const response: AxiosResponse<VideoCardTemplate[]> = await axios.get(`/videos`, {withCredentials: true});
-        
         setVideo(response.data)
         return true;
     } catch (error) {

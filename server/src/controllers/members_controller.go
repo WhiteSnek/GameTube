@@ -66,7 +66,7 @@ func GetGuildMembers(db *sql.DB) http.HandlerFunc {
 
 		var members []GuildMembers
 
-		query := `SELECT m.userId, m.userRole, m.created_at u.username, u.avatar 
+		query := `SELECT m.userId, m.userRole, m.created_at, u.username, u.avatar 
 				  FROM members m 
 				  JOIN users u ON m.userId = u.id 
 				  WHERE m.guildId = $1`
@@ -364,5 +364,33 @@ func LeaveGuild(db *sql.DB) http.HandlerFunc {
 		// Step 4: Send success response
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("Successfully left the guild"))
+	}
+}
+
+func CheckMembership(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var details JoinLeave
+
+		err := json.NewDecoder(r.Body).Decode(&details)
+		if err != nil {
+			http.Error(w, "Invalid JSON: "+err.Error(), http.StatusBadRequest)
+			return
+		}
+
+
+		query := `SELECT COUNT(*) FROM members WHERE userId = $1 AND guildId = $2`
+		var count int
+
+		err = db.QueryRow(query, details.UserId, details.GuildId).Scan(&count)
+		if err != nil {
+			http.Error(w, "Database query error: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		// Return JSON response with true if the user is a member, false otherwise
+		response := map[string]bool{"isMember": count > 0}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(response)
 	}
 }

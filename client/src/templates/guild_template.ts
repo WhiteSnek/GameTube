@@ -22,3 +22,19 @@ export interface GuildCard {
     name: string;
     avatar: string;
 }
+
+export interface GetGuilds {
+    guildId: string;
+    userRole: string;
+    guildName: string;
+    guildAvatar: string;
+    joinedAt: string
+  }
+
+export interface GuildMembers {
+    userId: string;
+    userRole: string;
+    userName: string;
+    userAvatar: string;
+    joinedAt: string;
+  }

@@ -3,7 +3,14 @@ import {
   LoginTemplate,
   UserDetails,
 } from "../templates/user_template";
+import { GetGuilds } from "../templates/guild_template";
 import axios, { AxiosResponse } from "axios";
+
+interface CheckMember {
+  isMember: boolean
+}
+
+
 
 interface UserContextType {
   user: UserDetails | null;
@@ -11,6 +18,10 @@ interface UserContextType {
   login: (userInfo: LoginTemplate) => Promise<boolean>;
   register: (userInfo: FormData) => Promise<boolean>;
   logout: () => Promise<boolean>;
+  joinGuild: (guildId: string) => Promise<string>
+  leaveGuild: (guildId: string) => Promise<string>
+  checkMembership: (guildId: string) => Promise<boolean>
+  getUserGuilds: () => Promise<GetGuilds[] | null>
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -75,10 +86,68 @@ const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     }
   }
 
+
+  const joinGuild = async (guildId: string): Promise<string> => {
+    try {
+      const userId = user?.id;
+      const response: AxiosResponse<string> = await axios.post(
+        '/users/protected/join-guild',
+        { userId, guildId },
+        { withCredentials: true }
+      );
+      console.log(response);
+      return response.data; 
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error('Axios error:', error.response?.data); 
+        return error.response?.data;
+      } else {
+        console.error('Unexpected error:', error); 
+        return 'An unexpected error occurred'; 
+      }
+    }
+  };
   
+  const leaveGuild = async( guildId: string): Promise<string> => {
+    try {
+      const userId = user?.id
+      const response: AxiosResponse<string> = await axios.post('/users/protected/leave-guild',{userId,guildId}, {withCredentials: true})
+      console.log(response);
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error('Axios error:', error.response?.data); 
+        return error.response?.data;
+      } else {
+        console.error('Unexpected error:', error); 
+        return 'An unexpected error occurred'; 
+      }
+    }
+  }
+
+  const checkMembership = async (guildId: string): Promise<boolean> => {
+    const userId = user?.id
+    try {
+      const response: AxiosResponse<CheckMember> = await axios.post('/members/check',{userId,guildId}, {withCredentials: true});
+      console.log(response);
+      return response.data.isMember
+    } catch (error) {
+      return false;
+    }
+  }
+
+  const getUserGuilds = async (): Promise<GetGuilds[] | null> => {
+    try {
+      const response: AxiosResponse<GetGuilds[]> = await axios.get(`/users/guilds/${user?.id}`, {withCredentials: true});
+      console.log(response)
+      return response.data
+    } catch (error) {
+      return null
+    }
+  }
 
   return (
-    <UserContext.Provider value={{ user, setUser, login, register, logout }}>
+    <UserContext.Provider value={{ user, setUser, login, register, logout, joinGuild, leaveGuild, checkMembership, getUserGuilds }}>
       {children}
     </UserContext.Provider>
   );
