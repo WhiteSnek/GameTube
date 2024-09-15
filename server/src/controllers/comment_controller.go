@@ -64,6 +64,7 @@ func GetVideoComments(db *sql.DB) http.HandlerFunc {
 			Content  string    `json:"content"`
 			Username string    `json:"username"`
 			Avatar   string    `json:"avatar"`
+			Likes 	int 	`json:"likes"`
 			CreatedAt string `json:"created_at"`
 		}
 
@@ -74,6 +75,12 @@ func GetVideoComments(db *sql.DB) http.HandlerFunc {
 			err := rows.Scan(&comment.ID, &comment.Content, &comment.Username, &comment.Avatar, &comment.CreatedAt)
 			if err != nil {
 				http.Error(w, "Failed to scan comment: "+err.Error(), http.StatusInternalServerError)
+				return
+			}
+			likeQuery := `SELECT COUNT(*) FROM likes WHERE entityId = $1`
+			err = db.QueryRow(likeQuery, comment.ID).Scan(&comment.Likes)
+			if err != nil {
+				http.Error(w, "Failed to retrieve like count: "+err.Error(), http.StatusInternalServerError)
 				return
 			}
 			comments = append(comments, comment)

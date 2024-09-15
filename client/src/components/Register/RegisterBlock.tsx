@@ -15,8 +15,8 @@ const RegisterBlock: React.FC = () => {
         gender: '',
         avatar: null,
         avatarUrl: '',
-        coverImage: null,
-        coverImageUrl: ''
+        cover_image: null,
+        cover_imageUrl: ''
     });
     const [activeTab, setActiveTab] = useState<number>(1)
     return (

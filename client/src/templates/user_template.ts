@@ -12,21 +12,19 @@ export interface RegisterTemplate {
     gender: string;
     avatar: File | null;
     avatarUrl: string;
-    coverImage: File | null;
-    coverImageUrl: string;
+    cover_image: File | null;
+    cover_imageUrl: string;
 }
 
 export interface UserDetails {
     id: string;
     username: string;
-    password: string;
     email: string;
     name: string;
     dob: string;
     gender: string;
     avatar: string;
-    coverImage: string;
-    googleId: string | null;
+    cover_image: string;
     createdAt: Date;
     updatedAt: Date;
     guild: string | null;
@@ -35,7 +33,7 @@ export interface UserDetails {
 export interface UserCard {
     username: string;
     avatar: string;
-    userId: string;
+    id: string;
 }
 
 export interface UserComment {

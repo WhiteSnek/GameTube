@@ -9,7 +9,7 @@ const Sidebar: React.FC = () => {
     const {user} = useUser()
     const list_items: SidebarItems[] = [
         { name: "Home", icon: Home, link: "/" },
-        { name: "Subscriptions", icon: Subscriptions, link: "/subscriptions" },
+        { name: "Subscriptions", icon: Subscriptions, link: user ? "/subscriptions" : '/login' },
         { name: "Your Guild", icon: Castle, link: user ? `/guilds/${user?.guild}` : '/login' },
         { name: "History", icon: History, link: "/history" },
         { name: "Playlists", icon: PlaylistPlay, link: "/playlists" },

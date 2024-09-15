@@ -10,6 +10,7 @@ import DownloadOutlinedIcon from '@mui/icons-material/DownloadOutlined';
 import formatViews from '../../../utils/formatViews';
 import { useUser } from '../../../providers/UserProvider';
 import { Snackbar, Alert } from '@mui/material';
+import { useVideo } from '../../../providers/VideoProvider';
 
 interface DetailsProps {
   video: VideoCardTemplate;
@@ -22,19 +23,57 @@ const Details: React.FC<DetailsProps> = ({ video }) => {
   const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
   const [snackbarMessage, setSnackbarMessage] = useState<string>('');
   const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
+  const [likeCount, setLikeCount] = useState<number>(video.likes);
 
   const { joinGuild, leaveGuild, checkMembership, user } = useUser();
+  const { likeVideo, unlikeVideo, videoLiked } = useVideo();
 
-  const toggleLike = useCallback(() => {
-    setLiked((prev) => !prev);
-  }, []);
+  useEffect(()=>{
+    const details = { userId: user?.id, entityId: video.id };
+    const checkLike = async () => {
+      const response = await videoLiked(details);
+      setLiked(response)
+    }
+    checkLike()
+  },[])
+
+  const toggleLike = useCallback(async () => {
+    if (liked) {
+      await removeLike();
+    } else {
+      await addLike();
+    }
+  }, [liked, video.id, user?.id, likeVideo, unlikeVideo]);
+
+  const removeLike = async () => {
+    if (!user?.id) return;
+    const details = { userId: user.id, entityId: video.id };
+    const success = await unlikeVideo(details);
+    if (success) {
+      setLikeCount(likeCount - 1);
+      setLiked(false);
+    } else {
+      console.error('Failed to remove like.');
+    }
+  };
+
+  const addLike = async () => {
+    if (!user?.id) return;
+    const details = { userId: user.id, entityId: video.id };
+    const success = await likeVideo(details);
+    if (success) {
+      setLikeCount(likeCount + 1);
+      setLiked(true);
+    } else {
+      console.error('Failed to add like.');
+    }
+  };
 
   const toggleSaved = useCallback(() => {
-    setSaved((prev) => !prev);
+    setSaved(prev => !prev);
   }, []);
 
   useEffect(() => {
-    console.log(video)
     const check = async () => {
       if (video) {
         const guildId = video.guild?.id || '';
@@ -48,26 +87,18 @@ const Details: React.FC<DetailsProps> = ({ video }) => {
   const toggleSubscription = async () => {
     const guildId = video?.guild?.id || '';
     if (!user) {
-      setSnackbarMessage('Login to join guild!!');
+      setSnackbarMessage('Login to join guild!');
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
       return;
     }
 
-    let success: string;
-    if (isAMember) {
-      success = await leaveGuild(guildId);
-    } else {
-      success = await joinGuild(guildId);
-    }
-    setSnackbarMessage(success);
-    // Update snackbar based on the action success
-    if (success.includes('successfully')) {
-      setSnackbarSeverity('success');
-    } else {
-      setSnackbarSeverity('error');
-    }
+    const success = isAMember
+      ? await leaveGuild(guildId)
+      : await joinGuild(guildId);
 
+    setSnackbarMessage(success);
+    setSnackbarSeverity(success.includes('successfully') ? 'success' : 'error');
     setSnackbarOpen(true);
   };
 
@@ -84,28 +115,28 @@ const Details: React.FC<DetailsProps> = ({ video }) => {
       <h1 className='text-3xl text-white font-bold py-5'>{video.title}</h1>
       <div className='flex items-center justify-between gap-4'>
         <div className='flex items-center gap-4'>
-          <Link to={`/guild/${video.owner?.userId}`} className='flex items-center gap-3'>
+          <div className='flex items-center gap-3'>
             <img src={video.owner?.avatar} alt={video.owner?.username} className='h-8 rounded-full aspect-square object-cover'/>
-            <div>
-              <h3 className='text-white font-semibold text-lg'>{video.owner?.username}</h3>
-              <p className='text-sm text-gray-300 bg-red-500 text-center rounded-md'>{video.guild.name}</p>
+            <div className='flex flex-col'>
+              <Link to={`/profile/${video.owner.id}`} className='text-white font-semibold text-lg'>{video.owner?.username}</Link>
+              <Link to={`/guilds/${video.guild.id}`} className='text-sm text-gray-300 bg-red-500 text-center rounded-md'>{video.guild.name}</Link>
             </div>
-          </Link>
-          <button onClick={toggleSubscription} className='bg-red-500 px-4 py-2 text-md rounded-lg font-bold text-white shadow-xl btn-5'>
+          </div>
+          <button onClick={toggleSubscription} className='bg-red-500 px-4 py-2 text-md rounded-lg font-bold text-white shadow-xl'>
             {isAMember ? 'Leave Guild' : 'Join Guild'}
           </button>
         </div>
         <div className='flex gap-4 items-center'>
-          <button onClick={toggleLike} className='text-white py-2 px-4 bg-red-500 rounded-full'>
-            {liked ? <ThumbUpAltIcon /> : <ThumbUpOffAltIcon />}
+          <button onClick={toggleLike} className='text-white py-2 px-4 bg-red-500 rounded-full flex gap-2' aria-label={liked ? 'Unlike' : 'Like'}>
+            {liked ? <ThumbUpAltIcon /> : <ThumbUpOffAltIcon />} {likeCount}
           </button>
-          <button className='text-white py-2 px-4 bg-red-500 rounded-full'>
+          <button className='text-white py-2 px-4 bg-red-500 rounded-full' aria-label='Share'>
             <ShareOutlinedIcon /> Share
           </button>
-          <button className='text-white py-2 px-4 bg-red-500 rounded-full'>
+          <button className='text-white py-2 px-4 bg-red-500 rounded-full' aria-label='Download'>
             <DownloadOutlinedIcon /> Download
           </button>
-          <button onClick={toggleSaved} title='save' className='text-white py-2 px-4 bg-red-500 rounded-full'>
+          <button onClick={toggleSaved} className='text-white py-2 px-4 bg-red-500 rounded-full' aria-label={saved ? 'Remove Bookmark' : 'Add Bookmark'}>
             {saved ? <BookmarkIcon /> : <BookmarkBorderIcon />}
           </button>
         </div>
@@ -114,7 +145,7 @@ const Details: React.FC<DetailsProps> = ({ video }) => {
         <div className='flex text-white gap-3 text-sm font-bold'>
           <p>{formatViews(video.views)} views</p>
         </div>
-        <p className='text-white'>Description</p>
+        <p className='text-gray-300'>{video.description}</p>
       </div>
 
       {/* Snackbar for feedback */}

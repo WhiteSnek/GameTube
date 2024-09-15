@@ -13,8 +13,8 @@ const CreateGuild: React.FC = () => {
     description: "",
     avatar: null,
     avatarUrl: "",
-    coverImage: null,
-    coverImageUrl: "",
+    cover_image: null,
+    cover_imageUrl: "",
     private: false,
   });
   const [activeTab, setActiveTab] = useState<number>(1);

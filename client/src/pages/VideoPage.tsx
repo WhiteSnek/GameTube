@@ -8,15 +8,16 @@ import { VideoCardTemplate } from "../templates/video_templates";
 import CommentProvider from "../providers/CommentProvider";
 
 const VideoPage: React.FC = () => {
-  const { id } = useParams();
+  const { videoId } = useParams();
   const { getVideoDetails } = useVideo();
   const [video, setVideo] = useState<VideoCardTemplate | null>(null);
-  const videoId = id ? id : "";
+  if(!videoId) return <div>Something went wrong...</div>
   useEffect(() => {
     const getVideo = async () => {
       
       const response = await getVideoDetails(videoId);
       if (response) {
+        console.log(response)
         console.log("Video fetched successfully");
         setVideo(response);
       } else {
@@ -24,7 +25,7 @@ const VideoPage: React.FC = () => {
       }
     };
     getVideo();
-  }, []);
+  }, [videoId]);
   if (!video) return <div>Loading...</div>;
   return (
     <div className="grid grid-cols-12">

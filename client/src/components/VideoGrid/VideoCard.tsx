@@ -13,6 +13,7 @@ interface VideoCardProps {
     owner: UserCard;
     guild: GuildCard;
     views: number;
+    duration: string;
 }
 
 const VideoCard: React.FC<VideoCardProps> = ({
@@ -23,11 +24,12 @@ const VideoCard: React.FC<VideoCardProps> = ({
   // created_at,
   thumbnail,
   video,
+  duration,
   guild
 }) => {
   return (
     <Link to={`/videos/${id}`} className="text-white" key={id}>
-      <HoverThumbnail duration={2000} video={video} thumbnail={thumbnail} />
+      <HoverThumbnail duration={duration} video={video} thumbnail={thumbnail} />
       <div className='flex gap-4 mt-4'>
         <img src={owner.avatar} alt='avatar' className='h-8 w-8 rounded-full object-cover' />
         <div>

@@ -12,7 +12,7 @@ const VideoGrid: React.FC<VideoGridProps> = ({ videos, gridSize=4 }) => {
     const { showSidebar } = useSidebar();
     console.log(videos)
     return (
-        <div className={`grid grid-cols-1 gap-4 p-6 ${showSidebar ? `sm:grid-cols-${gridSize}` : `sm:grid-cols-${gridSize+1}`}  pt-6 transition-all`}>
+        <div className={`grid grid-cols-3 gap-4 p-6 ${showSidebar ? `sm:grid-cols-${gridSize}` : `sm:grid-cols-${gridSize+1}`}  pt-6 transition-all`}>
             {videos?.map((video) => (
                 <VideoCard
                     key={video.id}
@@ -20,6 +20,7 @@ const VideoGrid: React.FC<VideoGridProps> = ({ videos, gridSize=4 }) => {
                     title={video.title}
                     owner={video.owner}
                     views={video.views}
+                    duration={video.duration}
                     // created_at={video.created_at}
                     thumbnail={video.thumbnail}
                     video={video.video}

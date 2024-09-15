@@ -29,18 +29,18 @@ const Page2: React.FC<CreateGuildProps> = ({ guildInfo, setGuildInfo }) => {
   const handleFileChange = useCallback(
     (
       e: React.ChangeEvent<HTMLInputElement>,
-      field: "avatar" | "coverImage"
+      field: "avatar" | "cover_image"
     ) => {
       const file = e.target.files ? e.target.files[0] : null;
       const fileUrl = file ? URL.createObjectURL(file) : "";
 
       if (field === "avatar") {
         setGuildInfo({ ...guildInfo, avatar: file, avatarUrl: fileUrl });
-      } else if (field === "coverImage") {
+      } else if (field === "cover_image") {
         setGuildInfo({
           ...guildInfo,
-          coverImage: file,
-          coverImageUrl: fileUrl,
+          cover_image: file,
+          cover_imageUrl: fileUrl,
         });
       }
     },
@@ -48,7 +48,7 @@ const Page2: React.FC<CreateGuildProps> = ({ guildInfo, setGuildInfo }) => {
   );
 
   const handleDrop = useCallback(
-    (e: React.DragEvent<HTMLDivElement>, field: "avatar" | "coverImage") => {
+    (e: React.DragEvent<HTMLDivElement>, field: "avatar" | "cover_image") => {
       e.preventDefault();
       e.stopPropagation();
       const file = e.dataTransfer.files ? e.dataTransfer.files[0] : null;
@@ -56,11 +56,11 @@ const Page2: React.FC<CreateGuildProps> = ({ guildInfo, setGuildInfo }) => {
 
       if (field === "avatar") {
         setGuildInfo({ ...guildInfo, avatar: file, avatarUrl: fileUrl });
-      } else if (field === "coverImage") {
+      } else if (field === "cover_image") {
         setGuildInfo({
           ...guildInfo,
-          coverImage: file,
-          coverImageUrl: fileUrl,
+          cover_image: file,
+          cover_imageUrl: fileUrl,
         });
       }
     },
@@ -72,9 +72,9 @@ const Page2: React.FC<CreateGuildProps> = ({ guildInfo, setGuildInfo }) => {
     e.stopPropagation();
   };
 
-  const openFileDialog = (field: "avatar" | "coverImage") => {
+  const openFileDialog = (field: "avatar" | "cover_image") => {
     const inputElement = document.querySelector<HTMLInputElement>(
-      field === "avatar" ? 'input[name="avatar"]' : 'input[name="coverImage"]'
+      field === "avatar" ? 'input[name="avatar"]' : 'input[name="cover_image"]'
     );
     if (inputElement) {
       inputElement.click();
@@ -87,7 +87,7 @@ const Page2: React.FC<CreateGuildProps> = ({ guildInfo, setGuildInfo }) => {
       guildInfo.name === "" ||
       guildInfo.description === "" ||
       guildInfo.avatar === null ||
-      guildInfo.coverImage === null
+      guildInfo.cover_image === null
     ) {
       setMessage("Please fill in all the fields");
       setSeverity("error");
@@ -99,7 +99,7 @@ const Page2: React.FC<CreateGuildProps> = ({ guildInfo, setGuildInfo }) => {
     formData.append("description", guildInfo.description);
     formData.append("privacy", String(guildInfo.private));
     formData.append("avatar", guildInfo.avatar);
-    formData.append("coverImage", guildInfo.coverImage);
+    formData.append("cover_image", guildInfo.cover_image);
     const userId = user?.id;
     const success = await createGuild({formData, userId});
     if (success) {
@@ -165,18 +165,18 @@ const Page2: React.FC<CreateGuildProps> = ({ guildInfo, setGuildInfo }) => {
         <div
           className="border-dashed border-2 border-zinc-600 rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer"
           onDragOver={handleDragOver}
-          onDrop={(e) => handleDrop(e, "coverImage")}
+          onDrop={(e) => handleDrop(e, "cover_image")}
         >
           <input
             type="file"
-            name="coverImage"
+            name="cover_image"
             accept="image/*"
-            onChange={(e) => handleFileChange(e, "coverImage")}
+            onChange={(e) => handleFileChange(e, "cover_image")}
             className="hidden"
           />
-          {guildInfo.coverImageUrl ? (
+          {guildInfo.cover_imageUrl ? (
             <img
-              src={guildInfo.coverImageUrl}
+              src={guildInfo.cover_imageUrl}
               alt="Cover Image Preview"
               className="rounded h-32 w-full object-cover"
             />
@@ -188,7 +188,7 @@ const Page2: React.FC<CreateGuildProps> = ({ guildInfo, setGuildInfo }) => {
           <button
             type="button"
             className="mt-4 bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded focus:outline-none focus:ring-2 focus:ring-red-500"
-            onClick={() => openFileDialog("coverImage")}
+            onClick={() => openFileDialog("cover_image")}
           >
             Select Cover Image
           </button>

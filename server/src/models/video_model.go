@@ -14,7 +14,8 @@ type Video struct {
 	Owner       uuid.UUID `json:"owner"`
 	Thumbnail   string    `json:"thumbnail"`
 	Views       int64     `json:"views"`
+	Duration    string    `json:"duration"`
 	Tags        []string  `json:"tags"`
-	CreatedAt  time.Time `json:"created_at"`
-    UpdatedAt  time.Time `json:"updated_at"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }

@@ -2,11 +2,19 @@ import React, { createContext, ReactNode, useContext, useState } from 'react';
 import { ReplyTemplate } from '../templates/reply_template';
 import axios, { AxiosResponse } from 'axios';
 
+interface likeReplyProps {
+    userId: string | undefined;
+    entityId: string | undefined;
+  }
+
 interface ReplyContextType {
     Replys: ReplyTemplate[];
     setReplys: React.Dispatch<React.SetStateAction<ReplyTemplate[]>>;
     addReply: (details: AddReplyProps) => Promise<boolean>
     getCommentReplys: (commentId: string) => Promise<ReplyTemplate[] | null>
+    likeReply: (details: likeReplyProps) => Promise<boolean>
+  unlikeReply: (details: likeReplyProps) => Promise<boolean>
+  replyLiked: (details: likeReplyProps) => Promise<boolean>
 }
 
 const ReplyContext = createContext<ReplyContextType | undefined>(undefined)
@@ -58,8 +66,41 @@ const ReplyProvider: React.FC<ReplyProviderProps> = ({children}) => {
         }
     }
 
+    const likeReply= async(details: likeReplyProps): Promise<boolean> => {
+        try {
+          const response: AxiosResponse<string> = await axios.post('/likes/protected/add-like',details, {withCredentials: true})
+          console.log(response)
+          return true;
+        } catch (error) {
+          return false;
+        }
+      }
+    
+      const unlikeReply = async(details: likeReplyProps): Promise<boolean> => {
+        try {
+          const response: AxiosResponse<string> = await axios.post('/likes/protected/remove-like',details, {withCredentials: true})
+          console.log(response)
+          return true;
+        } catch (error) {
+          return false;
+        }
+      }
+
+      interface CheckLikeResponse {
+        isLiked: boolean
+      }
+    
+      const replyLiked = async(details: likeReplyProps): Promise<boolean> => {
+        try {
+          const response: AxiosResponse<CheckLikeResponse> = await axios.post('/likes/protected/check-like',details, {withCredentials: true})
+          return response.data.isLiked
+        } catch (error) {
+          return false;
+        }
+      }
+
     return (
-        <ReplyContext.Provider value={{Replys, setReplys, addReply, getCommentReplys}}>
+        <ReplyContext.Provider value={{Replys, setReplys, addReply, getCommentReplys, likeReply, unlikeReply, replyLiked}}>
             {children}
         </ReplyContext.Provider>
     )

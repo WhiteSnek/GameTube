@@ -2,14 +2,19 @@ import React, { useState, useEffect, useRef } from 'react';
 import formatDuration from '../../utils/formateDuration';
 
 interface HoverThumbnailProps {
-  duration: number;
+  duration: string; // Assumes duration is in a format that can be parsed
   thumbnail: string;
   video: string;
 }
 
 const HoverThumbnail: React.FC<HoverThumbnailProps> = ({ duration, thumbnail, video }) => {
   const [isHovered, setIsHovered] = useState<boolean>(false);
-  const [currentDuration, setCurrentDuration] = useState<number>(duration);
+  const parseDuration = (duration: string): number => {
+    // Assuming duration is in the format "HH:MM:SS"
+    const parts = duration.split(':').map(Number);
+    return parts.reduce((total, part) => total * 60 + part, 0);
+  };
+  const [currentDuration, setCurrentDuration] = useState<number>(parseDuration(duration));
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -24,7 +29,7 @@ const HoverThumbnail: React.FC<HoverThumbnailProps> = ({ duration, thumbnail, vi
         });
       }, 1000);
     } else {
-      setCurrentDuration(duration);
+      setCurrentDuration(parseDuration(duration));
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
@@ -36,6 +41,8 @@ const HoverThumbnail: React.FC<HoverThumbnailProps> = ({ duration, thumbnail, vi
     };
   }, [isHovered, duration]);
 
+  
+
   return (
     <div
       className="relative"
@@ -45,7 +52,7 @@ const HoverThumbnail: React.FC<HoverThumbnailProps> = ({ duration, thumbnail, vi
       {isHovered ? (
         <video
           src={video}
-          className='aspect-video w-[1000px] object-fit rounded-md bg-gray-900'
+          className='aspect-video w-[1000px] object-cover rounded-md bg-gray-900'
           autoPlay
           muted
           loop
@@ -53,7 +60,7 @@ const HoverThumbnail: React.FC<HoverThumbnailProps> = ({ duration, thumbnail, vi
       ) : (
         <img
           src={thumbnail}
-          className='aspect-video w-[1000px] object-fit rounded-md'
+          className='aspect-video w-[1000px] object-cover rounded-md'
           alt="Thumbnail"
         />
       )}

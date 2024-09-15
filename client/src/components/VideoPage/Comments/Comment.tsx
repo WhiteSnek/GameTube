@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { CommentTemplate } from "../../../templates/comment_template";
 // import formatDate from '../../../utils/formatDate'
 import ThumbUpAltIcon from "@mui/icons-material/ThumbUpAlt";
@@ -7,6 +7,8 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import Replies from "./Replies/Replies";
 import ReplyProvider from "../../../providers/ReplyProvider";
+import { useUser } from "../../../providers/UserProvider";
+import { useComment } from "../../../providers/CommentProvider";
 
 interface CommentProps {
   comment: CommentTemplate;
@@ -15,8 +17,49 @@ interface CommentProps {
 const SingleComment: React.FC<CommentProps> = ({ comment }) => {
   const [liked, setLiked] = useState<boolean>(false);
   const [showReply, setShowReply] = useState<boolean>(false);
-  const toggleLike = () => {
-    setLiked(!liked);
+  const [likeCount, setLikeCount] = useState<number>(comment.likes);
+  const {user} = useUser()
+  const {likeComment, unlikeComment, commentLiked} = useComment()
+
+  useEffect(()=>{
+    const details = { userId: user?.id, entityId: comment.id };
+    const checkLike = async () => {
+      const response = await commentLiked(details);
+      setLiked(response)
+    }
+    checkLike()
+  },[])
+
+  const toggleLike = useCallback(async () => {
+    if (liked) {
+      await removeLike();
+    } else {
+      await addLike();
+    }
+  }, [liked, comment.id, user?.id, likeComment, unlikeComment]);
+
+  const removeLike = async () => {
+    if (!user?.id) return;
+    const details = { userId: user.id, entityId: comment.id };
+    const success = await unlikeComment(details);
+    if (success) {
+      setLikeCount(likeCount - 1);
+      setLiked(false);
+    } else {
+      console.error('Failed to remove like.');
+    }
+  };
+
+  const addLike = async () => {
+    if (!user?.id) return;
+    const details = { userId: user.id, entityId: comment.id };
+    const success = await likeComment(details);
+    if (success) {
+      setLikeCount(likeCount + 1);
+      setLiked(true);
+    } else {
+      console.error('Failed to add like.');
+    }
   };
   const toggleReplies = () => {
     setShowReply(!showReply);
@@ -38,9 +81,9 @@ const SingleComment: React.FC<CommentProps> = ({ comment }) => {
         <div className="flex gap-3 items-center py-1">
           <button
             onClick={toggleLike}
-            className="text-gray-300 p-2 text-sm rounded-full hover:bg-zinc-700"
+            className="text-gray-300 p-2 text-sm rounded-full hover:bg-zinc-700 flex gap-3 items-center"
           >
-            {liked ? <ThumbUpAltIcon /> : <ThumbUpOffAltIcon />}
+            {liked ? <ThumbUpAltIcon /> : <ThumbUpOffAltIcon />} {likeCount}
           </button>
           <button className="text-gray-300 py-2 px-4 text-sm rounded-full hover:bg-zinc-700">
             Reply

@@ -2,11 +2,20 @@ import React, { createContext, ReactNode, useContext, useState } from 'react';
 import { CommentTemplate } from '../templates/comment_template'
 import axios, { AxiosResponse } from 'axios';
 
+
+interface likeCommentProps {
+    userId: string | undefined;
+    entityId: string | undefined;
+  }
+
 interface CommentContextType {
     comments: CommentTemplate[];
     setComments: React.Dispatch<React.SetStateAction<CommentTemplate[]>>;
     addComment: (details: AddCommentProps) => Promise<boolean>
     getVideoComments: (videoId: string) => Promise<CommentTemplate[] | null>
+    likeComment: (details: likeCommentProps) => Promise<boolean>
+  unlikeComment: (details: likeCommentProps) => Promise<boolean>
+  commentLiked: (details: likeCommentProps) => Promise<boolean>
 }
 
 const CommentContext = createContext<CommentContextType | undefined>(undefined)
@@ -59,8 +68,41 @@ const CommentProvider: React.FC<CommentProviderProps> = ({children}) => {
         }
     }
 
+    const likeComment= async(details: likeCommentProps): Promise<boolean> => {
+        try {
+          const response: AxiosResponse<string> = await axios.post('/likes/protected/add-like',details, {withCredentials: true})
+          console.log(response)
+          return true;
+        } catch (error) {
+          return false;
+        }
+      }
+    
+      const unlikeComment = async(details: likeCommentProps): Promise<boolean> => {
+        try {
+          const response: AxiosResponse<string> = await axios.post('/likes/protected/remove-like',details, {withCredentials: true})
+          console.log(response)
+          return true;
+        } catch (error) {
+          return false;
+        }
+      }
+
+      interface CheckLikeResponse {
+        isLiked: boolean
+      }
+    
+      const commentLiked = async(details: likeCommentProps): Promise<boolean> => {
+        try {
+          const response: AxiosResponse<CheckLikeResponse> = await axios.post('/likes/protected/check-like',details, {withCredentials: true})
+          return response.data.isLiked
+        } catch (error) {
+          return false;
+        }
+      }
+
     return (
-        <CommentContext.Provider value={{comments, setComments, addComment, getVideoComments}}>
+        <CommentContext.Provider value={{comments, setComments, addComment, getVideoComments, likeComment, unlikeComment,commentLiked}}>
             {children}
         </CommentContext.Provider>
     )

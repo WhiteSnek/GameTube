@@ -28,22 +28,22 @@ const Page3: React.FC<RegisterProps> = ({ userInfo, setUserInfo }) => {
   const handleFileChange = useCallback(
     (
       e: React.ChangeEvent<HTMLInputElement>,
-      field: "avatar" | "coverImage"
+      field: "avatar" | "cover_image"
     ) => {
       const file = e.target.files ? e.target.files[0] : null;
       const fileUrl = file ? URL.createObjectURL(file) : "";
 
       if (field === "avatar") {
         setUserInfo({ ...userInfo, avatar: file, avatarUrl: fileUrl });
-      } else if (field === "coverImage") {
-        setUserInfo({ ...userInfo, coverImage: file, coverImageUrl: fileUrl });
+      } else if (field === "cover_image") {
+        setUserInfo({ ...userInfo, cover_image: file, cover_imageUrl: fileUrl });
       }
     },
     [userInfo, setUserInfo]
   );
 
   const handleDrop = useCallback(
-    (e: React.DragEvent<HTMLDivElement>, field: "avatar" | "coverImage") => {
+    (e: React.DragEvent<HTMLDivElement>, field: "avatar" | "cover_image") => {
       e.preventDefault();
       e.stopPropagation();
       const file = e.dataTransfer.files ? e.dataTransfer.files[0] : null;
@@ -51,8 +51,8 @@ const Page3: React.FC<RegisterProps> = ({ userInfo, setUserInfo }) => {
 
       if (field === "avatar") {
         setUserInfo({ ...userInfo, avatar: file, avatarUrl: fileUrl });
-      } else if (field === "coverImage") {
-        setUserInfo({ ...userInfo, coverImage: file, coverImageUrl: fileUrl });
+      } else if (field === "cover_image") {
+        setUserInfo({ ...userInfo, cover_image: file, cover_imageUrl: fileUrl });
       }
     },
     [userInfo, setUserInfo]
@@ -63,9 +63,9 @@ const Page3: React.FC<RegisterProps> = ({ userInfo, setUserInfo }) => {
     e.stopPropagation();
   };
 
-  const openFileDialog = (field: "avatar" | "coverImage") => {
+  const openFileDialog = (field: "avatar" | "cover_image") => {
     const inputElement = document.querySelector<HTMLInputElement>(
-      field === "avatar" ? 'input[name="avatar"]' : 'input[name="coverImage"]'
+      field === "avatar" ? 'input[name="avatar"]' : 'input[name="cover_image"]'
     );
     if (inputElement) {
       inputElement.click();
@@ -83,7 +83,7 @@ const Page3: React.FC<RegisterProps> = ({ userInfo, setUserInfo }) => {
       userInfo.dob === "" ||
       userInfo.gender === "" ||
       userInfo.avatar === null ||
-      userInfo.coverImage === null
+      userInfo.cover_image === null
     ) {
       setMessage("Please fill in all the fields");
       setSeverity('error');
@@ -103,8 +103,8 @@ const Page3: React.FC<RegisterProps> = ({ userInfo, setUserInfo }) => {
       if (userInfo.avatar) {
         formData.append("avatar", userInfo.avatar);
       }
-      if (userInfo.coverImage) {
-        formData.append("coverImage", userInfo.coverImage);
+      if (userInfo.cover_image) {
+        formData.append("cover_image", userInfo.cover_image);
       }
 
       console.log("FormData:", formData);
@@ -173,18 +173,18 @@ const Page3: React.FC<RegisterProps> = ({ userInfo, setUserInfo }) => {
         <div
           className="border-dashed border-2 border-zinc-600 rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer"
           onDragOver={handleDragOver}
-          onDrop={(e) => handleDrop(e, "coverImage")}
+          onDrop={(e) => handleDrop(e, "cover_image")}
         >
           <input
             type="file"
-            name="coverImage"
+            name="cover_image"
             accept="image/*"
-            onChange={(e) => handleFileChange(e, "coverImage")}
+            onChange={(e) => handleFileChange(e, "cover_image")}
             className="hidden"
           />
-          {userInfo.coverImageUrl ? (
+          {userInfo.cover_imageUrl ? (
             <img
-              src={userInfo.coverImageUrl}
+              src={userInfo.cover_imageUrl}
               alt="Cover Image Preview"
               className="rounded h-32 w-full object-cover"
             />
@@ -196,7 +196,7 @@ const Page3: React.FC<RegisterProps> = ({ userInfo, setUserInfo }) => {
           <button
             type="button"
             className="mt-4 bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded focus:outline-none focus:ring-2 focus:ring-red-500"
-            onClick={() => openFileDialog("coverImage")}
+            onClick={() => openFileDialog("cover_image")}
           >
             Select Cover Image
           </button>

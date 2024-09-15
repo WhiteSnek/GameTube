@@ -8,6 +8,7 @@ import VideoPage from "./VideoPage";
 import Search from "./Search";
 import Guild from "./Guild";
 import Profile from "./Profile";
+import UploadVideo from "./UploadVideo";
 
 export {
     Home,
@@ -19,5 +20,6 @@ export {
     VideoPage,
     Search,
     Guild,
-    Profile
+    Profile,
+    UploadVideo
 }

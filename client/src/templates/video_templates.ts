@@ -9,6 +9,21 @@ export interface VideoCardTemplate {
     owner: UserCard;
     guild: GuildCard;
     views: number;
+    duration: string;
+    likes: number
     created_at: Date;
     tags: string[];
+}
+
+export interface UploadVideoTemplate {
+    title: string;
+    description: string;
+    video: File | null;
+    videoUrl: string;
+    owner: string;
+    guild: string;
+    thumbnail: File | null;
+    thumbnailUrl: string;
+    tags: string[];
+    duration: number
 }

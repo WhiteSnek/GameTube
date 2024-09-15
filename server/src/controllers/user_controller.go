@@ -104,12 +104,13 @@ func LoginUser(db *sql.DB) http.HandlerFunc {
 		}
 
 		// Retrieve user from the database
-		query := `SELECT id, username, password, fullname, avatar, cover_image, dob, gender, google_id, guild, created_at, updated_at FROM users WHERE email = $1`
+		query := `SELECT id, username,email, password, fullname, avatar, cover_image, dob, gender, google_id, guild, created_at, updated_at FROM users WHERE email = $1`
 		var user models.User
 		row := db.QueryRow(query, credentials.Email)
 		err := row.Scan(
 			&user.ID,
 			&user.Username,
+			&user.Email,
 			&user.Password,
 			&user.FullName,
 			&user.Avatar,
@@ -175,11 +176,11 @@ func LoginUser(db *sql.DB) http.HandlerFunc {
 			"id":          user.ID,
 			"username":    user.Username,
 			"fullname":    user.FullName,
+			"email": user.Email,
 			"avatar":      user.Avatar,
 			"cover_image": user.CoverImage,
 			"dob":         user.Dob,
 			"gender":      user.Gender,
-			"google_id":   user.GoogleID,
 			"guild":       user.Guild,
 			"created_at":  user.CreatedAt,
 			"updated_at":  user.UpdatedAt,

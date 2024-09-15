@@ -2,13 +2,22 @@ import React, { createContext, ReactNode, useContext, useState } from "react";
 import { VideoCardTemplate } from "../templates/video_templates";
 import axios, { AxiosResponse } from "axios";
 
+interface likeVideoProps {
+  userId: string | undefined;
+  entityId: string | undefined;
+}
+
 interface VideoContextType {
   video: VideoCardTemplate[];
   setVideo: React.Dispatch<React.SetStateAction<VideoCardTemplate[]>>;
   getVideoDetails: (videoId: string) => Promise<VideoCardTemplate | null>
-  getUserVideos: (userId: string) => Promise<boolean>
+  getUserVideos: (userId: string) => Promise<VideoCardTemplate[] | null>
   getGuildVideos: (guildId: string) => Promise<VideoCardTemplate[]|null>
   getAllVideos: () => Promise<boolean>
+  uploadVideo: (formData: FormData) => Promise<boolean>
+  likeVideo: (details: likeVideoProps) => Promise<boolean>
+  unlikeVideo: (details: likeVideoProps) => Promise<boolean>
+  videoLiked: (details: likeVideoProps) => Promise<boolean>
 }
 
 const VideoContext = createContext<VideoContextType | undefined>(undefined);
@@ -28,6 +37,16 @@ interface VideoProviderProps {
 const VideoProvider: React.FC<VideoProviderProps> = ({ children }) => {
   const [video, setVideo] = useState<VideoCardTemplate[]>([]);
 
+  const uploadVideo = async (formData: FormData): Promise<boolean> => {
+    try {
+      const response: AxiosResponse<string> = await axios.post('/videos/protected/upload', formData, {withCredentials: true})
+      console.log(response.data)
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
   const getVideoDetails = async (videoId: string): Promise<VideoCardTemplate | null> => {
     try {
       const response: AxiosResponse<VideoCardTemplate> = await axios.get(`/videos/${videoId}`, { withCredentials: true });
@@ -38,14 +57,13 @@ const VideoProvider: React.FC<VideoProviderProps> = ({ children }) => {
     }
   }
 
-  const getUserVideos = async(userId: string): Promise<boolean> => {
+  const getUserVideos = async(userId: string): Promise<VideoCardTemplate[] | null> => {
     try {
         const response: AxiosResponse<VideoCardTemplate[]> = await axios.get(`/users/videos/${userId}`, {withCredentials: true});
-        setVideo(response.data)
-        return true;
+        return response.data
     } catch (error) {
         console.log(error)
-        return false;
+        return null;
     }
   }
 
@@ -70,8 +88,41 @@ const VideoProvider: React.FC<VideoProviderProps> = ({ children }) => {
     }
   }
 
+  const likeVideo= async(details: likeVideoProps): Promise<boolean> => {
+    try {
+      const response: AxiosResponse<string> = await axios.post('/likes/protected/add-like',details, {withCredentials: true})
+      console.log(response)
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  const unlikeVideo = async(details: likeVideoProps): Promise<boolean> => {
+    try {
+      const response: AxiosResponse<string> = await axios.post('/likes/protected/remove-like',details, {withCredentials: true})
+      console.log(response)
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  interface CheckLikeResponse {
+    isLiked: boolean
+  }
+
+  const videoLiked = async(details: likeVideoProps): Promise<boolean> => {
+    try {
+      const response: AxiosResponse<CheckLikeResponse> = await axios.post('/likes/protected/check-like',details, {withCredentials: true})
+      return response.data.isLiked
+    } catch (error) {
+      return false;
+    }
+  }
+
   return (
-    <VideoContext.Provider value={{ video, setVideo, getVideoDetails, getUserVideos,getAllVideos, getGuildVideos}}>
+    <VideoContext.Provider value={{ video, setVideo, getVideoDetails, getUserVideos,getAllVideos, getGuildVideos, uploadVideo, likeVideo, unlikeVideo, videoLiked}}>
       {children}
     </VideoContext.Provider>
   );

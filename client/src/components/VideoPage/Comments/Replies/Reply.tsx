@@ -1,8 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { ReplyTemplate } from "../../../../templates/reply_template";
 // import formatDate from '../../../utils/formatDate'
 import ThumbUpAltIcon from "@mui/icons-material/ThumbUpAlt";
 import ThumbUpOffAltIcon from "@mui/icons-material/ThumbUpOffAlt";
+import { useUser } from "../../../../providers/UserProvider";
+import { useReply } from "../../../../providers/ReplyProvider";
 
 interface ReplyProps {
     reply: ReplyTemplate;
@@ -10,8 +12,49 @@ interface ReplyProps {
 
 const Reply: React.FC<ReplyProps> = ({ reply }) => {
   const [liked, setLiked] = useState<boolean>(false);
-  const toggleLike = () => {
-    setLiked(!liked);
+  const [likeCount, setLikeCount] = useState<number>(reply.likes);
+  const {user} = useUser()
+  const {likeReply, unlikeReply, replyLiked} = useReply()
+
+  useEffect(()=>{
+    const details = { userId: user?.id, entityId: reply.id };
+    const checkLike = async () => {
+      const response = await replyLiked(details);
+      setLiked(response)
+    }
+    checkLike()
+  },[])
+
+  const toggleLike = useCallback(async () => {
+    if (liked) {
+      await removeLike();
+    } else {
+      await addLike();
+    }
+  }, [liked, reply.id, user?.id, likeReply, unlikeReply]);
+
+  const removeLike = async () => {
+    if (!user?.id) return;
+    const details = { userId: user.id, entityId: reply.id };
+    const success = await unlikeReply(details);
+    if (success) {
+      setLikeCount(likeCount - 1);
+      setLiked(false);
+    } else {
+      console.error('Failed to remove like.');
+    }
+  };
+
+  const addLike = async () => {
+    if (!user?.id) return;
+    const details = { userId: user.id, entityId: reply.id };
+    const success = await likeReply(details);
+    if (success) {
+      setLikeCount(likeCount + 1);
+      setLiked(true);
+    } else {
+      console.error('Failed to add like.');
+    }
   };
   return (
     <div className="flex justify-start gap-3 p-4 text-white">
@@ -31,9 +74,9 @@ const Reply: React.FC<ReplyProps> = ({ reply }) => {
         <p>{reply.content}</p>
           <button
             onClick={toggleLike}
-            className="text-gray-300 p-2 text-sm rounded-full hover:bg-zinc-700"
+            className="text-gray-300 p-2 text-sm rounded-full hover:bg-zinc-700 flex gap-3 items-center"
           >
-            {liked ? <ThumbUpAltIcon /> : <ThumbUpOffAltIcon />}
+            {liked ? <ThumbUpAltIcon /> : <ThumbUpOffAltIcon />} {likeCount}
           </button>
         </div>
       </div>

@@ -3,8 +3,8 @@ export interface CreateGuildTemplate {
     description: string;
     avatar: File | null;
     avatarUrl: string;
-    coverImage: File | null;
-    coverImageUrl: string;
+    cover_image: File | null;
+    cover_imageUrl: string;
     private: boolean;
 }
 

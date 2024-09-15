@@ -29,7 +29,7 @@ func AddReply(db *sql.DB) http.HandlerFunc{
 		query := `INSERT INTO replies (id, content, comment_id, owner, created_at) VALUES ($1,$2,$3,$4,CURRENT_TIMESTAMP) RETURNING id`
 		err = db.QueryRow(query, id, reply.Content, reply.CommentId, reply.Owner).Scan(&id);
 		if err != nil {
-			http.Error(w, "Failed to add comment" +err.Error() , http.StatusInternalServerError)
+			http.Error(w, "Failed to add reply" +err.Error() , http.StatusInternalServerError)
 			return
 		}
 
@@ -53,6 +53,7 @@ func GetCommentReplies (db *sql.DB) http.HandlerFunc {
 			Content  string    `json:"content"`
 			Username string    `json:"username"`
 			Avatar   string    `json:"avatar"`
+			Likes int `json:"likes"`
 			CreatedAt string `json:"created_at"`
 		}
 
@@ -76,6 +77,12 @@ func GetCommentReplies (db *sql.DB) http.HandlerFunc {
 			err := rows.Scan(&reply.ID, &reply.Content, &reply.Username, &reply.Avatar, &reply.CreatedAt)
 			if err != nil {
 				http.Error(w, "Failed to scan comment: "+err.Error(), http.StatusInternalServerError)
+				return
+			}
+			likeQuery := `SELECT COUNT(*) FROM likes WHERE entityId = $1`
+			err = db.QueryRow(likeQuery, reply.ID).Scan(&reply.Likes)
+			if err != nil {
+				http.Error(w, "Failed to retrieve like count: "+err.Error(), http.StatusInternalServerError)
 				return
 			}
 			replies = append(replies,reply)

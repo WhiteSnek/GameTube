@@ -7,6 +7,7 @@ import { VideoCardTemplate } from "../../templates/video_templates";
 import { Snackbar, Alert } from '@mui/material';
 import Members from "./Members/Members";
 import { useSidebar } from "../../providers/SidebarProvider";
+import { Link } from "react-router-dom";
 
 interface GuildDetailsProps {
   guildId: string;
@@ -114,7 +115,12 @@ const GuildDetails: React.FC<GuildDetailsProps> = ({ guildId }) => {
       </div>
       <div className="grid grid-cols-12 gap-4">
       <div className={`p-4 ${showSidebar ? 'col-span-8': 'col-span-9'}`}>
-        <h1 className="p-2 border-b-2 border-red-500 w-full text-white text-3xl font-bold">Guild Videos</h1>
+      <div className='flex justify-between items-center border-b-2 border-red-500 p-2'>
+        <h1 className="p-2 w-full text-white text-3xl font-bold">Guild Videos</h1>
+        <Link to={`/upload-video/${guild.id}`} className="bg-red-500 px-4 py-2 text-lg rounded-lg font-bold text-white shadow-xl btn-5">
+          Upload
+        </Link>
+      </div>
       <VideoGrid gridSize={3} videos={video} />
       </div>
       <div className={`p-4 ${showSidebar ? 'col-span-4': 'col-span-3'}  bg-zinc-800 my-4 rounded-lg `}>
