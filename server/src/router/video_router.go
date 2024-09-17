@@ -13,7 +13,9 @@ func VideosRouter(db *sql.DB) *mux.Router {
 	// Public routes
 	// Add any public routes related to videos here, for example:
 	r.HandleFunc("/videos/{id:[a-fA-F0-9-]+}", controllers.GetVideoDetails(db)).Methods("GET")
+	r.HandleFunc("/videos/views/{id:[a-fA-F0-9-]+}", controllers.IncreaseViews(db)).Methods("GET")
 	r.HandleFunc("/videos", controllers.GetAllVideos(db)).Methods("GET")
+
 
 	// Create a subrouter for protected routes
 	protected := r.PathPrefix("/videos/protected").Subrouter()

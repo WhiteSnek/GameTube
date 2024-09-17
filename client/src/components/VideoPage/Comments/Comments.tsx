@@ -3,12 +3,11 @@ import SingleComment from './Comment';
 import { useComment } from '../../../providers/CommentProvider';
 import { CommentTemplate } from '../../../templates/comment_template';
 import AddComment from './AddComment';
+import { useParams } from 'react-router-dom';
 
-interface CommentProps {
-  videoId: string
-}
-
-const Comments:React.FC<CommentProps> = ({videoId}) => {
+const Comments:React.FC = () => {
+  const {videoId} = useParams()
+  if(!videoId) return <div>Something went wrong...</div>
   const [comments, setComments] = useState<CommentTemplate[]>([])
   const { getVideoComments} = useComment()
   console.log(videoId)
@@ -22,7 +21,7 @@ const Comments:React.FC<CommentProps> = ({videoId}) => {
       }
     }
     getComments();
-  },[])
+  },[videoId])
   if(!comments) return <div>No comments yet</div>
   return (
     <div className='px-10'>

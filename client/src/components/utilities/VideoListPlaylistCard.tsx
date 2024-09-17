@@ -23,13 +23,13 @@ const VideoListPlaylistCard: React.FC<VideoListProps> = ({ video,index }) => {
             className="aspect-video w-full object-fit rounded-md h-20"
           />
           <span className="absolute bottom-0 right-0 px-2 text-xs text-white py-1 m-2 font-semibold bg-black opacity-70 rounded-md">
-            {2000}
+            {video.duration}
           </span>
         </div>
         <div>
         <h1 className="text-white text-xl font-bold">{video.title}</h1>
         <div className="flex gap-2 text-gray-300 text-sm">
-            <p>{video.owner.name}</p>
+            <p>{video.owner.username}</p>
             <p>{formatViews(video.views)} views</p>
             {/* <p>{formatDate(video.created_at)}</p> */}
         </div>

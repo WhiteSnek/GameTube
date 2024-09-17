@@ -9,6 +9,7 @@ import Search from "./Search";
 import Guild from "./Guild";
 import Profile from "./Profile";
 import UploadVideo from "./UploadVideo";
+import ManageGuild from "./ManageGuild";
 
 export {
     Home,
@@ -21,5 +22,6 @@ export {
     Search,
     Guild,
     Profile,
-    UploadVideo
+    UploadVideo,
+    ManageGuild
 }

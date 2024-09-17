@@ -2,12 +2,14 @@ import React, { useEffect, useState } from 'react'
 import { GuildMembers } from '../../../templates/guild_template'
 import { useGuild } from '../../../providers/GuildProvider'
 import Member from './Member'
+import EditMember from './EditMember'
 
 interface GuildMembersProps {
     guildId: string
+    edit: boolean
 }
 
-const Members:React.FC<GuildMembersProps> = ({guildId}) => {
+const Members:React.FC<GuildMembersProps> = ({guildId, edit}) => {
   const [members, setMembers] = useState<GuildMembers[]>([])
   const {getGuildMembers} = useGuild()
     useEffect(()=>{
@@ -23,8 +25,10 @@ const Members:React.FC<GuildMembersProps> = ({guildId}) => {
     },[])
   return (
     <div className='h-96 overflow-scroll'>
-      {members.map(member => (
+      {!edit ? members.map(member => (
         <Member  key={member.userId} member={member} />
+      )) : members.map(member => (
+        <EditMember  key={member.userId} member={member} />
       ))}
     </div>
   )

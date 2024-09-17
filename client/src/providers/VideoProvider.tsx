@@ -18,6 +18,8 @@ interface VideoContextType {
   likeVideo: (details: likeVideoProps) => Promise<boolean>
   unlikeVideo: (details: likeVideoProps) => Promise<boolean>
   videoLiked: (details: likeVideoProps) => Promise<boolean>
+  searchVideos: (query: string) => Promise<boolean>
+  increaseViews: (videoId: string) => Promise<boolean>
 }
 
 const VideoContext = createContext<VideoContextType | undefined>(undefined);
@@ -121,8 +123,32 @@ const VideoProvider: React.FC<VideoProviderProps> = ({ children }) => {
     }
   }
 
+  const searchVideos = async(query: string):  Promise<boolean> => {
+    try {
+        const encodedQuery = encodeURIComponent(query);
+        const response: AxiosResponse<VideoCardTemplate[]> = await axios.get(`/videos?query=${encodedQuery}`, {withCredentials: true});
+        setVideo(response.data)
+        console.log(response.data)
+        return true;
+    } catch (error) {
+        console.log(error)
+        return false;
+    }
+  }
+
+  const increaseViews = async (videoId: string): Promise<boolean> => {
+    try {
+      const response: AxiosResponse<string> = await axios.get(`/videos/views/${videoId}`,{withCredentials: true});
+      console.log(response)
+      return true;
+    } catch (error) {
+      console.log(error)
+      return false;
+    }
+  }
+
   return (
-    <VideoContext.Provider value={{ video, setVideo, getVideoDetails, getUserVideos,getAllVideos, getGuildVideos, uploadVideo, likeVideo, unlikeVideo, videoLiked}}>
+    <VideoContext.Provider value={{ video, setVideo, getVideoDetails, getUserVideos,getAllVideos, getGuildVideos, uploadVideo, likeVideo, unlikeVideo, videoLiked, searchVideos, increaseViews}}>
       {children}
     </VideoContext.Provider>
   );

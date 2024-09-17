@@ -11,6 +11,9 @@ interface VideoListProps {
 const VideoList: React.FC<VideoListProps> = ({ component }) => {
   const { video } = useVideo()
   console.log('Videos in VideoList:', video);
+  if(!video) return (
+    <div className='border-2 text-center bg-zinc-800 border-gray-400 flex justify-center items-center rounded-lg py-10 text-white text-3xl font-bold m-10'>No videos available.<br/> Try searching something else...</div>
+  )
   return (
     <div>
       <ol>

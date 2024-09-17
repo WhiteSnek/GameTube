@@ -2,12 +2,20 @@ import React, { createContext, ReactNode, useContext, useState } from 'react';
 import { GuildDetails, GuildMembers } from '../templates/guild_template';
 import axios, { AxiosResponse } from 'axios';
 
+interface EditMembership {
+  userId: string;
+  memberId: string;
+}
+
 interface GuildContextType {
   guild: GuildDetails | null;
   setGuild: React.Dispatch<React.SetStateAction<GuildDetails | null>>;
   createGuild: ({formData, userId}: CreateGuildProps) => Promise<boolean>;
   getGuildInfo: (guildId: string) => Promise<boolean>;
   getGuildMembers: (guildId: string) => Promise<GuildMembers[] | null>;
+  promoteUser: (details: EditMembership) => Promise<boolean>;
+  demoteUser: (details: EditMembership) => Promise<boolean>;
+  kickUser: (details: EditMembership) => Promise<boolean>;
 }
 
 const GuildContext = createContext<GuildContextType | undefined>(undefined);
@@ -78,9 +86,59 @@ const GuildProvider: React.FC<GuildProviderProps> = ({ children }) => {
     }
   }
 
+  
+
+  const promoteUser = async (userDetails: EditMembership): Promise<boolean> => {
+    try {
+      const details = {
+        userId: userDetails.userId,
+        guildId: guild?.id,
+        memberId: userDetails.memberId
+      }
+      const response: AxiosResponse<string> = await axios.post('/members/promote', details, {withCredentials: true})
+      console.log(response.data)
+      return true;
+    } catch (error) {
+      console.log('Something went wrong!!')
+      return false;
+    }
+  }
+
+  const demoteUser = async (userDetails: EditMembership): Promise<boolean> => {
+    try {
+      const details = {
+        userId: userDetails.userId,
+        guildId: guild?.id,
+        memberId: userDetails.memberId
+      }
+      const response: AxiosResponse<string> = await axios.post('/members/demote', details, {withCredentials: true})
+      console.log(response.data)
+      return true;
+    } catch (error) {
+      console.log('Something went wrong!!')
+      return false;
+    }
+  }
+
+  const kickUser = async (userDetails: EditMembership): Promise<boolean> => {
+    try {
+      const details = {
+        userId: userDetails.userId,
+        guildId: guild?.id,
+        memberId: userDetails.memberId
+      }
+      const response: AxiosResponse<string> = await axios.post('/members/kick', details, {withCredentials: true})
+      console.log(response.data)
+      return true;
+    } catch (error) {
+      console.log('Something went wrong!!')
+      return false;
+    }
+  }
+
 
   return (
-    <GuildContext.Provider value={{ guild, setGuild, createGuild, getGuildInfo, getGuildMembers }}>
+    <GuildContext.Provider value={{ guild, setGuild, createGuild, getGuildInfo, getGuildMembers, promoteUser,demoteUser,kickUser }}>
       {children}
     </GuildContext.Provider>
   );

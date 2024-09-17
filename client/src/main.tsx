@@ -20,6 +20,7 @@ import {
   Guild,
   Profile,
   UploadVideo,
+  ManageGuild,
 } from "./pages";
 import SidebarProvider from "./providers/SidebarProvider.tsx";
 import axios from "axios";
@@ -39,6 +40,7 @@ const Layout: React.FC = () => {
         <Route path="videos/:videoId" element={<VideoPage />} />
         <Route path="search" element={<Search />} />
         <Route path="guilds/:id" element={<Guild />} />
+        <Route path="guilds/manage/:id" element={<ManageGuild />} />
         <Route path="profile/:id" element={<Profile />} />
         <Route path="upload-video/:id" element={<UploadVideo />} />
       </Route>

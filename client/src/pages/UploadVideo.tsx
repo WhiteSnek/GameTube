@@ -1,10 +1,11 @@
 import React, { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useUser } from "../providers/UserProvider";
 import { UploadVideoTemplate } from "../templates/video_templates";
 import { useSidebar } from "../providers/SidebarProvider";
 import CloseIcon from "@mui/icons-material/Close";
 import { useVideo } from "../providers/VideoProvider";
+import VideoUploadLoader from "../components/Loader/VideoUploadLoader";
 
 const UploadVideo: React.FC = () => {
   const { id } = useParams();
@@ -13,7 +14,7 @@ const UploadVideo: React.FC = () => {
   const {uploadVideo} = useVideo()
   if (!id) return <div>Something went wrong...</div>;
   if (!user) return <div>Login...</div>;
-
+  const navigate = useNavigate()
   const [details, setDetails] = useState<UploadVideoTemplate>({
     title: "",
     description: "",
@@ -29,7 +30,7 @@ const UploadVideo: React.FC = () => {
   const [tagInput, setTagInput] = useState("");
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
-
+  const [loading, setLoading] = useState<boolean>(false)
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -111,13 +112,17 @@ const UploadVideo: React.FC = () => {
     details.tags.forEach((tag) => {
       formData.append("tags[]", tag);
     });
-
+    setLoading(true)
     const success = await uploadVideo(formData);
     if(success) {
         console.log('Video uploaded successfully!!')
+        setLoading(false)
+        navigate(`/profile/${user.id}`)
     } else {
         console.log('Error uploading video!!!')
-    }
+        setLoading(false)
+    } 
+
   };
 
   // Function to delete the selected video
@@ -279,6 +284,7 @@ const UploadVideo: React.FC = () => {
           Upload Video
         </button>
       </form>
+      {loading && <VideoUploadLoader />}
     </div>
   );
 };

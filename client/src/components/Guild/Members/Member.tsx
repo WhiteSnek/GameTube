@@ -10,7 +10,7 @@ interface Members {
 const Member: React.FC<Members> = ({ member }) => {
   return (
     <Link
-      to={`/${member.userId}`}
+      to={`/profile/${member.userId}`}
       className={`flex justify-between items-center p-4 text-white rounded-lg my-2 shadow-md ${
         member.userRole === "leader"
           ? "bg-yellow-700"

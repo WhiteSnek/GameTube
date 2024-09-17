@@ -1,10 +1,11 @@
-import React, { createContext, ReactNode, useContext, useState } from "react";
+import React, { createContext, ReactNode, useContext, useEffect, useState } from "react";
 import {
   LoginTemplate,
   UserDetails,
 } from "../templates/user_template";
 import { GetGuilds } from "../templates/guild_template";
 import axios, { AxiosResponse } from "axios";
+import { useNavigate } from "react-router-dom";
 
 interface CheckMember {
   isMember: boolean
@@ -44,6 +45,11 @@ interface AddUserResponse {
 
 const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   const [user, setUser] = useState<UserDetails | null>(null);
+  const navigate = useNavigate()
+  
+  useEffect(()=>{
+    if(!user) navigate('/login')
+  },[])
 
   const login = async (userInfo: LoginTemplate): Promise<boolean> => {
     try {

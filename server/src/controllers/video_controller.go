@@ -37,6 +37,25 @@ type VideoWithOwnerAndGuild struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
+type AllVideos struct {
+	Id          uuid.UUID `json:"id"`
+	Title       string    `json:"title"`
+	Url         string    `json:"video"`
+	Thumbnail   string    `json:"thumbnail"`
+	Owner       struct {
+		Username string    `json:"username"`
+		Avatar   string    `json:"avatar"`
+	} `json:"owner"`
+	Guild struct {
+		Name   string    `json:"name"`
+		Avatar string    `json:"avatar"`
+	} `json:"guild"`
+	Views     int       `json:"views"`
+	Duration  string    `json:"duration"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+
 func UploadVideo(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		err := r.ParseMultipartForm(10 << 20) // Limit the size to 10 MB
@@ -203,13 +222,10 @@ func GetUserVideos(db *sql.DB) http.HandlerFunc {
 				v.views,
 				v.duration,
 				v.created_at,
-				u.id AS owner_id,
 				u.username AS owner_username,
 				u.avatar AS owner_avatar,
-				g.id AS guild_id,
 				g.guild_name AS guild_name,
-				g.avatar AS guild_avatar,
-				v.tags
+				g.avatar AS guild_avatar
 			FROM 
 				videos v
 			JOIN 
@@ -226,15 +242,15 @@ func GetUserVideos(db *sql.DB) http.HandlerFunc {
 		}
 		defer rows.Close()
 
-		var videos []VideoWithOwnerAndGuild
+		var videos []AllVideos
 
 		// Loop through the rows and scan into the video model
 		for rows.Next() {
-			var video VideoWithOwnerAndGuild
+			var video AllVideos
 			err := rows.Scan(&video.Id, &video.Title, &video.Url,
-				&video.Thumbnail, &video.Views, &video.Duration, &video.CreatedAt, &video.Owner.Id,
-				&video.Owner.Username, &video.Owner.Avatar, &video.Guild.Id,
-				&video.Guild.Name, &video.Guild.Avatar, pq.Array(&video.Tags)) // Scan tags
+				&video.Thumbnail, &video.Views, &video.Duration, &video.CreatedAt,
+				&video.Owner.Username, &video.Owner.Avatar,
+				&video.Guild.Name, &video.Guild.Avatar) // Scan tags
 			if err != nil {
 				http.Error(w, "Failed to scan video details: "+err.Error(), http.StatusInternalServerError)
 				return
@@ -273,13 +289,10 @@ func GetGuildVideos(db *sql.DB) http.HandlerFunc {
 				v.views, 
 				v.duration,
 				v.created_at,
-				u.id AS owner_id,
 				u.username AS owner_username,
 				u.avatar AS owner_avatar,
-				g.id AS guild_id,
 				g.guild_name AS guild_name,
-				g.avatar AS guild_avatar,
-				v.tags
+				g.avatar AS guild_avatar
 			FROM 
 				videos v
 			JOIN 
@@ -296,15 +309,15 @@ func GetGuildVideos(db *sql.DB) http.HandlerFunc {
 		}
 		defer rows.Close()
 
-		var videos []VideoWithOwnerAndGuild
+		var videos []AllVideos
 
 		// Loop through the rows and scan into the video model
 		for rows.Next() {
-			var video VideoWithOwnerAndGuild
+			var video AllVideos
 			err := rows.Scan(&video.Id, &video.Title, &video.Url,
-				&video.Thumbnail, &video.Views, &video.Duration, &video.CreatedAt, &video.Owner.Id,
-				&video.Owner.Username, &video.Owner.Avatar, &video.Guild.Id,
-				&video.Guild.Name, &video.Guild.Avatar, pq.Array(&video.Tags)) // Scan tags
+				&video.Thumbnail, &video.Views, &video.Duration, &video.CreatedAt,
+				&video.Owner.Username, &video.Owner.Avatar,
+				&video.Guild.Name, &video.Guild.Avatar) // Scan tags
 			if err != nil {
 				http.Error(w, "Failed to scan video details: "+err.Error(), http.StatusInternalServerError)
 				return
@@ -326,13 +339,9 @@ func GetGuildVideos(db *sql.DB) http.HandlerFunc {
 
 func GetAllVideos(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Get query parameters
+		// Get the search query parameter
 		queryParams := r.URL.Query()
-		nameFilter := queryParams.Get("name")
-		descriptionFilter := queryParams.Get("description")
-		guildNameFilter := queryParams.Get("guildname")
-		ownerNameFilter := queryParams.Get("ownername")
-		tagFilter := queryParams.Get("tags") // Get the tags filter
+		searchQuery := queryParams.Get("query")
 
 		// Base query
 		query := `
@@ -344,13 +353,10 @@ func GetAllVideos(db *sql.DB) http.HandlerFunc {
 				v.views, 
 				v.duration,
 				v.created_at,
-				u.id AS owner_id,
 				u.username AS owner_username,
 				u.avatar AS owner_avatar,
-				g.id AS guild_id,
 				g.guild_name AS guild_name,
-				g.avatar AS guild_avatar,
-				v.tags
+				g.avatar AS guild_avatar
 			FROM 
 				videos v
 			JOIN 
@@ -361,55 +367,45 @@ func GetAllVideos(db *sql.DB) http.HandlerFunc {
 				1=1
 		`
 
-		// Build query based on filters
+		// Build the search query condition
 		var args []interface{}
 		argCount := 1
 
-		if nameFilter != "" {
-			query += " AND v.title ILIKE $" + strconv.Itoa(argCount)
-			args = append(args, "%"+nameFilter+"%")
+		if searchQuery != "" {
+			searchPattern := "%" + searchQuery + "%"
+			query += ` AND (
+				v.title ILIKE $` + strconv.Itoa(argCount) + ` OR
+				g.guild_name ILIKE $` + strconv.Itoa(argCount) + ` OR
+				u.username ILIKE $` + strconv.Itoa(argCount) + `
+			)`
+			args = append(args, searchPattern)
 			argCount++
-		}
-		if descriptionFilter != "" {
-			query += " AND v.description ILIKE $" + strconv.Itoa(argCount)
-			args = append(args, "%"+descriptionFilter+"%")
-			argCount++
-		}
-		if guildNameFilter != "" {
-			query += " AND g.guild_name ILIKE $" + strconv.Itoa(argCount)
-			args = append(args, "%"+guildNameFilter+"%")
-			argCount++
-		}
-		if ownerNameFilter != "" {
-			query += " AND u.username ILIKE $" + strconv.Itoa(argCount)
-			args = append(args, "%"+ownerNameFilter+"%")
-			argCount++
-		}
-		if tagFilter != "" {
-			query += " AND $" + strconv.Itoa(argCount) + " = ANY(v.tags)"
-			args = append(args, tagFilter)
 		}
 
+
+		// Execute the query
 		rows, err := db.Query(query, args...)
 		if err != nil {
 			http.Error(w, "Failed to retrieve videos", http.StatusInternalServerError)
-			log.Printf("Failed to retrieve videos: %v", err)
+			log.Printf("Query error: %v", err)
 			return
 		}
 		defer rows.Close()
 
-		var videos []VideoWithOwnerAndGuild
+		var videos []AllVideos
 
 		// Loop through the rows and scan into the video model
 		for rows.Next() {
-			var video VideoWithOwnerAndGuild
-			err := rows.Scan(&video.Id, &video.Title, &video.Url,
-				&video.Thumbnail, &video.Views, &video.Duration, &video.CreatedAt, &video.Owner.Id,
-				&video.Owner.Username, &video.Owner.Avatar, &video.Guild.Id,
-				&video.Guild.Name, &video.Guild.Avatar, pq.Array(&video.Tags)) // Scan tags
+			var video AllVideos
+			err := rows.Scan(
+				&video.Id, &video.Title, &video.Url,
+				&video.Thumbnail, &video.Views, &video.Duration, &video.CreatedAt,
+				&video.Owner.Username, &video.Owner.Avatar,
+				&video.Guild.Name, &video.Guild.Avatar,
+			)
 			if err != nil {
 				http.Error(w, "Failed to process video details", http.StatusInternalServerError)
-				log.Printf("Failed to scan video details: %v", err)
+				log.Printf("Scan error: %v", err)
 				return
 			}
 			videos = append(videos, video)
@@ -418,7 +414,7 @@ func GetAllVideos(db *sql.DB) http.HandlerFunc {
 		// Check for any error encountered during iteration
 		if err = rows.Err(); err != nil {
 			http.Error(w, "Failed to retrieve videos", http.StatusInternalServerError)
-			log.Printf("Failed to retrieve videos: %v", err)
+			log.Printf("Row iteration error: %v", err)
 			return
 		}
 
@@ -426,7 +422,29 @@ func GetAllVideos(db *sql.DB) http.HandlerFunc {
 		w.Header().Set("Content-Type", "application/json")
 		if err := json.NewEncoder(w).Encode(videos); err != nil {
 			http.Error(w, "Failed to encode videos", http.StatusInternalServerError)
-			log.Printf("Failed to encode videos: %v", err)
+			log.Printf("Encoding error: %v", err)
 		}
 	}
 }
+
+func IncreaseViews(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		videoId, err := uuid.Parse(mux.Vars(r)["id"])
+		if err != nil {
+			http.Error(w, "Invalid video ID: "+err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		query := `UPDATE videos SET views = views + 1 WHERE id = $1`
+
+		_, err = db.Exec(query, videoId)
+		if err != nil {
+			http.Error(w, "Failed to update views: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("View count updated successfully"))
+	}
+}
+

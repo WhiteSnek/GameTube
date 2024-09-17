@@ -32,7 +32,7 @@ const VideoPage: React.FC = () => {
       <div className="col-span-8">
         <VideoDetails video={video} />
         <CommentProvider>
-          <Comments videoId={videoId} />
+          <Comments />
         </CommentProvider>
       </div>
       <div className="col-span-4">

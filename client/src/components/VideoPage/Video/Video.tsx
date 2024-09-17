@@ -1,10 +1,12 @@
 import React, { useEffect, useRef } from 'react';
 import videojs from 'video.js';
 import 'video.js/dist/video-js.css';
+import { useVideo } from '../../../providers/VideoProvider';
 
 interface VideoProps {
   video: string;  // URL of the video (HLS stream or MP4 file)
   thumbnail: string;  // URL of the thumbnail image
+  videoId: string;  // Unique ID of the video
 }
 
 interface Source {
@@ -17,28 +19,31 @@ interface VideoJsOptions {
   controls: boolean;
   responsive: boolean;
   fluid: boolean;
-  preload: string;  // Add preload option
+  aspectRatio: string;
+  preload: string;
   sources: Source[];
-  poster: string;  // To set the initial thumbnail
+  poster: string;
 }
 
-const Video: React.FC<VideoProps> = ({ video, thumbnail }) => {
+const Video: React.FC<VideoProps> = ({ video, thumbnail, videoId }) => {
+  const { increaseViews } = useVideo();
   const videoRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<any | null>(null);
 
   const getVideoJsOptions = (videoUrl: string): VideoJsOptions => {
     const isHls = videoUrl.endsWith('.m3u8');
     return {
-      autoplay: false,  // Keep autoplay false or set to true based on your requirement
-      controls: true,   // Ensure controls are enabled
-      responsive: true, // Maintain responsiveness
-      fluid: true,      // Ensure fluid layout
-      preload: 'auto',  // Add preload option to start loading the video when the player is created
-      poster: thumbnail,  // Set the video thumbnail here
+      autoplay: false,
+      controls: true,
+      responsive: true,
+      fluid: true,
+      aspectRatio: '16:9',
+      preload: 'auto',
+      poster: thumbnail,
       sources: [
         {
           src: videoUrl,
-          type: isHls ? 'application/x-mpegURL' : 'video/mp4',  // Set type based on video format
+          type: isHls ? 'application/x-mpegURL' : 'video/mp4',
         },
       ],
     };
@@ -59,6 +64,20 @@ const Video: React.FC<VideoProps> = ({ video, thumbnail }) => {
       player.addClass('vjs-theme-city');
       playerRef.current = player;
 
+      // Track the timeupdate event to check video progress
+      player.on('timeupdate', () => {
+        const currentTime = player.currentTime();
+        const duration = player.duration();
+        if(!duration || !currentTime) return <div>Something went wrong...</div>
+        if (duration > 0 && currentTime >= duration / 2) {
+          // Ensure we only increase views once
+          player.off('timeupdate');  // Stop listening to timeupdate to prevent multiple triggers
+          increaseViews(videoId).catch(err => {
+            console.error('Failed to increase views:', err);
+          });  // Call increaseViews function
+        }
+      });
+
       player.on('waiting', () => {
         videojs.log('Player is waiting');
       });
@@ -77,10 +96,11 @@ const Video: React.FC<VideoProps> = ({ video, thumbnail }) => {
         playerRef.current = null;
       }
     };
-  }, [video]);
+  }, [video, videoId, increaseViews]);
+
   return (
-    <div data-vjs-player style={{ width: '100%', height: '100%' }}>
-      <div ref={videoRef} style={{ width: '100%', height: '100%' }} />
+    <div data-vjs-player className='w-full h-full'>
+      <div ref={videoRef} className='w-full h-full'/>
     </div>
   );
 };

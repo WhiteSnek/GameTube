@@ -97,15 +97,15 @@ const GuildDetails: React.FC<GuildDetailsProps> = ({ guildId }) => {
             className="w-24 h-24 rounded-full border-4 border-zinc-800 absolute bottom-0 left-4 transform translate-y-1/2"
           />
         </div>
-        <div className="flex justify-around items-center">
+        <div className="flex px-40 justify-between items-center">
           <div className="mt-6 text-center">
             <h2 className="text-2xl font-semibold">{guild.guild_name}</h2>
             <p className="mt-2 text-gray-200">{guild.guild_description}</p>
           </div>
           {user?.guild === guildId ? (
-            <button className="bg-red-500 px-4 py-2 text-lg rounded-lg font-bold text-white shadow-xl btn-5">
+            <Link to={`/guilds/manage/${guildId}`} className="bg-red-500 px-4 py-2 text-lg rounded-lg font-bold text-white shadow-xl btn-5">
               Manage
-            </button>
+            </Link>
           ) : (
             <button onClick={toggleSubscription} className='bg-red-500 px-4 py-2 text-md rounded-lg font-bold text-white shadow-xl btn-5'>
             {isAMember ? 'Leave Guild' : 'Join Guild'}
@@ -125,7 +125,7 @@ const GuildDetails: React.FC<GuildDetailsProps> = ({ guildId }) => {
       </div>
       <div className={`p-4 ${showSidebar ? 'col-span-4': 'col-span-3'}  bg-zinc-800 my-4 rounded-lg `}>
         <h1 className="p-2 border-b-2 border-red-500 w-full text-white text-3xl font-bold">Guild Members</h1>
-          <Members guildId={guild.id} />
+          <Members guildId={guild.id} edit={false}/>
       </div>
       </div>
       {/* Snackbar for feedback */}

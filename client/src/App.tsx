@@ -15,6 +15,7 @@ const App: React.FC = () => {
             <Header />
             <div className={`${showSidebar ? "ml-[16.67%]" : ""} mt-[5rem]`}>
               <Outlet />
+
             </div>
           </VideoProvider>
         </GuildProvider>

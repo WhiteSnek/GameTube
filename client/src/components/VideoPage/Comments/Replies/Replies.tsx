@@ -21,7 +21,7 @@ const Replies: React.FC<RepliesProps> = ({ commentId }) => {
       }
     };
     getReplies();
-  }, []);
+  }, [commentId]);
   return (
     <div className="px-10">
       <h1 className="text-xl text-white font-bold">{replies.length} replies</h1>

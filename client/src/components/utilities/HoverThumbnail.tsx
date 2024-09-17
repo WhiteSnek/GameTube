@@ -52,7 +52,7 @@ const HoverThumbnail: React.FC<HoverThumbnailProps> = ({ duration, thumbnail, vi
       {isHovered ? (
         <video
           src={video}
-          className='aspect-video w-[1000px] object-cover rounded-md bg-gray-900'
+          className='aspect-video w-[1000px] object-contain rounded-md bg-zinc-950'
           autoPlay
           muted
           loop
@@ -60,7 +60,7 @@ const HoverThumbnail: React.FC<HoverThumbnailProps> = ({ duration, thumbnail, vi
       ) : (
         <img
           src={thumbnail}
-          className='aspect-video w-[1000px] object-cover rounded-md'
+          className='aspect-video w-[1000px] object-contain rounded-md bg-zinc-950'
           alt="Thumbnail"
         />
       )}

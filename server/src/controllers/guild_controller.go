@@ -9,6 +9,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"net/http"
+	"strconv"
+	"log"
 )
 
 func CreateGuild(db *sql.DB) http.HandlerFunc {
@@ -111,7 +113,7 @@ func GetGuildInfo(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		query := `SELECT id, guild_name, guild_description,privacy, avatar, cover_image FROM guilds WHERE id = $1`
+		query := `SELECT id, guild_name, guild_description, privacy, avatar, cover_image FROM guilds WHERE id = $1`
 		row := db.QueryRow(query, guildId)
 
 		// Check for errors and retrieve data
@@ -129,6 +131,87 @@ func GetGuildInfo(db *sql.DB) http.HandlerFunc {
 		w.Header().Set("Content-Type", "application/json")
 		if err := json.NewEncoder(w).Encode(guild); err != nil {
 			http.Error(w, "Failed to encode response: "+err.Error(), http.StatusInternalServerError)
+		}
+	}
+}
+
+
+func GetAllGuilds(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Get the search query parameter
+		queryParams := r.URL.Query()
+		searchQuery := queryParams.Get("query")
+
+		// Base query
+		query := `
+			SELECT g.id, g.guild_name, g.avatar, u.username 
+			FROM guilds g 
+			JOIN users u ON g.id = u.guild
+			WHERE 1=1
+		`
+
+		// Build the search query condition
+		var args []interface{}
+		argCount := 1
+
+		if searchQuery != "" {
+			searchPattern := "%" + searchQuery + "%"
+			query += ` AND (
+				g.guild_name ILIKE $` + strconv.Itoa(argCount) + ` OR
+				u.username ILIKE $` + strconv.Itoa(argCount) + `
+			)`
+			args = append(args, searchPattern)
+			argCount++
+		}
+
+		// Execute the query
+		rows, err := db.Query(query, args...)
+		if err != nil {
+			http.Error(w, "Failed to retrieve guilds", http.StatusInternalServerError)
+			log.Printf("Query error: %v", err)
+			return
+		}
+		defer rows.Close()
+
+		// Define the struct for the guilds
+		type GuildWithUser struct {
+			Id          int    `json:"id"`
+			GuildName   string `json:"guild_name"`
+			Avatar      string `json:"avatar"`
+			Username    string `json:"username"`
+		}
+
+		var guilds []GuildWithUser
+
+		// Loop through the rows and scan into the guild struct
+		for rows.Next() {
+			var guild GuildWithUser
+			err := rows.Scan(
+				&guild.Id,
+				&guild.GuildName,
+				&guild.Avatar,
+				&guild.Username,
+			)
+			if err != nil {
+				http.Error(w, "Failed to process guild details", http.StatusInternalServerError)
+				log.Printf("Scan error: %v", err)
+				return
+			}
+			guilds = append(guilds, guild)
+		}
+
+		// Check for any error encountered during iteration
+		if err = rows.Err(); err != nil {
+			http.Error(w, "Failed to retrieve guilds", http.StatusInternalServerError)
+			log.Printf("Row iteration error: %v", err)
+			return
+		}
+
+		// Return the array of guilds as JSON
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(guilds); err != nil {
+			http.Error(w, "Failed to encode guilds", http.StatusInternalServerError)
+			log.Printf("Encoding error: %v", err)
 		}
 	}
 }

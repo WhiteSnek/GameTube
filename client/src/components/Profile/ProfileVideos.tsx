@@ -2,12 +2,14 @@ import React, { useEffect, useState } from 'react'
 import VideoGrid from '../VideoGrid/VideoGrid'
 import { VideoCardTemplate } from '../../templates/video_templates'
 import { useVideo } from '../../providers/VideoProvider'
+import { useUser } from '../../providers/UserProvider'
 
 interface ProfileVideosProps {
     userId: string
 }
 
 const ProfileVideos:React.FC<ProfileVideosProps> = ({userId}) => {
+    const {user} = useUser()
     const {getUserVideos} = useVideo()
     const [video, setVideo] = useState<VideoCardTemplate[]>([])
     useEffect(()=>{
@@ -23,7 +25,7 @@ const ProfileVideos:React.FC<ProfileVideosProps> = ({userId}) => {
     },[])
   return (
     <div className='my-4'>        
-        <h1 className="p-2  w-full border-b-2 border-red-500 text-white text-3xl font-bold">Your Videos</h1>
+        <h1 className="p-2  w-full border-b-2 border-red-500 text-white text-3xl font-bold">{user?.username}'s Videos</h1>
       <VideoGrid videos={video} />
       </div>
   )

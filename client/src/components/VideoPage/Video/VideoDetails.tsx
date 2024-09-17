@@ -8,7 +8,7 @@ interface VideoDetailsProps{
 const VideoDetails: React.FC<VideoDetailsProps> = ({video}) => {
   return (
     <div className="p-8">
-      <Video video={video.video} thumbnail={video.thumbnail} />
+      <Video video={video.video} thumbnail={video.thumbnail} videoId={video.id} />
       <Details video={video} />
     </div>
   );
