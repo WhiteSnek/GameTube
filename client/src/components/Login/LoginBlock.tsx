@@ -10,19 +10,21 @@ import Alert from "@mui/material/Alert";
 const LoginBlock: React.FC = () => {
   const { login } = useUser();
   const [open, setOpen] = useState<boolean>(false);
+  const [snackbarMessage, setSnackbarMessage] = useState<string>("");
+  const [severity, setSeverity] = useState<"success" | "error">("success");
   const navigate = useNavigate();
+
   const handleClose = () => {
     setOpen(false);
   };
-  const handleOpen = () => {
-    setOpen(true);
-  };
+
   const [userInfo, setUserInfo] = useState<LoginTemplate>({
     email: "",
     password: "",
   });
+
   const [showPassword, setShowPassword] = useState<boolean>(false);
-  const [error, setError] = useState<string>("");
+
   const togglePasswordVisibility = (e: React.FormEvent<HTMLButtonElement>) => {
     e.preventDefault();
     setShowPassword(!showPassword);
@@ -30,25 +32,37 @@ const LoginBlock: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (userInfo.email === "" && userInfo.password === "")
-      setError("Username and password is required!!");
-    else if (userInfo.password === "") setError("Password is required!!");
-    else if (userInfo.email === "") setError("Username is required!!");
-    else {
-      console.log(userInfo);
+  
+    if (userInfo.email === "" && userInfo.password === "") {
+      setSnackbarMessage("Email and password are required!");
+      setSeverity("error");
+      setOpen(true);
+    } else if (userInfo.password === "") {
+      setSnackbarMessage("Password is required!");
+      setSeverity("error");
+      setOpen(true);
+    } else if (userInfo.email === "") {
+      setSnackbarMessage("Email is required!");
+      setSeverity("error");
+      setOpen(true);
+    } else {
       try {
-        const success = await login(userInfo);
+        const { success, error } = await login(userInfo);
         if (success) {
-          handleOpen();
+          setSnackbarMessage("User Logged In!!");
+          setSeverity("success");
+          setOpen(true);
           navigate("/");
         } else {
-          setError("Login failed. Please try again.");
+          setSnackbarMessage(error || "Login failed. Please try again.");
+          setSeverity("error");
+          setOpen(true);
         }
       } catch (error) {
-        console.log(error);
-        setError("An error occurred during login.");
+        setSnackbarMessage("An error occurred during login.");
+        setSeverity("error");
+        setOpen(true);
       }
-      setError("");
     }
   };
 
@@ -90,7 +104,7 @@ const LoginBlock: React.FC = () => {
             {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
           </button>
         </div>
-        {error !== "" && <p className="text-sm text-red-600 pb-2">{error}</p>}
+
         <button
           type="submit"
           className="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-3 rounded focus:outline-none focus:ring-2 focus:ring-red-500"
@@ -99,22 +113,23 @@ const LoginBlock: React.FC = () => {
         </button>
 
         <div className="flex flex-col gap-2 py-3 text-sm text-white">
-          <Link to="/" className=" hover:text-gray-400">
+          <Link to="/" className="hover:text-gray-400">
             Forgot password?
           </Link>
-          <Link to="/register" className=" hover:text-gray-400">
+          <Link to="/register" className="hover:text-gray-400">
             Don't have an account? Sign up
           </Link>
         </div>
       </form>
+
       <Snackbar open={open} autoHideDuration={6000} onClose={handleClose}>
         <Alert
           onClose={handleClose}
-          severity="success"
+          severity={severity}
           variant="filled"
           sx={{ width: "100%" }}
         >
-          User Registered!!
+          {snackbarMessage}
         </Alert>
       </Snackbar>
     </div>

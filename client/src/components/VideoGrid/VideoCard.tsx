@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import HoverThumbnail from "../utilities/HoverThumbnail";
 import { UserCard } from "../../templates/user_template";
 import { GuildCard } from "../../templates/guild_template";
+import formatDate from "../../utils/formatDate";
 interface VideoCardProps {
   id: string;
     title: string;
@@ -14,6 +15,7 @@ interface VideoCardProps {
     guild: GuildCard;
     views: number;
     duration: string;
+    created_at: string;
 }
 
 const VideoCard: React.FC<VideoCardProps> = ({
@@ -21,7 +23,7 @@ const VideoCard: React.FC<VideoCardProps> = ({
   title,
   owner,
   views,
-  // created_at,
+  created_at,
   thumbnail,
   video,
   duration,
@@ -40,7 +42,7 @@ const VideoCard: React.FC<VideoCardProps> = ({
           </div>
           <div className='flex gap-3 font-medium text-gray-300'>
             <p>{formatViews(views)} views</p>
-            {/* <p>{formatDate(created_at)}</p> */}
+            <p>{formatDate(created_at)}</p>
           </div>
         </div>
       </div>

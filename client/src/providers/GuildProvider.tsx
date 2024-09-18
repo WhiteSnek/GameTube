@@ -1,5 +1,5 @@
 import React, { createContext, ReactNode, useContext, useState } from 'react';
-import { GuildDetails, GuildMembers } from '../templates/guild_template';
+import { AllGuilds, GuildDetails, GuildMembers } from '../templates/guild_template';
 import axios, { AxiosResponse } from 'axios';
 
 interface EditMembership {
@@ -16,6 +16,7 @@ interface GuildContextType {
   promoteUser: (details: EditMembership) => Promise<boolean>;
   demoteUser: (details: EditMembership) => Promise<boolean>;
   kickUser: (details: EditMembership) => Promise<boolean>;
+  searchGuild: (query: string) => Promise<AllGuilds[] | null>;
 }
 
 const GuildContext = createContext<GuildContextType | undefined>(undefined);
@@ -86,6 +87,16 @@ const GuildProvider: React.FC<GuildProviderProps> = ({ children }) => {
     }
   }
 
+  const searchGuild = async (query: string): Promise<AllGuilds[] | null> => {
+    try {
+      const encodedQuery = encodeURIComponent(query);
+      const response: AxiosResponse<AllGuilds[]> = await axios.get(`/guilds?query=${encodedQuery}`, {withCredentials: true});
+      return response.data;
+    } catch (error) {
+      return null
+    }
+  }
+
   
 
   const promoteUser = async (userDetails: EditMembership): Promise<boolean> => {
@@ -138,7 +149,7 @@ const GuildProvider: React.FC<GuildProviderProps> = ({ children }) => {
 
 
   return (
-    <GuildContext.Provider value={{ guild, setGuild, createGuild, getGuildInfo, getGuildMembers, promoteUser,demoteUser,kickUser }}>
+    <GuildContext.Provider value={{ guild, setGuild, createGuild, getGuildInfo, getGuildMembers, promoteUser,demoteUser,kickUser, searchGuild }}>
       {children}
     </GuildContext.Provider>
   );

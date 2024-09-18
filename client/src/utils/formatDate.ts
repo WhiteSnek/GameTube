@@ -1,4 +1,5 @@
-function formatDate(date: Date): string {
+function formatDate(dateString: string): string {
+  const date = new Date(dateString);
   const now = new Date();
   const diff = now.getTime() - date.getTime();
 
@@ -24,5 +25,4 @@ function formatDate(date: Date): string {
   }
 }
 
-
-export default formatDate; 
+export default formatDate;

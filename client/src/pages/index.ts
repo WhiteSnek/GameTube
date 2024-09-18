@@ -10,6 +10,9 @@ import Guild from "./Guild";
 import Profile from "./Profile";
 import UploadVideo from "./UploadVideo";
 import ManageGuild from "./ManageGuild";
+import History from "./History";
+import LikedVideos from "./LikedVideos";
+import WatchLater from "./WatchLater";
 
 export {
     Home,
@@ -23,5 +26,8 @@ export {
     Guild,
     Profile,
     UploadVideo,
-    ManageGuild
+    ManageGuild,
+    History,
+    LikedVideos,
+    WatchLater
 }

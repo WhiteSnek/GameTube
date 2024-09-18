@@ -38,3 +38,10 @@ export interface GuildMembers {
     userAvatar: string;
     joinedAt: string;
   }
+
+export interface AllGuilds {
+    id: string;
+    guild_name: string;
+    avatar: string;
+    username: string
+}

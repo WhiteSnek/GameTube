@@ -11,7 +11,7 @@ export interface VideoCardTemplate {
     views: number;
     duration: string;
     likes: number
-    created_at: Date;
+    created_at: string;
     tags: string[];
 }
 

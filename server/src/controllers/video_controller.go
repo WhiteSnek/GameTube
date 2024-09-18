@@ -41,6 +41,7 @@ type AllVideos struct {
 	Id          uuid.UUID `json:"id"`
 	Title       string    `json:"title"`
 	Url         string    `json:"video"`
+	Description string 	  `json:"description"`
 	Thumbnail   string    `json:"thumbnail"`
 	Owner       struct {
 		Username string    `json:"username"`
@@ -349,6 +350,7 @@ func GetAllVideos(db *sql.DB) http.HandlerFunc {
 				v.id, 
 				v.title, 
 				v.video, 
+				v.description,
 				v.thumbnail, 
 				v.views, 
 				v.duration,
@@ -398,7 +400,7 @@ func GetAllVideos(db *sql.DB) http.HandlerFunc {
 		for rows.Next() {
 			var video AllVideos
 			err := rows.Scan(
-				&video.Id, &video.Title, &video.Url,
+				&video.Id, &video.Title, &video.Url, &video.Description,
 				&video.Thumbnail, &video.Views, &video.Duration, &video.CreatedAt,
 				&video.Owner.Username, &video.Owner.Avatar,
 				&video.Guild.Name, &video.Guild.Avatar,

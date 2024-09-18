@@ -11,6 +11,7 @@ func GuildsRouter(db *sql.DB) *mux.Router {
 	r := mux.NewRouter()
 
 	// Public routes
+	r.HandleFunc("/guilds", controllers.GetAllGuilds(db)).Methods("GET")
 	r.HandleFunc("/guilds/{id:[a-fA-F0-9-]+}", controllers.GetGuildInfo(db)).Methods("GET")
 	r.HandleFunc("/guilds/members/{id:[a-fA-F0-9-]+}", controllers.GetGuildMembers(db)).Methods("GET")
 	r.HandleFunc("/guilds/videos/{id:[a-fA-F0-9-]+}", controllers.GetGuildVideos(db)).Methods("GET")

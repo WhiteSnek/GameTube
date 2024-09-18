@@ -1,7 +1,7 @@
 import React from 'react';
 import { VideoCardTemplate } from '../../templates/video_templates';
 import { Link } from 'react-router-dom';
-// import formatDate from '../../utils/formatDate';
+import formatDate from '../../utils/formatDate';
 import formatViews from '../../utils/formatViews';
 import HoverThumbnail from './HoverThumbnail';
 
@@ -21,7 +21,7 @@ const VideoListCard: React.FC<VideoListProps> = ({ video }) => {
           <p className="text-md text-zinc-400 font-semibold">{video.owner.username}</p>
           <div className="flex gap-2 text-gray-300 text-sm">
             <p>{formatViews(video.views)} views</p>
-            {/* <p>{formatDate(video.created_at)}</p> */}
+            <p>{formatDate(video.created_at)}</p>
           </div>
         </div>
       </div>

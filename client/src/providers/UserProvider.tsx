@@ -16,7 +16,7 @@ interface CheckMember {
 interface UserContextType {
   user: UserDetails | null;
   setUser: React.Dispatch<React.SetStateAction<UserDetails | null>>;
-  login: (userInfo: LoginTemplate) => Promise<boolean>;
+  login: (userInfo: LoginTemplate) => Promise<{ success: boolean; error?: string }>;
   register: (userInfo: FormData) => Promise<boolean>;
   logout: () => Promise<boolean>;
   joinGuild: (guildId: string) => Promise<string>
@@ -51,7 +51,7 @@ const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     if(!user) navigate('/login')
   },[])
 
-  const login = async (userInfo: LoginTemplate): Promise<boolean> => {
+  const login = async (userInfo: LoginTemplate): Promise<{ success: boolean; error?: string }> => {
     try {
       const response: AxiosResponse<UserDetails> = await axios.post(
         "/users/login",
@@ -60,12 +60,19 @@ const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
       );
       console.log(response);
       setUser(response.data);
-      return true; // Login successful
-    } catch (error) {
-      console.log(error);
-      return false; // Login failed
+      return { success: true }; // Login successful
+    } catch (error: any) {
+      // Check if the error is an Axios error and extract the message
+      if (error.response) {
+        return { success: false, error: error.response.data|| "Login failed" };
+      } else if (error.request) {
+        return { success: false, error: "No response from server. Please try again later." };
+      } else {
+        return { success: false, error: error.message || "An error occurred during login." };
+      }
     }
   };
+  
 
   const register = async (formData: FormData): Promise<boolean> => {
     try {

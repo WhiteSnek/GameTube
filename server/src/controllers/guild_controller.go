@@ -175,7 +175,7 @@ func GetAllGuilds(db *sql.DB) http.HandlerFunc {
 
 		// Define the struct for the guilds
 		type GuildWithUser struct {
-			Id          int    `json:"id"`
+			Id          string    `json:"id"`
 			GuildName   string `json:"guild_name"`
 			Avatar      string `json:"avatar"`
 			Username    string `json:"username"`
