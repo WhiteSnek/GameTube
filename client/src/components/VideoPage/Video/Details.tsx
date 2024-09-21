@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { VideoCardTemplate } from '../../../templates/video_templates';
+import { VideoDetailsTemplate } from '../../../templates/video_templates';
 import { Link } from 'react-router-dom';
 import ThumbUpAltIcon from '@mui/icons-material/ThumbUpAlt';
 import ThumbUpOffAltIcon from '@mui/icons-material/ThumbUpOffAlt';
@@ -13,7 +13,7 @@ import { Snackbar, Alert } from '@mui/material';
 import { useVideo } from '../../../providers/VideoProvider';
 
 interface DetailsProps {
-  video: VideoCardTemplate;
+  video: VideoDetailsTemplate;
 }
 
 const Details: React.FC<DetailsProps> = ({ video }) => {
@@ -29,7 +29,7 @@ const Details: React.FC<DetailsProps> = ({ video }) => {
   const { likeVideo, unlikeVideo, videoLiked } = useVideo();
 
   useEffect(()=>{
-    const details = { userId: user?.id, entityId: video.id };
+    const details = { userId: user?.id, entityId: video.id, entityType: "video" };
     const checkLike = async () => {
       const response = await videoLiked(details);
       setLiked(response)
@@ -47,7 +47,7 @@ const Details: React.FC<DetailsProps> = ({ video }) => {
 
   const removeLike = async () => {
     if (!user?.id) return;
-    const details = { userId: user.id, entityId: video.id };
+    const details = { userId: user.id, entityId: video.id, entityType: "video"};
     const success = await unlikeVideo(details);
     if (success) {
       setLikeCount(likeCount - 1);
@@ -59,7 +59,7 @@ const Details: React.FC<DetailsProps> = ({ video }) => {
 
   const addLike = async () => {
     if (!user?.id) return;
-    const details = { userId: user.id, entityId: video.id };
+    const details = { userId: user.id, entityId: video.id, entityType: "video"};
     const success = await likeVideo(details);
     if (success) {
       setLikeCount(likeCount + 1);

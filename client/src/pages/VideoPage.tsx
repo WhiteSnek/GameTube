@@ -4,13 +4,13 @@ import Recommended from "../components/VideoPage/Recommended/Recommended";
 import Comments from "../components/VideoPage/Comments/Comments";
 import { useParams } from "react-router-dom";
 import { useVideo } from "../providers/VideoProvider";
-import { VideoCardTemplate } from "../templates/video_templates";
+import { VideoDetailsTemplate } from "../templates/video_templates";
 import CommentProvider from "../providers/CommentProvider";
 
 const VideoPage: React.FC = () => {
   const { videoId } = useParams();
   const { getVideoDetails } = useVideo();
-  const [video, setVideo] = useState<VideoCardTemplate | null>(null);
+  const [video, setVideo] = useState<VideoDetailsTemplate | null>(null);
   if(!videoId) return <div>Something went wrong...</div>
   useEffect(() => {
     const getVideo = async () => {

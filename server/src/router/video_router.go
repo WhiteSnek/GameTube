@@ -24,6 +24,8 @@ func VideosRouter(db *sql.DB) *mux.Router {
 
 	// Define protected routes related to videos
 	protected.HandleFunc("/upload", controllers.UploadVideo(db)).Methods("POST")
+	protected.HandleFunc("/add-to-history", controllers.AddToHistory(db)).Methods("POST")
+	protected.HandleFunc("/history/{id:[a-fA-F0-9-]+}", controllers.GetHistory(db)).Methods("GET")
 	// Add any additional protected routes related to videos here
 
 	return r

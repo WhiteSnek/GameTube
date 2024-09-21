@@ -22,7 +22,7 @@ const SingleComment: React.FC<CommentProps> = ({ comment }) => {
   const {likeComment, unlikeComment, commentLiked} = useComment()
 
   useEffect(()=>{
-    const details = { userId: user?.id, entityId: comment.id };
+    const details = { userId: user?.id, entityId: comment.id, entityType: "comment"  };
     const checkLike = async () => {
       const response = await commentLiked(details);
       setLiked(response)
@@ -40,7 +40,7 @@ const SingleComment: React.FC<CommentProps> = ({ comment }) => {
 
   const removeLike = async () => {
     if (!user?.id) return;
-    const details = { userId: user.id, entityId: comment.id };
+    const details = { userId: user.id, entityId: comment.id, entityType: "comment" };
     const success = await unlikeComment(details);
     if (success) {
       setLikeCount(likeCount - 1);
@@ -52,7 +52,7 @@ const SingleComment: React.FC<CommentProps> = ({ comment }) => {
 
   const addLike = async () => {
     if (!user?.id) return;
-    const details = { userId: user.id, entityId: comment.id };
+    const details = { userId: user.id, entityId: comment.id, entityType: "comment"  };
     const success = await likeComment(details);
     if (success) {
       setLikeCount(likeCount + 1);

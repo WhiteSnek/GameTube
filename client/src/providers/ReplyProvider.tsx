@@ -5,6 +5,7 @@ import axios, { AxiosResponse } from 'axios';
 interface likeReplyProps {
     userId: string | undefined;
     entityId: string | undefined;
+    entityType: string;
   }
 
 interface ReplyContextType {

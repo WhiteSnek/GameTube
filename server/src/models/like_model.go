@@ -6,5 +6,6 @@ import (
 
 type Like struct {
 	EntityId   *uuid.UUID `json:"entityId"`
+	EntityType string `json:"entityType"`
 	UserId    uuid.UUID  `json:"userId"`
 }

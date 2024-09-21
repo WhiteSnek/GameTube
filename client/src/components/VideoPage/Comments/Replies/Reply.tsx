@@ -17,7 +17,7 @@ const Reply: React.FC<ReplyProps> = ({ reply }) => {
   const {likeReply, unlikeReply, replyLiked} = useReply()
 
   useEffect(()=>{
-    const details = { userId: user?.id, entityId: reply.id };
+    const details = { userId: user?.id, entityId: reply.id, entityType: "reply" };
     const checkLike = async () => {
       const response = await replyLiked(details);
       setLiked(response)
@@ -35,7 +35,7 @@ const Reply: React.FC<ReplyProps> = ({ reply }) => {
 
   const removeLike = async () => {
     if (!user?.id) return;
-    const details = { userId: user.id, entityId: reply.id };
+    const details = { userId: user.id, entityId: reply.id, entityType: "reply" };
     const success = await unlikeReply(details);
     if (success) {
       setLikeCount(likeCount - 1);
@@ -47,7 +47,7 @@ const Reply: React.FC<ReplyProps> = ({ reply }) => {
 
   const addLike = async () => {
     if (!user?.id) return;
-    const details = { userId: user.id, entityId: reply.id };
+    const details = { userId: user.id, entityId: reply.id, entityType: "reply" };
     const success = await likeReply(details);
     if (success) {
       setLikeCount(likeCount + 1);

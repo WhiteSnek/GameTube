@@ -2,9 +2,11 @@ import React, { useEffect, useRef } from 'react';
 import videojs from 'video.js';
 import 'video.js/dist/video-js.css';
 import { useVideo } from '../../../providers/VideoProvider';
+import { VideoUrls } from '../../../templates/video_templates';
+import { useUser } from '../../../providers/UserProvider';
 
 interface VideoProps {
-  video: string;  // URL of the video (HLS stream or MP4 file)
+  video: VideoUrls;  // URL of the video (HLS stream or MP4 file)
   thumbnail: string;  // URL of the thumbnail image
   videoId: string;  // Unique ID of the video
 }
@@ -26,7 +28,9 @@ interface VideoJsOptions {
 }
 
 const Video: React.FC<VideoProps> = ({ video, thumbnail, videoId }) => {
-  const { increaseViews } = useVideo();
+  const {user} = useUser();
+  if(!user) return <div>Something went wrong...</div>
+  const { increaseViews, addtoHistory } = useVideo();
   const videoRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<any | null>(null);
 
@@ -56,7 +60,7 @@ const Video: React.FC<VideoProps> = ({ video, thumbnail, videoId }) => {
       videoElement.classList.add('vjs-big-play-centered');
       videoRef.current.appendChild(videoElement);
 
-      const options = getVideoJsOptions(video);
+      const options = getVideoJsOptions(video.video720);
       const player = videojs(videoElement, options, () => {
         videojs.log('Player is ready');
       });
@@ -74,7 +78,10 @@ const Video: React.FC<VideoProps> = ({ video, thumbnail, videoId }) => {
           player.off('timeupdate');  // Stop listening to timeupdate to prevent multiple triggers
           increaseViews(videoId).catch(err => {
             console.error('Failed to increase views:', err);
-          });  // Call increaseViews function
+          });
+          addtoHistory({userId: user.id, videoId}).catch(err => {
+            console.error('Failed to add video to history:', err);
+          });
         }
       });
 
@@ -86,7 +93,7 @@ const Video: React.FC<VideoProps> = ({ video, thumbnail, videoId }) => {
         videojs.log('Player will dispose');
       });
     } else if (playerRef.current) {
-      const options = getVideoJsOptions(video);
+      const options = getVideoJsOptions(video.video720);
       playerRef.current.src(options.sources);
     }
 

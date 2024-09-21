@@ -6,6 +6,7 @@ import axios, { AxiosResponse } from 'axios';
 interface likeCommentProps {
     userId: string | undefined;
     entityId: string | undefined;
+    entityType: string;
   }
 
 interface CommentContextType {

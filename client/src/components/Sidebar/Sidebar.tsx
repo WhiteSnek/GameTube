@@ -1,6 +1,6 @@
 import React from 'react';
 import { SidebarItems } from '../../templates/sidebar_template';
-import { Home, Subscriptions, History, PlaylistPlay, WatchLater, ThumbUp, Castle } from '@mui/icons-material';
+import { Home, Subscriptions, History, ThumbUp, Castle } from '@mui/icons-material';
 import { NavLink } from 'react-router-dom';
 import { IconButton } from '@mui/material';
 import { useUser } from '../../providers/UserProvider';
@@ -12,8 +12,6 @@ const Sidebar: React.FC = () => {
         { name: "Subscriptions", icon: Subscriptions, link: "/subscriptions"},
         { name: "Your Guild", icon: Castle, link: `/guilds/${user?.guild}`},
         { name: "History", icon: History, link: "/history" },
-        { name: "Playlists", icon: PlaylistPlay, link: "/playlists" },
-        { name: "Watch Later", icon: WatchLater, link: "/watch-later" },
         { name: "Liked Videos", icon: ThumbUp, link: "/liked-videos" }
     ];
 
@@ -24,7 +22,7 @@ const Sidebar: React.FC = () => {
                     key={index}
                     to={item.link}
                     className={({ isActive }) => 
-                        `flex items-center gap-3 p-2 text-white ${isActive ? 'bg-red-500' : ''}  hover:bg-red-500 hover:text-white transition-all rounded-md`
+                        `flex items-center gap-3 p-2 my-1 text-white ${isActive ? 'bg-red-500' : ''}  hover:bg-red-500 hover:text-white transition-all rounded-md`
                     }
                     aria-label={item.name}
                 >
