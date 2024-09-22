@@ -9,7 +9,6 @@ const Guild:React.FC = () => {
   return (
     <div>
       {guildId === "" ? <CreateGuild /> : <GuildDetails guildId={guildId} /> }
-      
     </div>
   )
 }

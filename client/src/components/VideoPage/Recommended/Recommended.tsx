@@ -1,27 +1,48 @@
-import React, { useEffect } from 'react'
-import VideoList from '../../SpecificPlaylist/VideoList'
-import { useVideo } from '../../../providers/VideoProvider'
+import React, { useEffect, useState } from 'react';
+import VideoList from '../../SpecificPlaylist/VideoList';
+import { useVideo } from '../../../providers/VideoProvider';
+import LoadingState from './LoadingState';
+import Snackbar from '@mui/material/Snackbar';
+import Alert from '@mui/material/Alert';
 
-const Recommended:React.FC = () => {
-  const {video, getAllVideos} = useVideo();
-  useEffect(()=>{
+const Recommended: React.FC = () => {
+  const { getAllVideos } = useVideo();
+  const [loading, setLoading] = useState<boolean>(false);
+  const [openSnackbar, setOpenSnackbar] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string>('');
+
+  useEffect(() => {
     const getVideos = async () => {
-    const success: boolean = await getAllVideos();
-    if(success){
-      console.log(video)
-      console.log('Videos retrieved')
-    } else {
-      console.log('Error retreiving videos')
-    }
-  }
-  getVideos()
-  },[])
+      setLoading(true);
+      const success: boolean = await getAllVideos();
+      if (!success) {
+        setErrorMessage('Error retrieving videos');
+        setOpenSnackbar(true);
+      }
+      setLoading(false);
+    };
+    getVideos();
+  }, []);
+  const handleCloseSnackbar = () => {
+    setOpenSnackbar(false);
+  };
+
   return (
     <div className='mx-4'>
       <h1 className='text-xl font-bold text-white px-4 pt-4'>Recommended</h1>
-      <VideoList component='video' />
-    </div>
-  )
-}
+      {loading ? <LoadingState /> : <VideoList component="video" />}
 
-export default Recommended
+      <Snackbar
+        open={openSnackbar}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+      >
+        <Alert onClose={handleCloseSnackbar} severity="error" sx={{ width: '100%' }}>
+          {errorMessage}
+        </Alert>
+      </Snackbar>
+    </div>
+  );
+};
+
+export default Recommended;

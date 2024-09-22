@@ -3,10 +3,7 @@ import { VideoDetailsTemplate } from '../../../templates/video_templates';
 import { Link } from 'react-router-dom';
 import ThumbUpAltIcon from '@mui/icons-material/ThumbUpAlt';
 import ThumbUpOffAltIcon from '@mui/icons-material/ThumbUpOffAlt';
-import BookmarkBorderIcon from '@mui/icons-material/BookmarkBorder';
-import BookmarkIcon from '@mui/icons-material/Bookmark';
 import ShareOutlinedIcon from '@mui/icons-material/ShareOutlined';
-import DownloadOutlinedIcon from '@mui/icons-material/DownloadOutlined';
 import formatViews from '../../../utils/formatViews';
 import { useUser } from '../../../providers/UserProvider';
 import { Snackbar, Alert } from '@mui/material';
@@ -18,7 +15,6 @@ interface DetailsProps {
 
 const Details: React.FC<DetailsProps> = ({ video }) => {
   const [liked, setLiked] = useState<boolean>(false);
-  const [saved, setSaved] = useState<boolean>(false);
   const [isAMember, setIsAMember] = useState<boolean>(false);
   const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
   const [snackbarMessage, setSnackbarMessage] = useState<string>('');
@@ -69,10 +65,6 @@ const Details: React.FC<DetailsProps> = ({ video }) => {
     }
   };
 
-  const toggleSaved = useCallback(() => {
-    setSaved(prev => !prev);
-  }, []);
-
   useEffect(() => {
     const check = async () => {
       if (video) {
@@ -106,6 +98,25 @@ const Details: React.FC<DetailsProps> = ({ video }) => {
     setSnackbarOpen(false);
   };
 
+  // Function to share the video by copying the URL to clipboard
+  const shareVideo = () => {
+    const videoUrl = `${window.location.origin}/videos/${video.id}`;
+    
+    // Copy to clipboard
+    navigator.clipboard.writeText(videoUrl)
+      .then(() => {
+        setSnackbarMessage('Video URL copied to clipboard!');
+        setSnackbarSeverity('success');
+        setSnackbarOpen(true);
+      })
+      .catch(err => {
+        setSnackbarMessage('Failed to copy the URL');
+        setSnackbarSeverity('error');
+        setSnackbarOpen(true);
+        console.error('Failed to copy the URL: ', err);
+      });
+  };
+
   if (!video) {
     return <div>Loading...</div>;
   }
@@ -130,14 +141,8 @@ const Details: React.FC<DetailsProps> = ({ video }) => {
           <button onClick={toggleLike} className='text-white py-2 px-4 bg-red-500 rounded-full flex gap-2' aria-label={liked ? 'Unlike' : 'Like'}>
             {liked ? <ThumbUpAltIcon /> : <ThumbUpOffAltIcon />} {likeCount}
           </button>
-          <button className='text-white py-2 px-4 bg-red-500 rounded-full' aria-label='Share'>
+          <button onClick={shareVideo} className='text-white py-2 px-4 bg-red-500 rounded-full' aria-label='Share'>
             <ShareOutlinedIcon /> Share
-          </button>
-          <button className='text-white py-2 px-4 bg-red-500 rounded-full' aria-label='Download'>
-            <DownloadOutlinedIcon /> Download
-          </button>
-          <button onClick={toggleSaved} className='text-white py-2 px-4 bg-red-500 rounded-full' aria-label={saved ? 'Remove Bookmark' : 'Add Bookmark'}>
-            {saved ? <BookmarkIcon /> : <BookmarkBorderIcon />}
           </button>
         </div>
       </div>

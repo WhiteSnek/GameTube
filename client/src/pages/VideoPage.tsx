@@ -6,31 +6,56 @@ import { useParams } from "react-router-dom";
 import { useVideo } from "../providers/VideoProvider";
 import { VideoDetailsTemplate } from "../templates/video_templates";
 import CommentProvider from "../providers/CommentProvider";
+import { Snackbar, Alert } from '@mui/material'; // Import Snackbar and Alert
+import LoadingState from "../components/VideoPage/Video/LoadingState";
 
 const VideoPage: React.FC = () => {
   const { videoId } = useParams();
   const { getVideoDetails } = useVideo();
   const [video, setVideo] = useState<VideoDetailsTemplate | null>(null);
-  if(!videoId) return <div>Something went wrong...</div>
+  const [loading, setLoading] = useState<boolean>(false)
+  const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
+  const [snackbarMessage, setSnackbarMessage] = useState<string>('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
+
+  const handleSnackbarClose = () => {
+    setSnackbarOpen(false);
+  };
+
+
   useEffect(() => {
+    if (!videoId) {
+      setSnackbarMessage('Something went wrong...');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    } else {
     const getVideo = async () => {
-      
-      const response = await getVideoDetails(videoId);
-      if (response) {
-        console.log(response)
-        console.log("Video fetched successfully");
-        setVideo(response);
-      } else {
-        console.log("Error loading video");
+      try {
+        setLoading(true)
+        const response = await getVideoDetails(videoId);
+        if (response) {
+          console.log("Video fetched successfully", response);
+          setVideo(response);
+        } else {
+          throw new Error("Error loading video");
+        }
+        setLoading(false)
+      } catch (error) {
+        setSnackbarMessage('Failed to load video');
+        setSnackbarSeverity('error');
+        setSnackbarOpen(true);
       }
     };
     getVideo();
-  }, [videoId]);
+  }
+  }, [videoId, getVideoDetails]);
+
   if (!video) return <div>Loading...</div>;
+
   return (
     <div className="grid grid-cols-12">
       <div className="col-span-8">
-        <VideoDetails video={video} />
+        {loading ? <LoadingState /> :<VideoDetails video={video} />}
         <CommentProvider>
           <Comments />
         </CommentProvider>
@@ -38,6 +63,13 @@ const VideoPage: React.FC = () => {
       <div className="col-span-4">
         <Recommended />
       </div>
+
+      {/* Snackbar for error notifications */}
+      <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleSnackbarClose}>
+        <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: '100%' }}>
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </div>
   );
 };
