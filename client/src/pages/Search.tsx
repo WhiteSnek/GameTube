@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import VideoList from '../components/SpecificPlaylist/VideoList';
+import VideoList from '../components/VideoPage/Recommended/VideoList';
 import { useVideo } from '../providers/VideoProvider';
 import { useGuild } from '../providers/GuildProvider';
 import { AllGuilds } from '../templates/guild_template';

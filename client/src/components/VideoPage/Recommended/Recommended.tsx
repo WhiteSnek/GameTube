@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import VideoList from '../../SpecificPlaylist/VideoList';
+import VideoList from './VideoList';
 import { useVideo } from '../../../providers/VideoProvider';
 import LoadingState from './LoadingState';
 import Snackbar from '@mui/material/Snackbar';

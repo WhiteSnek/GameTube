@@ -11,10 +11,8 @@ import {
 import {
   Home,
   Login,
-  Playlists,
   Register,
   Search,
-  SpecificPlaylist,
   Subscriptions,
   VideoPage,
   Guild,
@@ -38,8 +36,6 @@ const Layout: React.FC = () => {
         <Route path="login" element={<Login />} />
         <Route path="register" element={<Register />} />
         <Route path="subscriptions" element={<Subscriptions />} />
-        <Route path="playlists" element={<Playlists />} />
-        <Route path="playlist/:id" element={<SpecificPlaylist />} />
         <Route path="videos/:videoId" element={<VideoPage />} />
         <Route path="search" element={<Search />} />
         <Route path="guilds/:id" element={<Guild />} />

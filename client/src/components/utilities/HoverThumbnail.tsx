@@ -9,20 +9,26 @@ interface HoverThumbnailProps {
 
 const HoverThumbnail: React.FC<HoverThumbnailProps> = ({ duration, thumbnail, video }) => {
   const [isHovered, setIsHovered] = useState<boolean>(false);
+  
   const parseDuration = (duration: string): number => {
     // Assuming duration is in the format "HH:MM:SS"
     const parts = duration.split(':').map(Number);
     return parts.reduce((total, part) => total * 60 + part, 0);
   };
+
   const [currentDuration, setCurrentDuration] = useState<number>(parseDuration(duration));
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Use number type for intervalRef to work in a browser environment
+  const intervalRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (isHovered) {
-      intervalRef.current = setInterval(() => {
+      intervalRef.current = window.setInterval(() => {
         setCurrentDuration((prevDuration) => {
           if (prevDuration <= 0) {
-            clearInterval(intervalRef.current!);
+            if (intervalRef.current) {
+              clearInterval(intervalRef.current);
+            }
             return 0;
           }
           return Math.max(prevDuration - 1, 0);
@@ -40,8 +46,6 @@ const HoverThumbnail: React.FC<HoverThumbnailProps> = ({ duration, thumbnail, vi
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, [isHovered, duration]);
-
-  
 
   return (
     <div
@@ -69,6 +73,6 @@ const HoverThumbnail: React.FC<HoverThumbnailProps> = ({ duration, thumbnail, vi
       </span>
     </div>
   );
-}
+};
 
 export default HoverThumbnail;

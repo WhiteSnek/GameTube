@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useUser } from '../providers/UserProvider';
 import { useVideo } from '../providers/VideoProvider';
-import VideoList from '../components/SpecificPlaylist/VideoList';
+import VideoList from '../components/VideoPage/Recommended/VideoList';
 import { useNavigate } from 'react-router-dom';
 import LoadingState from '../components/History/LoadingState';
 
