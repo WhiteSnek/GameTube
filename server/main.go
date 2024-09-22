@@ -12,11 +12,14 @@ import (
 )
 
 func main() {
-    // Load environment variables from .env file only if in development
-    if os.Getenv("ENV") == "development" {
+    // Check if ENV variable is set to "development", otherwise skip loading .env
+    env := os.Getenv("ENV")
+    if env == "development" {
         if err := godotenv.Load(); err != nil {
             log.Printf("No .env file found or error loading it: %v", err)
         }
+    } else {
+        log.Println("Production environment detected, skipping .env loading")
     }
 
     // Connect to the database
