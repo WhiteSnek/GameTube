@@ -12,9 +12,11 @@ import (
 )
 
 func main() {
-    // Load environment variables from .env file
-    if err := godotenv.Load(); err != nil {
-        log.Fatalf("Error loading .env file: %v", err)
+    // Load environment variables from .env file only if in development
+    if os.Getenv("ENV") == "development" {
+        if err := godotenv.Load(); err != nil {
+            log.Printf("No .env file found or error loading it: %v", err)
+        }
     }
 
     // Connect to the database
@@ -28,8 +30,9 @@ func main() {
     r := router.NewRouter(dbConn)
 
     // Setup CORS
+    allowedOrigin := os.Getenv("ALLOWED_ORIGIN")
     c := cors.New(cors.Options{
-        AllowedOrigins: []string{"http://localhost:5173"}, // Replace with specific domains if needed
+        AllowedOrigins: []string{allowedOrigin}, // Replace with specific domains if needed
         AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
         AllowedHeaders: []string{"Content-Type", "Authorization"},
         AllowCredentials: true,
