@@ -10,7 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/google/uuid"
-	"github.com/joho/godotenv"
+	// "github.com/joho/godotenv"
 )
 
 var uploader *s3manager.Uploader
@@ -18,10 +18,10 @@ var bucketName string
 
 func init() {
     // Load environment variables from .env file
-    err := godotenv.Load()
-    if err != nil {
-        panic("Error loading .env file")
-    }
+    // err := godotenv.Load()
+    // if err != nil {
+    //     panic("Error loading .env file")
+    // }
 
     region := os.Getenv("AWS_REGION")
     accessKey := os.Getenv("AWS_ACCESS_KEY")
