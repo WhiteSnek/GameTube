@@ -7,10 +7,11 @@ import { useUser } from '../../providers/UserProvider';
 
 const Sidebar: React.FC = () => {
     const {user} = useUser()
+    const guildId = user?.guild ? user.guild : "$";
     const list_items: SidebarItems[] = [
         { name: "Home", icon: Home, link: "/" },
         { name: "Subscriptions", icon: Subscriptions, link: "/subscriptions"},
-        { name: "Your Guild", icon: Castle, link: `/guilds/${user?.guild}`},
+        { name: "Your Guild", icon: Castle, link: `/guilds/${guildId}`},
         { name: "History", icon: History, link: "/history" },
         { name: "Liked Videos", icon: ThumbUp, link: "/liked-videos" }
     ];

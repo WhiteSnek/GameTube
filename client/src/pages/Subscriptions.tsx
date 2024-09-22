@@ -9,6 +9,7 @@ import LoadingState from '../components/VideoGrid/LoadingState'; // Import Loadi
 import LoadingGuilds from '../components/SubscriptionGuilds/LoadingGuilds';
 import Snackbar from '@mui/material/Snackbar';
 import MuiAlert, { AlertProps } from '@mui/material/Alert';
+import { useNavigate } from 'react-router-dom';
 
 // Helper for Snackbar Alert
 const Alert = React.forwardRef<HTMLDivElement, AlertProps>(function Alert(props, ref) {
@@ -23,11 +24,14 @@ const Subscriptions: React.FC = () => {
   const [guildsError, setGuildsError] = useState<string | null>(null); // Error state for guilds
   const [videosError, setVideosError] = useState<string | null>(null); // Error state for videos
   const [openSnackbar, setOpenSnackbar] = useState<boolean>(false);
-
-  const { getUserGuilds } = useUser();
+  const navigate = useNavigate()
+  const { getUserGuilds, user } = useUser();
   const { getGuildVideos } = useVideo();
 
   useEffect(() => {
+    if(!user){
+      navigate('/login')
+    }
     const fetchGuilds = async () => {
       setLoadingGuilds(true);
       setGuildsError(null); // Reset error before fetching

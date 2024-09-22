@@ -48,12 +48,19 @@ const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
 
   // Load user from cookie when the component mounts
   useEffect(() => {
-    const storedUser = Cookies.get("user"); // Get the user data from cookies
-    if (storedUser) {
-      setUser(JSON.parse(storedUser)); // Parse and set the user data
-    } else {
-      navigate("/login"); // Redirect to login if no user is found
+    const getCurrentUser = async () => {
+      try {
+        const storedUser: AxiosResponse<UserDetails> = await axios.get('/users/protected/current-user',{withCredentials: true})
+        if (storedUser) {
+          setUser(storedUser.data);
+        } else {
+          navigate("/login");
+        }
+      } catch (error) {
+        navigate("/login");
+      }
     }
+    getCurrentUser()
   }, [navigate]);
 
   const login = async (userInfo: LoginTemplate): Promise<{ success: boolean; error?: string }> => {

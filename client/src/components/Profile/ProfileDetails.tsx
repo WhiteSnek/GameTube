@@ -26,9 +26,6 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({user}) => {
           <h2 className="text-2xl font-semibold">{user?.username}</h2>
           <p className="mt-2 text-gray-200 text-sm">{user?.email}</p>
         </div>
-        <button className="bg-red-500 px-4 py-2 text-lg rounded-lg font-bold text-white shadow-xl btn-5">
-          Manage
-        </button>
       </div>
     </div>
   );

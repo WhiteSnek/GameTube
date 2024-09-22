@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"time"
+	"github.com/WhiteSnek/GameTube/src/contextkeys"
 )
 
 func RegisterUser(db *sql.DB) http.HandlerFunc {
@@ -254,4 +255,33 @@ func GetUserByID(db *sql.DB) http.HandlerFunc {
 	}
 }
 
+func GetLoggedInUser(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Extract the user from the request context (added by the AuthMiddleware)
+		user, ok := r.Context().Value(contextkeys.UserKey).(*models.User)
+		if !ok || user == nil {
+			http.Error(w, "Unauthorized: User not found in context", http.StatusUnauthorized)
+			return
+		}
 
+		// Query the database for the user's full details using the ID from the context
+		query := `SELECT id, username, email, password, fullname, avatar, cover_image, dob, gender, google_id, guild, created_at, updated_at FROM users WHERE id = $1`
+		row := db.QueryRow(query, user.ID)
+		
+		// Scan the user details into a user struct
+		var fullUser models.User
+		err := row.Scan(&fullUser.ID, &fullUser.Username, &fullUser.Email, &fullUser.Password, &fullUser.FullName, &fullUser.Avatar, &fullUser.CoverImage, &fullUser.Dob, &fullUser.Gender, &fullUser.GoogleID, &fullUser.Guild, &fullUser.CreatedAt, &fullUser.UpdatedAt)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				http.Error(w, "User not found", http.StatusNotFound)
+			} else {
+				http.Error(w, "Failed to retrieve user details: "+err.Error(), http.StatusInternalServerError)
+			}
+			return
+		}
+
+		// Respond with the full user details as JSON
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(fullUser)
+	}
+}

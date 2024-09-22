@@ -23,6 +23,7 @@ func UsersRouter(db *sql.DB) *mux.Router {
 	protected.Use(authMiddleware) // Apply the middleware to this subrouter
 
 	protected.HandleFunc("/logout", controllers.LogoutUser()).Methods("POST")
+	protected.HandleFunc("/current-user", controllers.GetLoggedInUser(db)).Methods("GET")
 	protected.HandleFunc("/join-guild", controllers.JoinGuild(db)).Methods("POST")
 	protected.HandleFunc("/leave-guild", controllers.LeaveGuild(db)).Methods("POST")
 	return r
