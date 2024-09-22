@@ -1,6 +1,5 @@
 import React, { createContext, ReactNode, useContext, useEffect, useState } from "react";
 import axios, { AxiosResponse } from "axios";
-import Cookies from "js-cookie"
 import { useNavigate } from "react-router-dom";
 import {
   LoginTemplate,
@@ -72,8 +71,6 @@ const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
       );
       setUser(response.data);
 
-      // Set user data in cookies with 1 day expiration
-      Cookies.set("user", JSON.stringify(response.data), { expires: 1 });
 
       return { success: true }; // Login successful
     } catch (error: any) {
@@ -90,12 +87,21 @@ const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
 
   const register = async (formData: FormData): Promise<boolean> => {
     try {
+      const email = formData.get("email")
+      const password = formData.get("password")
+      if (typeof email !== "string" || typeof password !== "string") {
+        throw new Error("Invalid email or password");
+      }
+      const userInfo: LoginTemplate = {
+        email, password
+      }
       const response: AxiosResponse<AddUserResponse> = await axios.post(
         "/users/addUser",
         formData,
         { withCredentials: true }
       );
       console.log(response);
+      login(userInfo)
       return true;
     } catch (error) {
       return false;
@@ -105,14 +111,11 @@ const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   const logout = async (): Promise<boolean> => {
     
     try {
-      // Cookies.remove("user");
       const response: AxiosResponse<string> = await axios.post("/users/protected/logout", {}, { withCredentials: true });
       console.log(response);
 
       setUser(null);
 
-      // Remove the user cookie on logout
-      Cookies.remove("user");
 
       return true;
     } catch (error) {
