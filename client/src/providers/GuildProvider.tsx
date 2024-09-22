@@ -44,7 +44,7 @@ const GuildProvider: React.FC<GuildProviderProps> = ({ children }) => {
   const createGuild = async ({ formData, userId }: CreateGuildProps): Promise<boolean> => {
     try {
       const response: AxiosResponse<GuildDetails> = await axios.post(
-        `/protected/create-guild/${userId}`,
+        `/guilds/protected/create-guild/${userId}`,
         formData,
         { withCredentials: true }
       );

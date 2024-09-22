@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import videojs from 'video.js';
 import 'video.js/dist/video-js.css';
 import { useVideo } from '../../../providers/VideoProvider';
@@ -27,17 +27,22 @@ interface VideoJsOptions {
   poster: string;
 }
 
+// Define a type for valid resolution keys
+type VideoResolution = '360' | '480' | '720';
+
 const Video: React.FC<VideoProps> = ({ video, thumbnail, videoId }) => {
-  const {user} = useUser();
-  if(!user) return <div>Something went wrong...</div>
+  const { user } = useUser();
+  if (!user) return <div>Something went wrong...</div>;
+
   const { increaseViews, addtoHistory } = useVideo();
   const videoRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<any | null>(null);
+  const [currentResolution, setCurrentResolution] = useState<VideoResolution>('720'); // Default resolution
 
   const getVideoJsOptions = (videoUrl: string): VideoJsOptions => {
     const isHls = videoUrl.endsWith('.m3u8');
     return {
-      autoplay: false,
+      autoplay: true, // Set autoplay to true for immediate play
       controls: true,
       responsive: true,
       fluid: true,
@@ -53,14 +58,30 @@ const Video: React.FC<VideoProps> = ({ video, thumbnail, videoId }) => {
     };
   };
 
+  const handleResolutionChange = (resolution: VideoResolution) => {
+    setCurrentResolution(resolution);
+    let newVideoUrl;
+    if (resolution === '360') newVideoUrl = video.video360; 
+    else if (resolution === '480') newVideoUrl = video.video480;
+    else if (resolution === '720') newVideoUrl = video.video720;
+
+    if (newVideoUrl) {
+      const options = getVideoJsOptions(newVideoUrl); // Get new options for the selected resolution
+      if (playerRef.current) {
+        playerRef.current.src(options.sources); // Update source
+        playerRef.current.load(); // Load the new video
+        playerRef.current.play(); // Play the new video
+      }
+    }
+  };
+
   useEffect(() => {
     if (videoRef.current && !playerRef.current) {
       const videoElement = document.createElement('video');
-      videoElement.classList.add('video-js');
-      videoElement.classList.add('vjs-big-play-centered');
+      videoElement.classList.add('video-js', 'vjs-big-play-centered');
       videoRef.current.appendChild(videoElement);
 
-      const options = getVideoJsOptions(video.video720);
+      const options = getVideoJsOptions(video.video720); // Initialize with 720p
       const player = videojs(videoElement, options, () => {
         videojs.log('Player is ready');
       });
@@ -72,14 +93,13 @@ const Video: React.FC<VideoProps> = ({ video, thumbnail, videoId }) => {
       player.on('timeupdate', () => {
         const currentTime = player.currentTime();
         const duration = player.duration();
-        if(!duration || !currentTime) return <div>Something went wrong...</div>
+        if (!duration || !currentTime) return;
         if (duration > 0 && currentTime >= duration / 2) {
-          // Ensure we only increase views once
-          player.off('timeupdate');  // Stop listening to timeupdate to prevent multiple triggers
+          player.off('timeupdate'); // Prevent multiple triggers
           increaseViews(videoId).catch(err => {
             console.error('Failed to increase views:', err);
           });
-          addtoHistory({userId: user.id, videoId}).catch(err => {
+          addtoHistory({ userId: user.id, videoId }).catch(err => {
             console.error('Failed to add video to history:', err);
           });
         }
@@ -92,9 +112,6 @@ const Video: React.FC<VideoProps> = ({ video, thumbnail, videoId }) => {
       player.on('dispose', () => {
         videojs.log('Player will dispose');
       });
-    } else if (playerRef.current) {
-      const options = getVideoJsOptions(video.video720);
-      playerRef.current.src(options.sources);
     }
 
     return () => {
@@ -103,11 +120,25 @@ const Video: React.FC<VideoProps> = ({ video, thumbnail, videoId }) => {
         playerRef.current = null;
       }
     };
-  }, [video, videoId, increaseViews]);
+  }, [video, videoId, increaseViews]); // Dependencies for useEffect
 
   return (
-    <div data-vjs-player className='w-full h-full'>
-      <div ref={videoRef} className='w-full h-full'/>
+    <div className='relative w-full h-full'>
+      <div data-vjs-player className='w-full h-full'>
+        <div ref={videoRef} className='w-full h-full' />
+      </div>
+      <div className='absolute bg-black/20 top-2 right-2 flex justify-center items-center'>
+        <select
+          id="resolution-select"
+          value={currentResolution}
+          onChange={(e) => handleResolutionChange(e.target.value as VideoResolution)}
+          className="bg-zinc-900 text-white p-2 rounded shadow-lg"
+        >
+          <option value="720">720p</option>
+          <option value="480">480p</option>
+          <option value="360">360p</option>
+        </select>
+      </div>
     </div>
   );
 };

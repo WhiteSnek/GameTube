@@ -104,7 +104,7 @@ const Page3: React.FC<RegisterProps> = ({ userInfo, setUserInfo }) => {
         formData.append("avatar", userInfo.avatar);
       }
       if (userInfo.cover_image) {
-        formData.append("cover_image", userInfo.cover_image);
+        formData.append("coverImage", userInfo.cover_image);
       }
 
       console.log("FormData:", formData);

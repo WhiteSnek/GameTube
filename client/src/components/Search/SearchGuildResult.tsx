@@ -10,7 +10,7 @@ const SearchGuildResult: React.FC<SearchGuildResultProps> = ({ guild }) => {
   return (
     <Link
       to={`/guilds/${guild.id}`}
-      className="flex items-center space-x-6 px-40 rounded-lg p-4 hover:bg-zinc-800 transition-transform transform shadow-lg"
+      className="flex items-center space-x-6 px-40 rounded-lg p-4 hover:bg-zinc-800 transition-transform transform"
     >
       {/* Avatar Image */}
       <img

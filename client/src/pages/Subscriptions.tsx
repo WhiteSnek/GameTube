@@ -95,8 +95,6 @@ const Subscriptions: React.FC = () => {
       
       {loadingVideos ? (
         <LoadingState /> 
-      ) : videosError ? (
-        <p className="text-red-500 px-6 py-4">Failed to load videos: {videosError}</p>
       ) : (
         <VideoGrid videos={videos} />
       )}

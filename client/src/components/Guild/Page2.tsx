@@ -5,7 +5,8 @@ import Alert from "@mui/material/Alert";
 import { useUser } from "../../providers/UserProvider";
 import { useGuild } from "../../providers/GuildProvider";
 import { UserDetails } from "../../templates/user_template";
-// import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import Cookies from "js-cookie";
 interface CreateGuildProps {
   guildInfo: CreateGuildTemplate;
   setGuildInfo: React.Dispatch<React.SetStateAction<CreateGuildTemplate>>;
@@ -17,7 +18,7 @@ const Page2: React.FC<CreateGuildProps> = ({ guildInfo, setGuildInfo }) => {
   const [severity, setSeverity] = useState<"success" | "error">("success");
   const { user, setUser } = useUser()
   const { guild, createGuild } = useGuild();
-  //   const navigate = useNavigate();
+    const navigate = useNavigate();
 
   const handleClose = () => {
     setOpen(false);
@@ -99,11 +100,12 @@ const Page2: React.FC<CreateGuildProps> = ({ guildInfo, setGuildInfo }) => {
     formData.append("description", guildInfo.description);
     formData.append("privacy", String(guildInfo.private));
     formData.append("avatar", guildInfo.avatar);
-    formData.append("cover_image", guildInfo.cover_image);
+    formData.append("coverImage", guildInfo.cover_image);
     const userId = user?.id;
     const success = await createGuild({formData, userId});
     if (success) {
         const guildId = guild?.id || '';
+        console.log(guild)
       if (user) {
         const updatedUser: UserDetails = {
           ...user,
@@ -111,9 +113,11 @@ const Page2: React.FC<CreateGuildProps> = ({ guildInfo, setGuildInfo }) => {
         };
 
         setUser(updatedUser);
+        Cookies.set("user", JSON.stringify(updatedUser), { expires: 1 });
       }
       setMessage("Guild Created Successfully!");
       setSeverity("success");
+      navigate(`/guilds/${guildId}`)
     } else {
       setMessage("Failed to create guild!");
       setSeverity("error");

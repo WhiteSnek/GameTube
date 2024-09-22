@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { RegisterTemplate } from "../../templates/user_template";
-import { formatDateFormat } from "../../utils/formatDateFormat";
 
 interface RegisterProps {
   userInfo: RegisterTemplate;
@@ -71,7 +70,7 @@ const Page2: React.FC<RegisterProps> = ({
         <label className="block text-white mb-2">Date of Birth:</label>
         <input
           type="date"
-          value={userInfo.dob ? formatDateFormat(userInfo.dob) : "2023-03-21"}
+          // value={userInfo.dob ? formatDateFormat(userInfo.dob) : "2023-03-21"}
           onChange={(e) => setUserInfo({ ...userInfo, dob: e.target.value })}
           className="w-full p-3 rounded bg-zinc-700 text-white focus:outline-none focus:ring-2 focus:ring-red-500"
         />

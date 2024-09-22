@@ -1,17 +1,16 @@
 import React, { createContext, ReactNode, useContext, useEffect, useState } from "react";
+import axios, { AxiosResponse } from "axios";
+import Cookies from "js-cookie"
+import { useNavigate } from "react-router-dom";
 import {
   LoginTemplate,
   UserDetails,
 } from "../templates/user_template";
 import { GetGuilds } from "../templates/guild_template";
-import axios, { AxiosResponse } from "axios";
-import { useNavigate } from "react-router-dom";
 
 interface CheckMember {
-  isMember: boolean
+  isMember: boolean;
 }
-
-
 
 interface UserContextType {
   user: UserDetails | null;
@@ -19,10 +18,10 @@ interface UserContextType {
   login: (userInfo: LoginTemplate) => Promise<{ success: boolean; error?: string }>;
   register: (userInfo: FormData) => Promise<boolean>;
   logout: () => Promise<boolean>;
-  joinGuild: (guildId: string) => Promise<string>
-  leaveGuild: (guildId: string) => Promise<string>
-  checkMembership: (guildId: string) => Promise<boolean>
-  getUserGuilds: () => Promise<GetGuilds[] | null>
+  joinGuild: (guildId: string) => Promise<string>;
+  leaveGuild: (guildId: string) => Promise<string>;
+  checkMembership: (guildId: string) => Promise<boolean>;
+  getUserGuilds: () => Promise<GetGuilds[] | null>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -45,11 +44,17 @@ interface AddUserResponse {
 
 const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   const [user, setUser] = useState<UserDetails | null>(null);
-  const navigate = useNavigate()
-  
-  useEffect(()=>{
-    if(!user) navigate('/login')
-  },[])
+  const navigate = useNavigate();
+
+  // Load user from cookie when the component mounts
+  useEffect(() => {
+    const storedUser = Cookies.get("user"); // Get the user data from cookies
+    if (storedUser) {
+      setUser(JSON.parse(storedUser)); // Parse and set the user data
+    } else {
+      navigate("/login"); // Redirect to login if no user is found
+    }
+  }, [navigate]);
 
   const login = async (userInfo: LoginTemplate): Promise<{ success: boolean; error?: string }> => {
     try {
@@ -58,13 +63,16 @@ const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         userInfo,
         { withCredentials: true }
       );
-      console.log(response);
       setUser(response.data);
+
+      // Set user data in cookies with 1 day expiration
+      Cookies.set("user", JSON.stringify(response.data), { expires: 1 });
+
       return { success: true }; // Login successful
     } catch (error: any) {
-      // Check if the error is an Axios error and extract the message
+      // Handle different types of errors
       if (error.response) {
-        return { success: false, error: error.response.data|| "Login failed" };
+        return { success: false, error: error.response.data || "Login failed" };
       } else if (error.request) {
         return { success: false, error: "No response from server. Please try again later." };
       } else {
@@ -72,7 +80,6 @@ const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
       }
     }
   };
-  
 
   const register = async (formData: FormData): Promise<boolean> => {
     try {
@@ -89,78 +96,90 @@ const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   };
 
   const logout = async (): Promise<boolean> => {
+    
     try {
-        const response: AxiosResponse<string> = await axios.post('/users/protected/logout',{},{withCredentials: true});
-        console.log(response)
-        setUser(null)
-        return true;
-    } catch (error) {
-        return false;
-    }
-  }
+      // Cookies.remove("user");
+      const response: AxiosResponse<string> = await axios.post("/users/protected/logout", {}, { withCredentials: true });
+      console.log(response);
 
+      setUser(null);
+
+      // Remove the user cookie on logout
+      Cookies.remove("user");
+
+      return true;
+    } catch (error) {
+      return false;
+    }
+  };
 
   const joinGuild = async (guildId: string): Promise<string> => {
     try {
       const userId = user?.id;
       const response: AxiosResponse<string> = await axios.post(
-        '/users/protected/join-guild',
+        "/users/protected/join-guild",
         { userId, guildId },
         { withCredentials: true }
       );
       console.log(response);
-      return response.data; 
+      return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        console.error('Axios error:', error.response?.data); 
+        console.error("Axios error:", error.response?.data);
         return error.response?.data;
       } else {
-        console.error('Unexpected error:', error); 
-        return 'An unexpected error occurred'; 
+        console.error("Unexpected error:", error);
+        return "An unexpected error occurred";
       }
     }
   };
-  
-  const leaveGuild = async( guildId: string): Promise<string> => {
+
+  const leaveGuild = async (guildId: string): Promise<string> => {
     try {
-      const userId = user?.id
-      const response: AxiosResponse<string> = await axios.post('/users/protected/leave-guild',{userId,guildId}, {withCredentials: true})
+      const userId = user?.id;
+      const response: AxiosResponse<string> = await axios.post(
+        "/users/protected/leave-guild",
+        { userId, guildId },
+        { withCredentials: true }
+      );
       console.log(response);
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        console.error('Axios error:', error.response?.data); 
+        console.error("Axios error:", error.response?.data);
         return error.response?.data;
       } else {
-        console.error('Unexpected error:', error); 
-        return 'An unexpected error occurred'; 
+        console.error("Unexpected error:", error);
+        return "An unexpected error occurred";
       }
     }
-  }
+  };
 
   const checkMembership = async (guildId: string): Promise<boolean> => {
-    const userId = user?.id
+    const userId = user?.id;
     try {
-      const response: AxiosResponse<CheckMember> = await axios.post('/members/check',{userId,guildId}, {withCredentials: true});
+      const response: AxiosResponse<CheckMember> = await axios.post("/members/check", { userId, guildId }, { withCredentials: true });
       console.log(response);
-      return response.data.isMember
+      return response.data.isMember;
     } catch (error) {
       return false;
     }
-  }
+  };
 
   const getUserGuilds = async (): Promise<GetGuilds[] | null> => {
     try {
-      const response: AxiosResponse<GetGuilds[]> = await axios.get(`/users/guilds/${user?.id}`, {withCredentials: true});
-      console.log(response)
-      return response.data
+      const response: AxiosResponse<GetGuilds[]> = await axios.get(`/users/guilds/${user?.id}`, { withCredentials: true });
+      console.log(response);
+      return response.data;
     } catch (error) {
-      return null
+      return null;
     }
-  }
+  };
 
   return (
-    <UserContext.Provider value={{ user, setUser, login, register, logout, joinGuild, leaveGuild, checkMembership, getUserGuilds }}>
+    <UserContext.Provider
+      value={{ user, setUser, login, register, logout, joinGuild, leaveGuild, checkMembership, getUserGuilds }}
+    >
       {children}
     </UserContext.Provider>
   );

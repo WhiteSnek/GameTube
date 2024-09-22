@@ -103,11 +103,12 @@ const VideoProvider: React.FC<VideoProviderProps> = ({ children }) => {
     guildId: string
   ): Promise<VideoCardTemplate[] | null> => {
     try {
+      console.log(guildId)
       const response: AxiosResponse<VideoCardTemplate[]> = await axios.get(
         `/guilds/videos/${guildId}`,
         { withCredentials: true }
       );
-      return response.data;
+      return response.data ? response.data : [];
     } catch (error) {
       console.log(error);
       return null;

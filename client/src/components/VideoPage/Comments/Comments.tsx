@@ -23,12 +23,13 @@ const Comments: React.FC = () => {
       try {
         setLoading(true)
         const response = await getVideoComments(videoId);
+        setLoading(false)
         if (response) {
           setComments(response);
         } else {
           throw new Error('Failed to load comments');
         }
-        setLoading(false)
+        
       } catch (error) {
         setSnackbarMessage((error as Error).message || 'Something went wrong!');
         setSnackbarSeverity('error');
@@ -41,8 +42,6 @@ const Comments: React.FC = () => {
   const handleSnackbarClose = () => {
     setSnackbarOpen(false);
   };
-
-  if (!comments.length) return <div>No comments yet</div>;
 
   return (
     <div className='px-10'>
