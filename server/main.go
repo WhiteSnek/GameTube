@@ -7,10 +7,20 @@ import (
 
     "github.com/WhiteSnek/GameTube/src/db"
     "github.com/WhiteSnek/GameTube/src/router"
+    // "github.com/joho/godotenv"
     "github.com/rs/cors"
 )
 
 func main() {
+    // Check if ENV variable is set to "development", otherwise skip loading .env
+    // env := os.Getenv("ENV")
+    // if env == "development" {
+    //     if err := godotenv.Load(); err != nil {
+    //         log.Printf("No .env file found or error loading it: %v", err)
+    //     }
+    // } else {
+    //     log.Println("Production environment detected, skipping .env loading")
+    // }
 
     // Connect to the database
     dbConn, err := db.ConnectDB()

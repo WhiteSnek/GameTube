@@ -8,7 +8,7 @@ import (
 	"database/sql"
 	"os"
     "log"
-    "github.com/joho/godotenv"
+    // "github.com/joho/godotenv"
 )
 
 type User struct {
@@ -36,9 +36,9 @@ var (
 )
 
 func init() {
-    if err := godotenv.Load(); err != nil {
-        log.Fatalf("Error loading .env file: %v", err)
-    }
+    // if err := godotenv.Load(); err != nil {
+    //     log.Fatalf("Error loading .env file: %v", err)
+    // }
     accessTokenSecret = []byte(os.Getenv("ACCESS_TOKEN_SECRET"))
     refreshTokenSecret = []byte(os.Getenv("REFRESH_TOKEN_SECRET"))
     if len(accessTokenSecret) == 0 || len(refreshTokenSecret) == 0 {
