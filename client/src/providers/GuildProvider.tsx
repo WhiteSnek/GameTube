@@ -106,7 +106,7 @@ const GuildProvider: React.FC<GuildProviderProps> = ({ children }) => {
         guildId: guild?.id,
         memberId: userDetails.memberId
       }
-      const response: AxiosResponse<string> = await axios.post('/members/promote', details, {withCredentials: true})
+      const response: AxiosResponse<string> = await axios.post('/members/protected/promote', details, {withCredentials: true})
       console.log(response.data)
       return true;
     } catch (error) {
@@ -122,7 +122,7 @@ const GuildProvider: React.FC<GuildProviderProps> = ({ children }) => {
         guildId: guild?.id,
         memberId: userDetails.memberId
       }
-      const response: AxiosResponse<string> = await axios.post('/members/demote', details, {withCredentials: true})
+      const response: AxiosResponse<string> = await axios.post('/members/protected/demote', details, {withCredentials: true})
       console.log(response.data)
       return true;
     } catch (error) {
@@ -138,7 +138,7 @@ const GuildProvider: React.FC<GuildProviderProps> = ({ children }) => {
         guildId: guild?.id,
         memberId: userDetails.memberId
       }
-      const response: AxiosResponse<string> = await axios.post('/members/kick', details, {withCredentials: true})
+      const response: AxiosResponse<string> = await axios.post('/members/protected/kick', details, {withCredentials: true})
       console.log(response.data)
       return true;
     } catch (error) {

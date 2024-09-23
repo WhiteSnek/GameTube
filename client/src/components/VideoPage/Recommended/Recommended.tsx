@@ -29,7 +29,7 @@ const Recommended: React.FC = () => {
 
   return (
     <div className='mx-4'>
-      <h1 className='text-xl font-bold text-white px-4 pt-4'>Recommended</h1>
+      <h1 className='text-lg sm:text-xl font-bold text-white px-4 pt-4'>Recommended</h1>
       {loading ? <LoadingState /> : <VideoList component="video" />}
 
       <Snackbar

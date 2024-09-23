@@ -7,7 +7,7 @@ const LoadingMembers: React.FC = () => {
       <Skeleton
         animation="wave"
         variant="rounded"
-        width={320}
+        width={window.innerWidth > 768 ? 320 : 280}
         height={60}
         sx={{ bgcolor: "grey.800" }}
       />

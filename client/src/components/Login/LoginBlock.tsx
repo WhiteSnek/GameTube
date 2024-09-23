@@ -67,7 +67,7 @@ const LoginBlock: React.FC = () => {
   };
 
   return (
-    <div className="flex justify-center items-center mt-36 bg-zinc-900">
+    <div className="flex justify-center items-center mt-36 bg-zinc-900 sm:max-w-xl max-w-xs mx-auto">
       <form
         className="bg-zinc-800 p-8 rounded-lg border border-red-500 w-full max-w-xl"
         onSubmit={handleSubmit}

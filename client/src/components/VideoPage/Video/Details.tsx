@@ -8,6 +8,7 @@ import formatViews from '../../../utils/formatViews';
 import { useUser } from '../../../providers/UserProvider';
 import { Snackbar, Alert } from '@mui/material';
 import { useVideo } from '../../../providers/VideoProvider';
+import truncateText from '../../../utils/truncate_text';
 
 interface DetailsProps {
   video: VideoDetailsTemplate;
@@ -20,18 +21,17 @@ const Details: React.FC<DetailsProps> = ({ video }) => {
   const [snackbarMessage, setSnackbarMessage] = useState<string>('');
   const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
   const [likeCount, setLikeCount] = useState<number>(video.likes);
-
   const { joinGuild, leaveGuild, checkMembership, user } = useUser();
   const { likeVideo, unlikeVideo, videoLiked } = useVideo();
 
-  useEffect(()=>{
-    const details = { userId: user?.id, entityId: video.id, entityType: "video" };
+  useEffect(() => {
+    const details = { userId: user?.id, entityId: video.id, entityType: 'video' };
     const checkLike = async () => {
       const response = await videoLiked(details);
-      setLiked(response)
-    }
-    checkLike()
-  },[])
+      setLiked(response);
+    };
+    checkLike();
+  }, []);
 
   const toggleLike = useCallback(async () => {
     if (liked) {
@@ -43,7 +43,7 @@ const Details: React.FC<DetailsProps> = ({ video }) => {
 
   const removeLike = async () => {
     if (!user?.id) return;
-    const details = { userId: user.id, entityId: video.id, entityType: "video"};
+    const details = { userId: user.id, entityId: video.id, entityType: 'video' };
     const success = await unlikeVideo(details);
     if (success) {
       setLikeCount(likeCount - 1);
@@ -55,7 +55,7 @@ const Details: React.FC<DetailsProps> = ({ video }) => {
 
   const addLike = async () => {
     if (!user?.id) return;
-    const details = { userId: user.id, entityId: video.id, entityType: "video"};
+    const details = { userId: user.id, entityId: video.id, entityType: 'video' };
     const success = await likeVideo(details);
     if (success) {
       setLikeCount(likeCount + 1);
@@ -85,10 +85,8 @@ const Details: React.FC<DetailsProps> = ({ video }) => {
       return;
     }
 
-    const success = isAMember
-      ? await leaveGuild(guildId)
-      : await joinGuild(guildId);
-
+    const success = isAMember ? await leaveGuild(guildId) : await joinGuild(guildId);
+    setIsAMember(!isAMember)
     setSnackbarMessage(success);
     setSnackbarSeverity(success.includes('successfully') ? 'success' : 'error');
     setSnackbarOpen(true);
@@ -98,11 +96,9 @@ const Details: React.FC<DetailsProps> = ({ video }) => {
     setSnackbarOpen(false);
   };
 
-  // Function to share the video by copying the URL to clipboard
   const shareVideo = () => {
     const videoUrl = `${window.location.origin}/videos/${video.id}`;
-    
-    // Copy to clipboard
+
     navigator.clipboard.writeText(videoUrl)
       .then(() => {
         setSnackbarMessage('Video URL copied to clipboard!');
@@ -122,35 +118,60 @@ const Details: React.FC<DetailsProps> = ({ video }) => {
   }
 
   return (
-    <div>
-      <h1 className='text-3xl text-white font-bold py-5'>{video.title}</h1>
-      <div className='flex items-center justify-between gap-4'>
-        <div className='flex items-center gap-4'>
+    <div className='sm:p-4'>
+      <h1 className='text-xl sm:text-3xl text-white font-semibold sm:font-bold py-2 sm:py-5'>
+        {video.title}
+      </h1>
+      <div className='flex items-center sm:justify-between gap-4'>
           <div className='flex items-center gap-3'>
-            <img src={video.owner?.avatar} alt={video.owner?.username} className='h-8 rounded-full aspect-square object-cover'/>
+            <img
+              src={video.owner?.avatar}
+              alt={video.owner?.username}
+              className='h-8 sm:h-12 rounded-full aspect-square object-cover'
+            />
             <div className='flex flex-col'>
-              <Link to={`/profile/${video.owner.id}`} className='text-white font-semibold text-lg'>{video.owner?.username}</Link>
-              <Link to={`/guilds/${video.guild.id}`} className='text-sm text-gray-300 bg-red-500 text-center rounded-md'>{video.guild.name}</Link>
+              <Link
+                to={`/profile/${video.owner.id}`}
+                className='text-white font-semibold text-sm sm:text-lg'
+              >
+                {video.owner?.username}
+              </Link>
+              <Link
+                to={`/guilds/${video.guild.id}`}
+                className='text-xs sm:text-sm text-gray-300 bg-red-500 text-center rounded-md'
+              >
+                {truncateText(video.guild.name, 15)}
+              </Link>
             </div>
           </div>
-          <button onClick={toggleSubscription} className='bg-red-500 px-4 py-2 text-md rounded-lg font-bold text-white shadow-xl'>
-            {isAMember ? 'Leave Guild' : 'Join Guild'}
+        <div className='grid grid-cols-3 gap-2 sm:gap-4 items-center'>
+          <button
+              onClick={toggleSubscription}
+              className='bg-red-500 sm:text-lg px-2 sm:px-4 py-2 text-xs sm:text-md rounded-lg font-bold text-white shadow-xl flex justify-center items-center'
+            >
+              {isAMember ? 'Leave' : 'Join'} {window.innerWidth > 768 && 'Guild'}
+            </button>
+          <button
+            onClick={toggleLike}
+            className='text-white sm:text-lg text-xs py-1 sm:py-2 px-3 sm:px-4 bg-red-500 rounded-full flex gap-1 sm:gap-2 justify-center items-center'
+            aria-label={liked ? 'Unlike' : 'Like'}
+          >
+            {liked ? <ThumbUpAltIcon /> : <ThumbUpOffAltIcon />} {window.innerWidth > 768  && likeCount}
           </button>
-        </div>
-        <div className='flex gap-4 items-center'>
-          <button onClick={toggleLike} className='text-white py-2 px-4 bg-red-500 rounded-full flex gap-2' aria-label={liked ? 'Unlike' : 'Like'}>
-            {liked ? <ThumbUpAltIcon /> : <ThumbUpOffAltIcon />} {likeCount}
-          </button>
-          <button onClick={shareVideo} className='text-white py-2 px-4 bg-red-500 rounded-full' aria-label='Share'>
-            <ShareOutlinedIcon /> Share
+          <button
+            onClick={shareVideo}
+            className='text-white sm:text-lg text-xs py-1 sm:py-2 px-3 sm:px-4 bg-red-500 rounded-full flex gap-2 justify-center items-center'
+            aria-label='Share'
+          >
+            <ShareOutlinedIcon /> {window.innerWidth > 768 ? "Share" : ""}
           </button>
         </div>
       </div>
-      <div className='p-4 m-4 bg-zinc-800 rounded-lg'>
+      <div className='p-3 sm:p-4 m-2 sm:m-4 bg-zinc-800 rounded-lg'>
         <div className='flex text-white gap-3 text-sm font-bold'>
           <p>{formatViews(video.views)} views</p>
         </div>
-        <p className='text-gray-300'>{video.description}</p>
+        <p className='text-gray-300 text-xs sm:text-sm'>{video.description}</p>
       </div>
 
       {/* Snackbar for feedback */}

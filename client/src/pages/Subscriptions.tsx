@@ -88,14 +88,14 @@ const Subscriptions: React.FC = () => {
   };
 
   return (
-    <div>
+    <div className='px-4 sm:px-6'>
       {loadingGuilds ? (
         <LoadingGuilds /> 
       ) : (
         <SubscriptionChannels guilds={guilds} />
       )}
       
-      <h1 className='px-6 py-4 text-white text-3xl font-bold'>Latest</h1>
+      <h1 className='px-2 sm:px-6 py-4 text-white text-2xl sm:text-3xl font-bold'>Latest</h1>
       
       {loadingVideos ? (
         <LoadingState /> 

@@ -15,29 +15,30 @@ const Comments: React.FC = () => {
   const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
   const [snackbarMessage, setSnackbarMessage] = useState<string>('');
   const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
-  const [loading, setLoading] = useState<boolean>(false)
+  const [loading, setLoading] = useState<boolean>(false);
   const { getVideoComments } = useComment();
-  
-  useEffect(() => {
-    const getComments = async () => {
-      try {
-        setLoading(true)
-        const response = await getVideoComments(videoId);
-        setLoading(false)
-        if (response) {
-          setComments(response);
-        } else {
-          throw new Error('Failed to load comments');
-        }
-        
-      } catch (error) {
-        setSnackbarMessage((error as Error).message || 'Something went wrong!');
-        setSnackbarSeverity('error');
-        setSnackbarOpen(true);
+
+  // Function to fetch comments
+  const fetchComments = async () => {
+    try {
+      setLoading(true);
+      const response = await getVideoComments(videoId);
+      setLoading(false);
+      if (response) {
+        setComments(response);
+      } else {
+        throw new Error('Failed to load comments');
       }
-    };
-    getComments();
-  }, [videoId, getVideoComments]);
+    } catch (error) {
+      setSnackbarMessage((error as Error).message || 'Something went wrong!');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    }
+  };
+
+  useEffect(() => {
+    fetchComments();
+  }, [videoId]);
 
   const handleSnackbarClose = () => {
     setSnackbarOpen(false);
@@ -45,13 +46,13 @@ const Comments: React.FC = () => {
 
   return (
     <div className='px-10'>
-      <h1 className='text-xl text-white font-bold'>{comments.length} Comments</h1>
-      <AddComment videoId={videoId} />
-      {loading ? <LoadingState /> :comments.map((comment) => (
+      <h1 className='text-md sm:text-xl text-white sm:font-bold'>{comments.length} Comments</h1>
+      {/* Pass fetchComments as a prop to refresh the comments after adding a new one */}
+      <AddComment videoId={videoId} onCommentAdded={fetchComments} />
+      {loading ? <LoadingState /> : comments.map((comment) => (
         <SingleComment key={comment.id} comment={comment} />
       ))}
-      
-      {/* Snackbar for error handling */}
+
       <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleSnackbarClose}>
         <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: '100%' }}>
           {snackbarMessage}

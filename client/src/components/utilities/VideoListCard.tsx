@@ -17,11 +17,11 @@ const VideoListCard: React.FC<VideoListProps> = ({ video }) => {
           <HoverThumbnail video={video.video} thumbnail={video.thumbnail} duration={video.duration} />
         </div>
         <div className="flex flex-col justify-between">
-          <h1 className="text-white text-lg font-bold">{video.title}</h1>
-          <p className="text-md text-zinc-400 font-semibold">{video.owner.username}</p>
+          <h1 className="text-white text-sm sm:text-lg sm:font-bold">{video.title}</h1>
+          <p className="text-xs sm:text-md text-zinc-400 font-thin sm:font-semibold">{video.owner.username}</p>
           <div className="flex gap-2 text-gray-300 text-sm">
-            <p>{formatViews(video.views)} views</p>
-            <p>{formatDate(video.created_at)}</p>
+            <p className='sm:text-md text-xs'>{formatViews(video.views)} views</p>
+            <p className='sm:text-md text-xs'>{formatDate(video.created_at)}</p>
           </div>
         </div>
       </div>

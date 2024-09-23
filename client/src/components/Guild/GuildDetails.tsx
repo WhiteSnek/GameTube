@@ -41,7 +41,7 @@ const GuildDetails: React.FC<GuildDetailsProps> = ({ guildId }) => {
       }
     };
     check();
-  }, [video, checkMembership]);
+  }, []);
 
   useEffect(() => {
     const getGuild = async () => {
@@ -54,7 +54,11 @@ const GuildDetails: React.FC<GuildDetailsProps> = ({ guildId }) => {
       }
       setLoadingInfo(false);
     };
-
+    if (!guild) {
+      setSnackbarMessage('Failed to get guild!!');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    }
     const fetchGuildVideos = async () => {
       setLoadingVideo(true);
       const response: VideoCardTemplate[] | null = await getGuildVideos(guildId);
@@ -86,9 +90,11 @@ const GuildDetails: React.FC<GuildDetailsProps> = ({ guildId }) => {
     } else {
       success = await joinGuild(guildId);
     }
+    
     setSnackbarMessage(success);
     if (success.includes('successfully')) {
       setSnackbarSeverity('success');
+      setIsAMember(!isAMember)
     } else {
       setSnackbarSeverity('error');
     }
@@ -99,16 +105,8 @@ const GuildDetails: React.FC<GuildDetailsProps> = ({ guildId }) => {
     setSnackbarOpen(false);
   };
 
-  useEffect(() => {
-    if (!guild) {
-      setSnackbarMessage('Failed to get guild!!');
-      setSnackbarSeverity('error');
-      setSnackbarOpen(true);
-    }
-  }, [guild]);
-
   return (
-    <div className={`${showSidebar ? "max-w-6xl mx-auto" : "mx-10"}`}>
+    <div className={`${showSidebar ? "max-w-6xl mx-auto" : "mx-4 sm:mx-10"}`}>
       {loadingInfo ? (
         <LoadingGuildDetails />
       ) : (
@@ -117,30 +115,30 @@ const GuildDetails: React.FC<GuildDetailsProps> = ({ guildId }) => {
             <img
               src={guild?.cover_image}
               alt={`${guild?.guild_name} Cover`}
-              className="w-full h-48 object-cover rounded-t-lg"
+              className="w-full h-20 sm:h-48 object-cover rounded-t-lg"
             />
             <img
               src={guild?.avatar}
               alt={`${guild?.guild_name} Avatar`}
-              className="w-24 h-24 rounded-full border-4 border-zinc-800 absolute bottom-0 left-4 transform translate-y-1/2"
+              className="w-16 sm:w-24 h-16 sm:h-24 rounded-full border-4 object-cover border-zinc-800 absolute bottom-0 left-4 transform translate-y-1/2"
             />
           </div>
-          <div className="flex px-40 justify-between items-center">
-            <div className="mt-6 text-center">
-              <h2 className="text-2xl font-semibold">{guild?.guild_name}</h2>
-              <p className="mt-2 text-gray-200">{guild?.guild_description}</p>
+          <div className="flex px-4 gap-2 sm:px-40 justify-between items-center">
+            <div className="mt-6">
+              <h2 className="text-md sm:text-2xl font-semibold">{guild?.guild_name}</h2>
+              <p className="mt-2 text-gray-200 text-xs sm:text-lg">{guild?.guild_description}</p>
             </div>
             {user?.guild === guildId ? (
               <Link
                 to={`/guilds/manage/${guildId}`}
-                className="bg-red-500 px-4 py-2 text-lg rounded-lg font-bold text-white shadow-xl btn-5"
+                className="bg-red-500 px-2 sm:px-4 py-2 text-xs sm:text-lg rounded-lg font-bold text-white shadow-xl btn-5"
               >
                 Manage
               </Link>
             ) : (
               <button
                 onClick={toggleSubscription}
-                className="bg-red-500 px-4 py-2 text-md rounded-lg font-bold text-white shadow-xl btn-5"
+                className="bg-red-500 px-2 sm:px-4 py-2 text-xs sm:text-lg rounded-lg font-bold text-white shadow-xl btn-5"
               >
                 {isAMember ? 'Leave Guild' : 'Join Guild'}
               </button>
@@ -148,21 +146,21 @@ const GuildDetails: React.FC<GuildDetailsProps> = ({ guildId }) => {
           </div>
         </div>
       )}
-      <div className="grid grid-cols-12 gap-4">
-        <div className={`p-4 ${showSidebar ? 'col-span-8' : 'col-span-9'}`}>
-          <div className="flex justify-between items-center border-b-2 border-red-500 p-2">
-            <h1 className="p-2 w-full text-white text-3xl font-bold">Guild Videos</h1>
+      <div className="grid grid-cols-1 sm:grid-cols-12 gap-4">
+        <div className={`py-2 sm:p-4 col-span-1 ${showSidebar ? 'sm:col-span-8' : 'sm:col-span-9'}`}>
+          <div className="flex justify-between items-center border-b-2 border-red-500 p-2 my-2">
+            <h1 className="sm:p-2 w-full text-white text-lg sm:text-3xl font-bold">Guild Videos</h1>
             <Link
               to={`/upload-video/${guild?.id}`}
-              className="bg-red-500 px-4 py-2 text-lg rounded-lg font-bold text-white shadow-xl btn-5"
+              className="bg-red-500 px-2 sm:px-4 py-2 text-xs sm:text-lg rounded-lg font-bold text-white shadow-xl btn-5"
             >
               Upload
             </Link>
           </div>
           {loadingVideo ? <LoadingVideo /> : <VideoGrid gridSize={3} videos={video} />}
         </div>
-        <div className={`p-4 ${showSidebar ? 'col-span-4' : 'col-span-3'} bg-zinc-800 my-4 rounded-lg`}>
-          <h1 className="p-2 border-b-2 border-red-500 w-full text-white text-3xl font-bold">Guild Members</h1>
+        <div className={`p-4  ${showSidebar ? 'sm:col-span-4' : 'sm:col-span-3'} bg-zinc-800 my-4 rounded-lg`}>
+          <h1 className="p-2 border-b-2 border-red-500 w-full text-white text-lg sm:text-3xl font-bold">Guild Members</h1>
           {guild && <Members guildId={guild.id} edit={false} />}
         </div>
       </div>

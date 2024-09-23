@@ -52,19 +52,26 @@ const Home: React.FC = () => {
     reason?: string
   ): void => {
     if (reason === 'clickaway') {
-      console.log(event)  
+      console.log(event);
       return;
     }
     setOpenSnackbar(false);
   };
 
   return (
-    <div className="mt-[8rem]">
-      <TagList activeTag={activeTag} setActiveTag={setActiveTag} />
+    <div className="flex flex-col mt-[4rem] p-4 sm:p-6 md:p-8 lg:p-10 xl:p-12">
+      {/* TagList */}
+      <div className="mb-4 sm:mb-6 md:mb-8 lg:mb-10">
+        <TagList activeTag={activeTag} setActiveTag={setActiveTag} />
+      </div>
+
+      {/* Video Grid */}
       {loading ? (
         <LoadingState />
       ) : (
-        <VideoGrid videos={video} />
+        <div className="w-full py-4 sm:py-0">
+          <VideoGrid videos={video} />
+        </div>
       )}
 
       {/* Snackbar for displaying error messages */}

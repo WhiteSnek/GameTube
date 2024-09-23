@@ -13,7 +13,7 @@ const App: React.FC = () => {
         <GuildProvider>
           <VideoProvider>
             <Header />
-            <div className={`${showSidebar ? "ml-[16.67%]" : ""} mt-[5rem]`}>
+            <div className={`${showSidebar ? "sm:ml-[16.67%]" : ""} mt-[5rem]`}>
               <Outlet />
 
             </div>

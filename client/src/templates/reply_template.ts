@@ -4,4 +4,5 @@ export interface ReplyTemplate {
     username: string;
     avatar: string;
     likes: number;
+    created_at: string;
 }

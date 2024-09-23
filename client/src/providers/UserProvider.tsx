@@ -1,10 +1,7 @@
 import React, { createContext, ReactNode, useContext, useEffect, useState } from "react";
 import axios, { AxiosResponse } from "axios";
 import { useNavigate } from "react-router-dom";
-import {
-  LoginTemplate,
-  UserDetails,
-} from "../templates/user_template";
+import { LoginTemplate, UserDetails } from "../templates/user_template";
 import { GetGuilds } from "../templates/guild_template";
 
 interface CheckMember {
@@ -37,29 +34,29 @@ interface UserProviderProps {
   children: ReactNode;
 }
 
-interface AddUserResponse {
-  id: string;
-}
 
 const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   const [user, setUser] = useState<UserDetails | null>(null);
   const navigate = useNavigate();
 
-  // Load user from cookie when the component mounts
+  // Load user from backend when the component mounts (and on refresh)
   useEffect(() => {
     const getCurrentUser = async () => {
       try {
-        const storedUser: AxiosResponse<UserDetails> = await axios.get('/users/protected/current-user',{withCredentials: true})
-        if (storedUser) {
-          setUser(storedUser.data);
+        const response: AxiosResponse<UserDetails> = await axios.get('/users/protected/current-user', { withCredentials: true });
+        if (response && response.data) {
+          setUser(response.data); // Set user if authenticated
         } else {
-          navigate("/login");
+          throw new Error("No user found");
         }
       } catch (error) {
+        // On error (e.g., unauthorized), clear user and navigate to login
+        setUser(null);
         navigate("/login");
       }
-    }
-    getCurrentUser()
+    };
+
+    getCurrentUser();
   }, [navigate]);
 
   const login = async (userInfo: LoginTemplate): Promise<{ success: boolean; error?: string }> => {
@@ -70,11 +67,8 @@ const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         { withCredentials: true }
       );
       setUser(response.data);
-
-
-      return { success: true }; // Login successful
+      return { success: true };
     } catch (error: any) {
-      // Handle different types of errors
       if (error.response) {
         return { success: false, error: error.response.data || "Login failed" };
       } else if (error.request) {
@@ -87,21 +81,18 @@ const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
 
   const register = async (formData: FormData): Promise<boolean> => {
     try {
-      const email = formData.get("email")
-      const password = formData.get("password")
+      const email = formData.get("email");
+      const password = formData.get("password");
       if (typeof email !== "string" || typeof password !== "string") {
         throw new Error("Invalid email or password");
       }
-      const userInfo: LoginTemplate = {
-        email, password
-      }
-      const response: AxiosResponse<AddUserResponse> = await axios.post(
+      const userInfo: LoginTemplate = { email, password };
+      await axios.post(
         "/users/addUser",
         formData,
         { withCredentials: true }
       );
-      console.log(response);
-      login(userInfo)
+      await login(userInfo); // Log in the user after registration
       return true;
     } catch (error) {
       return false;
@@ -109,14 +100,14 @@ const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   };
 
   const logout = async (): Promise<boolean> => {
-    
     try {
-      const response: AxiosResponse<string> = await axios.post("/users/protected/logout", {}, { withCredentials: true });
+      const response: AxiosResponse<string> = await axios.post(
+        "/users/protected/logout",
+        {},
+        { withCredentials: true }
+      );
       console.log(response);
-
-      setUser(null);
-
-
+      setUser(null); // Clear the user on logout
       return true;
     } catch (error) {
       return false;
@@ -131,14 +122,11 @@ const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         { userId, guildId },
         { withCredentials: true }
       );
-      console.log(response);
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        console.error("Axios error:", error.response?.data);
         return error.response?.data;
       } else {
-        console.error("Unexpected error:", error);
         return "An unexpected error occurred";
       }
     }
@@ -152,14 +140,11 @@ const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         { userId, guildId },
         { withCredentials: true }
       );
-      console.log(response);
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        console.error("Axios error:", error.response?.data);
         return error.response?.data;
       } else {
-        console.error("Unexpected error:", error);
         return "An unexpected error occurred";
       }
     }
@@ -168,8 +153,11 @@ const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   const checkMembership = async (guildId: string): Promise<boolean> => {
     const userId = user?.id;
     try {
-      const response: AxiosResponse<CheckMember> = await axios.post("/members/check", { userId, guildId }, { withCredentials: true });
-      console.log(response);
+      const response: AxiosResponse<CheckMember> = await axios.post(
+        "/members/check",
+        { userId, guildId },
+        { withCredentials: true }
+      );
       return response.data.isMember;
     } catch (error) {
       return false;
@@ -179,7 +167,6 @@ const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   const getUserGuilds = async (): Promise<GetGuilds[] | null> => {
     try {
       const response: AxiosResponse<GetGuilds[]> = await axios.get(`/users/guilds/${user?.id}`, { withCredentials: true });
-      console.log(response);
       return response.data;
     } catch (error) {
       return null;
@@ -188,7 +175,17 @@ const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
 
   return (
     <UserContext.Provider
-      value={{ user, setUser, login, register, logout, joinGuild, leaveGuild, checkMembership, getUserGuilds }}
+      value={{
+        user,
+        setUser,
+        login,
+        register,
+        logout,
+        joinGuild,
+        leaveGuild,
+        checkMembership,
+        getUserGuilds
+      }}
     >
       {children}
     </UserContext.Provider>

@@ -1,10 +1,10 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { ReplyTemplate } from "../../../../templates/reply_template";
-// import formatDate from '../../../utils/formatDate'
 import ThumbUpAltIcon from "@mui/icons-material/ThumbUpAlt";
 import ThumbUpOffAltIcon from "@mui/icons-material/ThumbUpOffAlt";
 import { useUser } from "../../../../providers/UserProvider";
 import { useReply } from "../../../../providers/ReplyProvider";
+import formatDate from "../../../../utils/formatDate";
 
 interface ReplyProps {
     reply: ReplyTemplate;
@@ -57,7 +57,7 @@ const Reply: React.FC<ReplyProps> = ({ reply }) => {
     }
   };
   return (
-    <div className="flex justify-start gap-3 p-4 text-white">
+    <div className="flex justify-start gap-3 py-2 sm:p-4 text-white">
       <img
         src={reply.avatar}
         alt={reply.username}
@@ -67,7 +67,7 @@ const Reply: React.FC<ReplyProps> = ({ reply }) => {
         <div className="flex gap-4 items-center">
           <h1 className="font-bold">{reply.username}</h1>
           {/* <span className='py-1 px-2 text-xs font-semibold bg-red-500 rounded-full'>{reply.user.userRole}</span> */}
-          {/* <p className='text-sm text-gray-400'>{formatDate(reply.created_at)}</p> */}
+          <p className='text-sm text-gray-400'>{formatDate(reply.created_at)}</p>
         </div>
         
         <div className="flex justify-between w-full items-center py-1">

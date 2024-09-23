@@ -29,7 +29,7 @@ const TagList: React.FC<TagListProps> = ({ activeTag, setActiveTag }) => {
     }, []);
 
     return (
-        <div className={`flex gap-4 items-center overflow-x-auto p-4 fixed z-10 top-[4rem] ${showSidebar ? 'left-[16.67%] w-[calc(100%-16.67%)]' : 'w-full'} transition-all bg-zinc-900 border-b border-gray-700`}>
+        <div className={`flex gap-4 items-center overflow-x-auto p-1 sm:p-4 fixed z-10 top-[4rem] ${showSidebar ? 'left-[16.67%] w-[calc(100%-16.67%)]' : 'w-full'} transition-all bg-zinc-900 border-b border-gray-700`}>
             {loading ? (
                 Array.from({ length: 11 }).map((_, index) => (
                     <LoadingState key={index} />

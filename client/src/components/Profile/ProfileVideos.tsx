@@ -25,7 +25,7 @@ const ProfileVideos:React.FC<ProfileVideosProps> = ({userId}) => {
     },[])
   return (
     <div className='my-4'>        
-        <h1 className="p-2  w-full border-b-2 border-red-500 text-white text-3xl font-bold">{user?.username}'s Videos</h1>
+        <h1 className="sm:p-2  w-full border-b-2 border-red-500 text-white text-lg sm:text-3xl font-bold mb-2">{user?.username}'s Videos</h1>
       <VideoGrid videos={video} />
       </div>
   )

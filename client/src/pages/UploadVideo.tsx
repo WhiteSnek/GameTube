@@ -140,8 +140,8 @@ const UploadVideo: React.FC = () => {
   return (
     <div
       className={`${
-        showSidebar ? "max-w-6xl mx-auto" : "max-w-7xl"
-      } bg-zinc-800 text-white rounded-lg shadow-lg p-4 mx-auto`}
+        showSidebar ? "sm:max-w-6xl mx-auto" : "sm:max-w-7xl"
+      } bg-zinc-800 text-white rounded-lg shadow-lg p-4 mx-auto max-w-xs`}
     >
       <h2 className="text-2xl font-bold mb-4">Upload Video</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -261,16 +261,16 @@ const UploadVideo: React.FC = () => {
             <button
               type="button"
               onClick={addTag}
-              className="bg-red-500 px-3 py-1 text-lg hover:bg-red-700 transition-colors rounded-md col-span-2"
+              className="bg-red-500 px-1 sm:px-3 py-1 text-sm sm:text-lg hover:bg-red-700 transition-colors rounded-md col-span-2"
             >
               Add
             </button>
           </div>
-          <div className="mt-2 flex flex-wrap">
+          <div className="mt-2 flex flex-wrap gap-2">
             {details.tags.map((tag, index) => (
               <span
                 key={index}
-                className="bg-gray-600 px-2 py-1 rounded-full mr-2 text-sm"
+                className="bg-gray-600 px-2 py-1 rounded-full text-sm"
               >
                 {tag}
               </span>
