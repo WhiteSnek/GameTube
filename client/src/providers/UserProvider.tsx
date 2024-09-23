@@ -50,7 +50,6 @@ const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
           throw new Error("No user found");
         }
       } catch (error) {
-        // On error (e.g., unauthorized), clear user and navigate to login
         setUser(null);
         navigate("/login");
       }
@@ -107,7 +106,8 @@ const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         { withCredentials: true }
       );
       console.log(response);
-      setUser(null); // Clear the user on logout
+      setUser(null);
+      navigate('/login')
       return true;
     } catch (error) {
       return false;

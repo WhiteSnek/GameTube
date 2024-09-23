@@ -186,6 +186,7 @@ const VideoProvider: React.FC<VideoProviderProps> = ({ children }) => {
       return true;
     } catch (error) {
       console.log(error);
+      setVideo([])
       return false;
     }
   };
@@ -243,6 +244,7 @@ const VideoProvider: React.FC<VideoProviderProps> = ({ children }) => {
       return true;
     } catch (error) {
       console.log("Error");
+      setVideo([])
       return false;
     }
   };

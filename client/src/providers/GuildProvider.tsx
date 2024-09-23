@@ -72,6 +72,7 @@ const GuildProvider: React.FC<GuildProviderProps> = ({ children }) => {
       return true;
     } catch (error) {
       console.error("Failed to fetch guild:", error);
+      setGuild(null)
       return false;
     }
   }

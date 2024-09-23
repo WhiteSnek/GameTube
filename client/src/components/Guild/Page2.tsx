@@ -6,7 +6,6 @@ import { useUser } from "../../providers/UserProvider";
 import { useGuild } from "../../providers/GuildProvider";
 import { UserDetails } from "../../templates/user_template";
 import { useNavigate } from "react-router-dom";
-import Cookies from "js-cookie";
 interface CreateGuildProps {
   guildInfo: CreateGuildTemplate;
   setGuildInfo: React.Dispatch<React.SetStateAction<CreateGuildTemplate>>;
@@ -103,17 +102,14 @@ const Page2: React.FC<CreateGuildProps> = ({ guildInfo, setGuildInfo }) => {
     formData.append("coverImage", guildInfo.cover_image);
     const userId = user?.id;
     const success = await createGuild({formData, userId});
-    if (success) {
-        const guildId = guild?.id || '';
-        console.log(guild)
+    if (success && guild?.id) {
+        const guildId = guild.id
       if (user) {
         const updatedUser: UserDetails = {
           ...user,
           guild: guildId,
         };
-
         setUser(updatedUser);
-        Cookies.set("user", JSON.stringify(updatedUser), { expires: 1 });
       }
       setMessage("Guild Created Successfully!");
       setSeverity("success");
