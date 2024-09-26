@@ -4,10 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
-
 	"github.com/WhiteSnek/GameTube/src/models"
-	"github.com/google/uuid"
-	"github.com/gorilla/mux"
 )
 
 // AddLike handles the addition of a like to the database
@@ -84,44 +81,7 @@ func IsLiked(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-func GetLikedVideos(db *sql.DB) http.HandlerFunc {
-    return func(w http.ResponseWriter, r *http.Request) {
-        userId, err := uuid.Parse(mux.Vars(r)["id"])
-        if err != nil {
-            http.Error(w, "Invalid user ID: "+err.Error(), http.StatusBadRequest)
-            return
-        }
 
-        query := `SELECT entityId FROM likes WHERE userId = $1 AND entityType = $2`
-        rows, err := db.Query(query, userId, "video")
-        if err != nil {
-            http.Error(w, "Failed to get liked videos: "+err.Error(), http.StatusInternalServerError)
-            return
-        }
-        defer rows.Close()  
-
-        var likedVideos []string
-
-        for rows.Next() {
-            var video string
-            err = rows.Scan(&video)
-            if err != nil {
-                http.Error(w, "Error scanning video ID: "+err.Error(), http.StatusInternalServerError)
-                return
-            }
-            likedVideos = append(likedVideos, video)
-        }
-
-        if err = rows.Err(); err != nil {
-            http.Error(w, "Error iterating rows: "+err.Error(), http.StatusInternalServerError)
-            return
-        }
-
-        w.Header().Set("Content-Type", "application/json")
-        w.WriteHeader(http.StatusOK)
-        json.NewEncoder(w).Encode(likedVideos)
-    }
-}
 
 
 

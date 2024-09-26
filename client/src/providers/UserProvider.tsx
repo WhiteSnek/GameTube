@@ -91,7 +91,7 @@ const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         formData,
         { withCredentials: true }
       );
-      await login(userInfo); // Log in the user after registration
+      await login(userInfo);
       return true;
     } catch (error) {
       return false;

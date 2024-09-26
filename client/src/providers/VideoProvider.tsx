@@ -237,9 +237,10 @@ const VideoProvider: React.FC<VideoProviderProps> = ({ children }) => {
   ): Promise<boolean> => {
     try {
       const response: AxiosResponse<VideoCardTemplate[]> = await axios.get(
-        `/liked-videos/${userId}`,
+        `/likes/protected/liked-videos/${userId}`,
         { withCredentials: true }
       );
+      console.log(response)
       setVideo(response.data)
       return true;
     } catch (error) {
