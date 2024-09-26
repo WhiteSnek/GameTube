@@ -69,11 +69,7 @@ const GuildDetails: React.FC<GuildDetailsProps> = ({ guildId }) => {
     };
 
     getGuild();
-    if (!guild) {
-      setSnackbarMessage('Failed to get guild!!');
-      setSnackbarSeverity('error');
-      setSnackbarOpen(true);
-    }
+    
     fetchGuildVideos();
   }, []);
 
