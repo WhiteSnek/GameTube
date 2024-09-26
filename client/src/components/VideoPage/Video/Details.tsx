@@ -86,7 +86,7 @@ const Details: React.FC<DetailsProps> = ({ video }) => {
     }
 
     const success = isAMember ? await leaveGuild(guildId) : await joinGuild(guildId);
-    setIsAMember(!isAMember)
+    if(success.includes('successfully')) setIsAMember(!isAMember)
     setSnackbarMessage(success);
     setSnackbarSeverity(success.includes('successfully') ? 'success' : 'error');
     setSnackbarOpen(true);
