@@ -54,11 +54,7 @@ const GuildDetails: React.FC<GuildDetailsProps> = ({ guildId }) => {
       }
       setLoadingInfo(false);
     };
-    if (!guild) {
-      setSnackbarMessage('Failed to get guild!!');
-      setSnackbarSeverity('error');
-      setSnackbarOpen(true);
-    }
+    
     const fetchGuildVideos = async () => {
       setLoadingVideo(true);
       const response: VideoCardTemplate[] | null = await getGuildVideos(guildId);
@@ -73,6 +69,11 @@ const GuildDetails: React.FC<GuildDetailsProps> = ({ guildId }) => {
     };
 
     getGuild();
+    if (!guild) {
+      setSnackbarMessage('Failed to get guild!!');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    }
     fetchGuildVideos();
   }, []);
 

@@ -91,7 +91,6 @@ const UploadVideo: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Video Details:", details);
     const formData = new FormData();
     formData.append("title", details.title);
     formData.append("description", details.description);

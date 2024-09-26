@@ -48,7 +48,6 @@ const GuildProvider: React.FC<GuildProviderProps> = ({ children }) => {
         formData,
         { withCredentials: true }
       );
-      console.log(response);
       
       // Optionally update the guild in context here
       setGuild(response.data);

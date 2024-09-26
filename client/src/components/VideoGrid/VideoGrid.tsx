@@ -10,7 +10,7 @@ interface VideoGridProps {
 
 const VideoGrid: React.FC<VideoGridProps> = ({ videos, gridSize = 4 }) => {
   const { showSidebar } = useSidebar();
-  console.log(videos);
+
   return (
     <div
       className={`grid grid-cols-1 ${

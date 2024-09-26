@@ -7,7 +7,6 @@ interface VideoListProps {
 }
 
 const VideoList: React.FC<VideoListProps> = ({ videos }) => {
-    console.log(videos)
   return (
     <div>
       {videos.map((video) => (

@@ -81,7 +81,6 @@ const Subscriptions: React.FC = () => {
 
   const handleCloseSnackbar = (event?: React.SyntheticEvent | Event, reason?: string) => {
     if (reason === 'clickaway') {
-      console.log(event)
       return;
     }
     setOpenSnackbar(false);

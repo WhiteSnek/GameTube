@@ -14,7 +14,6 @@ const Search: React.FC<SearchProps> = ({ toggleSearch }) => {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const encodedSearch = encodeURIComponent(search);
-    console.log(encodedSearch);
     navigate(`/search?query=${encodedSearch}`);
   };
 

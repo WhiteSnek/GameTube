@@ -58,7 +58,6 @@ const ReplyProvider: React.FC<ReplyProviderProps> = ({children}) => {
 
     const getCommentReplys = async(commentId: string): Promise<ReplyTemplate[] | null> => {
         try {
-            console.log(commentId)
             const response: AxiosResponse<ReplyTemplate[]> = await axios.get(`/replies/${commentId}`, {withCredentials: true});
             return response.data
         } catch (error) {

@@ -11,7 +11,7 @@ interface VideoListProps {
 }
 
 const VideoListPlaylistCard: React.FC<VideoListProps> = ({ video,index }) => {
-    // console.log(video.duration)
+
   return (
     <Link to={`/videos/${video.id}`} className="flex items-center justify-between p-4 hover:bg-zinc-800 rounded-lg">
       <div className="flex items-start gap-4">

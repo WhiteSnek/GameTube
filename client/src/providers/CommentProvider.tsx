@@ -60,7 +60,6 @@ const CommentProvider: React.FC<CommentProviderProps> = ({children}) => {
 
     const getVideoComments = async(videoId: string): Promise<CommentTemplate[] | null> => {
         try {
-            console.log(videoId)
             const response: AxiosResponse<CommentTemplate[]> = await axios.get(`/comments/${videoId}`, {withCredentials: true});
             return response.data
         } catch (error) {

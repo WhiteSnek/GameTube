@@ -26,8 +26,6 @@ const Comments: React.FC = () => {
       setLoading(false);
       if (response) {
         setComments(response);
-      } else {
-        throw new Error('Failed to load comments');
       }
     } catch (error) {
       setSnackbarMessage((error as Error).message || 'Something went wrong!');

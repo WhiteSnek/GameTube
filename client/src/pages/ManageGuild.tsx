@@ -13,9 +13,7 @@ const ManageGuild:React.FC = () => {
   useEffect(() => {
     const getGuild = async () => {
       const success: boolean = await getGuildInfo(id);
-      if (success) {
-        console.log(guild);
-      } else {
+      if (!success) {
         console.log("Failed to get guild info");
       }
     };

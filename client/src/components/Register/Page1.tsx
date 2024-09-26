@@ -40,7 +40,6 @@ const Page1: React.FC<RegisterProps> = ({
     }
     else {
       setActiveTab((prev) => prev + 1);
-      console.log(userInfo);
       setError('');
     }
     

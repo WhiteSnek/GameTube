@@ -20,7 +20,6 @@ const Search: React.FC = () => {
     const getSearchResults = async() => {
       setLoading(true)
     if (query && searchVideos) {
-      console.log(query)
       await searchVideos(query);
       const response = await  searchGuild(query);
       if(response) setGuilds(response);

@@ -52,7 +52,6 @@ const Home: React.FC = () => {
     reason?: string
   ): void => {
     if (reason === 'clickaway') {
-      console.log(event);
       return;
     }
     setOpenSnackbar(false);

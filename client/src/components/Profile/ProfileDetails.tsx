@@ -6,7 +6,6 @@ interface ProfileDetailsProps {
 }
 
 const ProfileDetails: React.FC<ProfileDetailsProps> = ({user}) => {
-  console.log(user);
   return (
     <div className=" bg-zinc-800 text-white rounded-lg shadow-lg p-4">
       <div className="relative">

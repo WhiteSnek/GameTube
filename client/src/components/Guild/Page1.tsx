@@ -12,7 +12,6 @@ const Page1: React.FC<RegisterProps> = ({ guildInfo, setGuildInfo, setActiveTab 
   const handleNext = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setActiveTab((prev) => prev + 1);
-    console.log(guildInfo);
   };
 
   return (
