@@ -32,8 +32,6 @@ type VideoResolution = '360' | '480' | '720';
 
 const Video: React.FC<VideoProps> = ({ video, thumbnail, videoId }) => {
   const { user } = useUser();
-  if (!user) return <div>Something went wrong...</div>;
-
   const { increaseViews, addtoHistory } = useVideo();
   const videoRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<any | null>(null);
@@ -94,7 +92,7 @@ const Video: React.FC<VideoProps> = ({ video, thumbnail, videoId }) => {
         const currentTime = player.currentTime();
         const duration = player.duration();
         if (!duration || !currentTime) return;
-        if (duration > 0 && currentTime >= duration / 2) {
+        if (user && duration > 0 && currentTime >= duration / 2) {
           player.off('timeupdate'); // Prevent multiple triggers
           increaseViews(videoId).catch(err => {
             console.error('Failed to increase views:', err);

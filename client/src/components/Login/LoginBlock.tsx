@@ -113,9 +113,9 @@ const LoginBlock: React.FC = () => {
         </button>
 
         <div className="flex flex-col gap-2 py-3 text-sm text-white">
-          <Link to="/" className="hover:text-gray-400">
+          <button className="hover:text-gray-400">
             Forgot password?
-          </Link>
+          </button>
           <Link to="/register" className="hover:text-gray-400">
             Don't have an account? Sign up
           </Link>
