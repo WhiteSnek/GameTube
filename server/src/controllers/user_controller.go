@@ -160,7 +160,7 @@ func LoginUser(db *sql.DB) http.HandlerFunc {
 			Path:     "/",
 			HttpOnly: true,
 			Secure:   true,                          // Set to true if using HTTPS
-			Expires:  time.Now().Add(time.Hour * 1), // Set expiration as needed
+			Expires:  time.Now().Add(time.Hour * 24 * 7), 
 		})
 
 		http.SetCookie(w, &http.Cookie{

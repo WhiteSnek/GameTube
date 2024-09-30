@@ -3,7 +3,7 @@ package models
 import (
     "time"
     "github.com/google/uuid"
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v4" 
     "golang.org/x/crypto/bcrypt"
 	"database/sql"
 	"os"
@@ -31,7 +31,7 @@ var accessTokenSecret []byte
 var refreshTokenSecret []byte
 
 var (
-    accessTokenExpiry  = 15 * time.Minute // Adjust as needed
+    accessTokenExpiry  = 7 * 24 * time.Hour // Adjust as needed
     refreshTokenExpiry = 7 * 24 * time.Hour // Adjust as needed
 )
 

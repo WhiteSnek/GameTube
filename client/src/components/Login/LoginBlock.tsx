@@ -112,7 +112,7 @@ const LoginBlock: React.FC = () => {
           Login
         </button>
 
-        <div className="flex flex-col gap-2 py-3 text-sm text-white">
+        <div className="flex flex-col gap-2 py-3 text-sm text-white ">
           <button className="hover:text-gray-400">
             Forgot password?
           </button>
