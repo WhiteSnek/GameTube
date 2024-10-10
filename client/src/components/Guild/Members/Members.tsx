@@ -8,9 +8,10 @@ import LoadingMembers from './LoadingMembers'
 interface GuildMembersProps {
     guildId: string
     edit: boolean
+    isAMember: boolean
 }
 
-const Members:React.FC<GuildMembersProps> = ({guildId, edit}) => {
+const Members:React.FC<GuildMembersProps> = ({guildId, edit, isAMember}) => {
   const [members, setMembers] = useState<GuildMembers[]>([])
   const [loading, setLoading] = useState<boolean>(false)
   const {getGuildMembers} = useGuild()
@@ -26,7 +27,7 @@ const Members:React.FC<GuildMembersProps> = ({guildId, edit}) => {
           setLoading(false)
         }
       getMembers()
-    },[])
+    },[isAMember])
   return (
     <div className='h-96 overflow-scroll'>
       {loading ? <LoadingMembers /> :(!edit ? members.map(member => (

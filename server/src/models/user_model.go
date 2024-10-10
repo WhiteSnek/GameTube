@@ -7,7 +7,6 @@ import (
     "golang.org/x/crypto/bcrypt"
 	"database/sql"
 	"os"
-    "log"
     // "github.com/joho/godotenv"
 )
 
@@ -41,9 +40,9 @@ func init() {
     // }
     accessTokenSecret = []byte(os.Getenv("ACCESS_TOKEN_SECRET"))
     refreshTokenSecret = []byte(os.Getenv("REFRESH_TOKEN_SECRET"))
-    if len(accessTokenSecret) == 0 || len(refreshTokenSecret) == 0 {
-        log.Fatalf("Token secrets must be set in environment variables")
-    }
+    // if len(accessTokenSecret) == 0 || len(refreshTokenSecret) == 0 {
+    //     log.Fatalf("Token secrets must be set in environment variables")
+    // }
 }
 
 // Hash the password before saving it to the database

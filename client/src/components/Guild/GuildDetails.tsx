@@ -147,18 +147,18 @@ const GuildDetails: React.FC<GuildDetailsProps> = ({ guildId }) => {
         <div className={`py-2 sm:p-4 col-span-1 ${showSidebar ? 'sm:col-span-8' : 'sm:col-span-9'}`}>
           <div className="flex justify-between items-center border-b-2 border-red-500 p-2 my-2">
             <h1 className="sm:p-2 w-full text-white text-lg sm:text-3xl font-bold">Guild Videos</h1>
-            <Link
+            {isAMember && <Link
               to={`/upload-video/${guild?.id}`}
               className="bg-red-500 px-2 sm:px-4 py-2 text-xs sm:text-lg rounded-lg font-bold text-white shadow-xl btn-5"
             >
               Upload
-            </Link>
+            </Link>}
           </div>
           {loadingVideo ? <LoadingVideo /> : <VideoGrid gridSize={3} videos={video} />}
         </div>
         <div className={`p-4  ${showSidebar ? 'sm:col-span-4' : 'sm:col-span-3'} bg-zinc-800 my-4 rounded-lg`}>
           <h1 className="p-2 border-b-2 border-red-500 w-full text-white text-lg sm:text-3xl font-bold">Guild Members</h1>
-          {guild && <Members guildId={guild.id} edit={false} />}
+          {guild && <Members guildId={guild.id} edit={false} isAMember={isAMember} />}
         </div>
       </div>
 
