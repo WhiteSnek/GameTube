@@ -8,7 +8,7 @@ import LoadingMembers from './LoadingMembers'
 interface GuildMembersProps {
     guildId: string
     edit: boolean
-    isAMember: boolean
+    isAMember?: boolean
 }
 
 const Members:React.FC<GuildMembersProps> = ({guildId, edit, isAMember}) => {
