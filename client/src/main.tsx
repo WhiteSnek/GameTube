@@ -26,7 +26,7 @@ import {
 import SidebarProvider from "./providers/SidebarProvider.tsx";
 import axios from "axios";
 
-axios.defaults.baseURL = "/api";
+axios.defaults.baseURL = import.meta.env.VITE_SERVER;
 
 const Layout: React.FC = () => {
   const router = createBrowserRouter(
