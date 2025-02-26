@@ -1,50 +1,30 @@
-FROM golang:latest
+# Use the correct Golang version as required in go.mod
+FROM golang:1.22.3 AS builder
 
-ARG PORT
-ARG DB_HOST
-ARG DB_PORT
-ARG DB_USER
-ARG DB_PASSWORD
-ARG DB_NAME
-ARG DB_SSLMODE
-ARG ALLOWED_ORIGIN
-ARG ACCESS_TOKEN_SECRET
-ARG REFRESH_TOKEN_SECRET
-ARG AWS_REGION
-ARG AWS_ACCESS_KEY
-ARG AWS_SECRET_KEY
-ARG BUCKET_NAME
-ARG VIDEO_BUCKET_NAME
-ARG TASK_DEFINITION
-ARG CLUSTER
-ARG TRANSCODED_VIDEO_BUCKET_NAME
-
-
-ENV PORT=${PORT}
-ENV DB_HOST=${DB_HOST}
-ENV DB_PORT=${DB_PORT}
-ENV DB_USER=${DB_USER}
-ENV DB_PASSWORD=${DB_PASSWORD}
-ENV DB_NAME=${DB_NAME}
-ENV DB_SSLMODE=${DB_SSLMODE}
-ENV ALLOWED_ORIGIN=${ALLOWED_ORIGIN}
-ENV ACCESS_TOKEN_SECRET=${ACCESS_TOKEN_SECRET}
-ENV REFRESH_TOKEN_SECRET=${REFRESH_TOKEN_SECRET}
-ENV AWS_REGION=${AWS_REGION}
-ENV AWS_ACCESS_KEY=${AWS_ACCESS_KEY}
-ENV AWS_SECRET_KEY=${AWS_SECRET_KEY}
-ENV BUCKET_NAME=${BUCKET_NAME}
-ENV VIDEO_BUCKET_NAME=${VIDEO_BUCKET_NAME}
-ENV TASK_DEFINITION=${TASK_DEFINITION}
-ENV CLUSTER=${CLUSTER}
-ENV TRANSCODED_VIDEO_BUCKET_NAME=${TRANSCODED_VIDEO_BUCKET_NAME}
-
+# Set the working directory
 WORKDIR /app
 
-COPY . /app
+# Copy the Go module files first for dependency resolution
+COPY go.mod go.sum ./
+RUN go mod download
 
-RUN go build -o main .
+# Copy the rest of the application code
+COPY . .
 
-EXPOSE ${PORT}
+# Build the Go application
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o main .
 
-CMD [ "./main" ]
+# Use a minimal base image for the final container
+FROM alpine:latest
+
+# Set the working directory in the final image
+WORKDIR /root/
+
+# Copy the built binary from the builder stage
+COPY --from=builder /app/main .
+
+# Expose port 3000
+EXPOSE 3000
+
+# Command to run the application
+CMD ["./main"]

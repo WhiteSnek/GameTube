@@ -1,14 +1,15 @@
 package main
 
 import (
-    "log"
-    "net/http"
-    "os"
+	"log"
+	"net/http"
+	"os"
 
-    "github.com/WhiteSnek/GameTube/src/db"
-    "github.com/WhiteSnek/GameTube/src/router"
-    "github.com/joho/godotenv"
-    "github.com/rs/cors"
+	"github.com/WhiteSnek/GameTube/src/config"
+	"github.com/WhiteSnek/GameTube/src/db"
+	"github.com/WhiteSnek/GameTube/src/router"
+	"github.com/joho/godotenv"
+	"github.com/rs/cors"
 )
 
 func main() {
@@ -18,9 +19,11 @@ func main() {
     // Connect to the database
     dbConn, err := db.ConnectDB()
     if err != nil {
-        log.Fatalf("Failed to connect to the database: %v", err)
+        log.Printf("Failed to connect to the database: %v", err)
     }
     defer dbConn.Close()
+
+    config.InitializeRedis()
 
     // Create a new router
     r := router.NewRouter(dbConn)
@@ -40,7 +43,7 @@ func main() {
     // Get the port from environment variable or default to 8080
     port := os.Getenv("PORT")
     if port == "" {
-        port = "8080"
+        port = "3000"
     }
 
     // Start the HTTP server

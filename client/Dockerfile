@@ -1,17 +1,33 @@
-FROM node:latest
+# Stage 1 - build
+FROM node:18-alpine AS builder
 
-ARG VITE_SERVER
+# Set work directory
+WORKDIR /gametube-frontend
 
-ENV VITE_SERVER=$VITE_SERVER
+# Install dependencies
+COPY package.json package-lock.json ./
+RUN npm ci
 
-WORKDIR /app
-
-COPY package*.json ./
-
-RUN npm install
-
+# Copy source code
 COPY . .
 
-EXPOSE 5173
+# Build the frontend
+RUN npm run build
 
-CMD ["npm", "run", "dev"]
+# Stage 2 - Serve with nginx
+FROM nginx:stable-alpine
+
+# Remove default nginx static assets
+RUN rm -rf /usr/share/nginx/html/*
+
+# Copy build assets from the builder stage
+COPY --from=builder /gametube-frontend/dist /usr/share/nginx/html
+
+# Copy custom Nginx configuration
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Expose port 80
+EXPOSE 80
+
+# Start Nginx
+CMD ["nginx", "-g", "daemon off;"]

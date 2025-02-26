@@ -3,14 +3,17 @@ package controllers
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
+	"log"
+	"net/http"
+	"time"
+
+	"github.com/WhiteSnek/GameTube/src/config"
+	"github.com/WhiteSnek/GameTube/src/contextkeys"
 	"github.com/WhiteSnek/GameTube/src/models"
 	"github.com/WhiteSnek/GameTube/src/utils"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
-	"log"
-	"net/http"
-	"time"
-	"github.com/WhiteSnek/GameTube/src/contextkeys"
 )
 
 func RegisterUser(db *sql.DB) http.HandlerFunc {
@@ -235,6 +238,21 @@ func GetUserByID(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
+		// check cache
+		cacheKey :=fmt.Sprintf("user:%s", id.String())
+		cachedUser, err := config.RedisClient.Get(cacheKey).Result()
+
+		if err != nil {
+			// Cache hit: Respond with cached data
+			w.Header().Set("Content-Type", "application/json")
+			w.Write([]byte(cachedUser))
+			return
+		} else if err != nil {
+			// Redis error (not a cache miss)
+			http.Error(w, "Failed to access cache: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
 		// Query the database for the user details
 		query := `SELECT id, username, email, password, fullname, avatar, cover_image, dob, gender, google_id, guild, created_at, updated_at FROM users WHERE id = $1`
 		var user models.User
@@ -246,6 +264,18 @@ func GetUserByID(db *sql.DB) http.HandlerFunc {
 			} else {
 				http.Error(w, "Failed to retrieve user details: "+err.Error(), http.StatusInternalServerError)
 			}
+			return
+		}
+
+		userJSON, err := json.Marshal(user)
+		if err != nil {
+			http.Error(w, "Failed to serialize user data: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		err = config.RedisClient.Set(cacheKey, userJSON, 10*time.Minute).Err()
+		if err != nil {
+			http.Error(w, "Failed to cache user data: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
