@@ -3,7 +3,7 @@ package controllers
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
+	// "fmt"
 	"log"
 	"net/http"
 	"time"
@@ -273,11 +273,11 @@ func GetUserByID(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		err = config.RedisClient.Set(cacheKey, userJSON, 10*time.Minute).Err()
-		if err != nil {
-			http.Error(w, "Failed to cache user data: "+err.Error(), http.StatusInternalServerError)
-			return
-		}
+		// err = config.RedisClient.Set(cacheKey, userJSON, 10*time.Minute).Err()
+		// if err != nil {
+		// 	http.Error(w, "Failed to cache user data: "+err.Error(), http.StatusInternalServerError)
+		// 	return
+		// }
 
 		// Respond with the user's details
 		w.Header().Set("Content-Type", "application/json")
