@@ -14,7 +14,7 @@ import { SlidersHorizontal, Gauge, Monitor } from "lucide-react";
 const VideoSection: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-
+  const [showThumbnail, setShowThumbnail] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -102,6 +102,7 @@ const VideoSection: React.FC = () => {
       videoRef.current.pause();
       setIsPlaying(false);
     }
+    setShowThumbnail(false)
   };
 
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -167,7 +168,17 @@ const VideoSection: React.FC = () => {
           onPlay={() => setIsPlaying(true)}
           onPause={() => setIsPlaying(false)}
         />
-
+        {showThumbnail && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black">
+            <img src='https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTNWMEKB19dQr8ikNRrxW09pt7bWpLY7hXtWA&s' alt="Video Thumbnail" className="w-full rounded-lg shadow-lg" />
+            <button
+              onClick={togglePlayPause}
+              className="absolute text-white bg-black/60 cursor-pointer p-4 rounded-full"
+            >
+              <Play size={48} />
+            </button>
+          </div>
+        )}
         {/* Custom Controls */}
         <div
           className={`absolute bottom-0 left-0 right-0 p-3 bg-black/60 bg-opacity-50 flex items-center justify-between rounded-b-lg transition-opacity duration-300 ${
