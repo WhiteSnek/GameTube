@@ -2,7 +2,7 @@
     {
       "id": 1,
       "video_title": "I'm Not Doing This Again",
-      "thumbnail_link": "https://images.pexels.com/photos/2325447/pexels-photo-2325447.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
+      "thumbnail_link": "https://s3.ap-south-1.amazonaws.com/www.profiles.gametube.com/profile/avatar/nikhilkr2604.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Checksum-Mode=ENABLED&X-Amz-Credential=AKIA2UC26RVNSZ3M6DW5%2F20250319%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20250319T095644Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&x-id=GetObject&X-Amz-Signature=50bf3b2219df565f9ddf7dfaabe7c127e17b700d36de394e019615219a2ba223",
       "video_link": "https://videos.pexels.com/video-files/7859858/uhd_25fps.mp4",
       "channel_name": "Chess Simp",
       "video_duration": "2:30",
@@ -12,7 +12,7 @@
     {
       "id": 2,
         "video_title": "I'm Not Doing This Again",
-        "thumbnail_link": "https://images.pexels.com/photos/2325447/pexels-photo-2325447.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
+        "thumbnail_link": "https://s3.ap-south-1.amazonaws.com/www.profiles.gametube.com/profile/coverImage/nikhilkr2604.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Checksum-Mode=ENABLED&X-Amz-Credential=AKIA2UC26RVNSZ3M6DW5%2F20250319%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20250319T095644Z&X-Amz-Expires=1800&X-Amz-SignedHeaders=host&x-id=GetObject&X-Amz-Signature=4db6cb0cfb0675fd0fda0969510cb473e17cff6e24d63cfabb620d8a3d79e2a7",
         "video_link": "https://videos.pexels.com/video-files/7859858/uhd_25fps.mp4",
         "channel_name": "Chess Simp",
         "video_duration": "2:30",

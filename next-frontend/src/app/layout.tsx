@@ -5,6 +5,7 @@ import Navbar from "@/components/navbar";
 import Sidebar from "@/components/sidebar";
 import { ParticlesBackground } from "@/components/particles";
 import ThemeProvider from "@/context/theme_provider";
+import UserProvider from "@/context/user_provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,14 +33,16 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ThemeProvider>
-          <Navbar />
-          <div className="pt-20 flex">
-            <Sidebar />
-            <main className="ml-64 w-full">
-              <ParticlesBackground />
-              {children}
-            </main>
-          </div>
+          <UserProvider>
+            <Navbar />
+            <div className="pt-20 flex">
+              <Sidebar />
+              <main className="ml-64 w-full">
+                <ParticlesBackground />
+                {children}
+              </main>
+            </div>
+          </UserProvider>
         </ThemeProvider>
       </body>
     </html>

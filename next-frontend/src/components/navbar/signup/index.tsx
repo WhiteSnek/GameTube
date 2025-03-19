@@ -17,6 +17,7 @@ import { UploadCloud, ImagePlus } from "lucide-react";
 import { SignupImage } from "@/assets";
 import { FcGoogle } from "react-icons/fc";
 import { FaDiscord } from "react-icons/fa";
+import { useUser } from "@/context/user_provider";
 const Signup = () => {
   const [step, setStep] = useState("account"); // Tracks tab state
   const [open, setOpen] = useState(false); // Controls dialog visibility
@@ -29,6 +30,8 @@ const Signup = () => {
     avatar: null as File | null,
     coverImage: null as File | null,
   });
+
+  const {signup, getSignedUrls, uploadImages} = useUser()
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -50,11 +53,52 @@ const Signup = () => {
     }
   };
 
-  const handleSignup = () => {
-    console.log("Signup details:", form);
-    // Add signup logic here
-    setOpen(false); // Close modal on successful signup
-  };
+  const handleSignup = async () => {
+    try {
+        if (!form.avatar || !form.coverImage) {
+            console.error("Avatar and Cover Image are required");
+            return;
+        }
+
+        // Generate unique keys based on user email
+        const emailPrefix = form.email.split("@")[0];
+        const avatarKey = `profile/avatar/${emailPrefix}`;
+        const coverImageKey = `profile/coverImage/${emailPrefix}`;
+
+        // Request Presigned URLs from backend
+        const { avatarUrl, coverUrl } = await getSignedUrls(avatarKey, coverImageKey);
+        if (!avatarUrl || !coverUrl) {
+            console.error("Failed to get presigned URLs");
+            return;
+        }
+
+        // Upload files to S3
+        const uploadResult = await uploadImages(avatarUrl, coverUrl, form.avatar, form.coverImage);
+        if (!uploadResult.success) {
+            console.error("Image upload failed", uploadResult.error);
+            return;
+        }
+
+        // Send signup request with image keys
+        const signupData = {
+            fullname: form.fullName,
+            email: form.email,
+            password: form.password,
+            avatar: avatarKey, // Store key, NOT URL
+            coverImage: coverImageKey,
+            dob: form.dob
+        };
+
+        await signup(signupData);
+        console.log("Signup successful!");
+
+        // 🔹 Close modal or reset form
+        setOpen(false);
+    } catch (error) {
+        console.error("Error during signup:", error);
+    }
+};
+
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

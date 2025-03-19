@@ -14,15 +14,20 @@ import Signup from "../signup";
 import { LoginImage } from "@/assets";
 import { FcGoogle } from "react-icons/fc";
 import { FaDiscord } from "react-icons/fa";
+import { useUser } from "@/context/user_provider";
 
-const Login = () => {
+interface LoginProps {
+  setOpen: React.Dispatch<React.SetStateAction<boolean>>
+}
+
+const Login:React.FC<LoginProps> = ({setOpen}) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-
-  const handleLogin = () => {
-    console.log("Logging in with:", { email, password });
-    // Add your login logic here
+  const {signin} = useUser()
+  const handleLogin =async() => {
+    await signin(email, password)
+    setOpen(false)
   };
 
   const handleGoogleLogin = () => {
