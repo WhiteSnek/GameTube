@@ -1,10 +1,10 @@
 "use client";
 import { SignUpUser, UserType } from "@/types/user.types";
-import React, { createContext, ReactNode, useContext, useState } from "react";
+import React, { createContext, ReactNode, useContext, useEffect, useState } from "react";
 import axios from "axios";
 interface UserContextType {
-  User: UserType | undefined;
-  setUser: React.Dispatch<React.SetStateAction<UserType | undefined>>;
+  User: UserType | null;
+  setUser: React.Dispatch<React.SetStateAction<UserType | null>>;
   signup: (data: SignUpUser) => Promise<void>;
   getSignedUrls: (
     avatar: string,
@@ -40,16 +40,33 @@ interface UserProviderProps {
 }
 
 const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
-  const [User, setUser] = useState<UserType | undefined>(undefined);
+  const [User, setUser] = useState<UserType | null>(null);
   const [images, setImages] = useState<{ avatarUrl: string; coverUrl: string }>(
     {
       avatarUrl: "",
       coverUrl: "",
     }
   );
+
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      try {
+        const response = await axios.get("http://localhost:8000/user/", {withCredentials: true})
+        if(response.data){
+          setUser(response.data.data)
+        }
+      } catch (error) {
+        console.error("Token expired or invalid:", error);
+      }
+    }
+    getCurrentUser()
+  }, []);
+
+  
+
   const getSignedUrls = async (avatar: string, coverImage: string) => {
     const response = await axios.get(
-      `http://localhost:8000/auth/upload-url?avatar=${avatar}&coverImage=${coverImage}`
+      `http://localhost:8000/image/upload-url?avatar=${avatar}&coverImage=${coverImage}`
     );
     const { avatarUrl, coverUrl } = response.data;
     return { avatarUrl, coverUrl };
@@ -57,7 +74,7 @@ const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
 
   const getUserImages = async (userId: string) => {
     const response = await axios.get(
-      `http://localhost:8000/auth/images/${userId}`
+      `http://localhost:8000/image/user/${userId}`
     );
     setImages(response.data);
     console.log(response.data);
@@ -79,7 +96,7 @@ const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     const response = await axios.post("http://localhost:8000/auth/signin", {
       email,
       password,
-    });
+    }, { withCredentials: true });
     if (response.data.error) {
       console.log(response.data.error);
     } else {
@@ -90,7 +107,7 @@ const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   const logout = async() => {
     const response = await axios.post("http://localhost:8000/auth/logout", {}, {withCredentials: true})
     console.log(response)
-    setUser(undefined)
+    setUser(null)
   }
 
   const uploadImages = async (

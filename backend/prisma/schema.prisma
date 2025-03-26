@@ -18,10 +18,52 @@ model User {
   fullname String 
   email String @unique
   password String 
-  dob String
-  avatar String
-  coverImage String
+  dob String?
+  avatar String?
+  coverImage String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   isVerified Boolean @default(false)
+  guilds      GuildMember[] 
+  ownedGuild  Guild?         @relation("Owner")
+}
+
+model Guild {
+  id String @default(cuid()) @id
+  ownerId String @unique
+  name String
+  description String?
+  avatar String?
+  coverImage String?
+  isPrivate Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  owner       User       @relation("Owner", fields: [ownerId], references: [id])
+  members     GuildMember[]
+}
+
+model GuildMember {
+   id        String  @id @default(cuid())
+  userId    String
+  guildId   String
+  role      ROLE  @default(MEMBER) 
+  joinedAt  DateTime @default(now())
+  status    STATUS   @default(APPROVED) 
+  user      User   @relation(fields: [userId], references: [id])
+  guild     Guild  @relation(fields: [guildId], references: [id])
+
+  @@unique([userId, guildId])
+}
+
+enum ROLE {
+  MEMBER
+  LEADER
+  CO_LEADER
+  ELDER
+}
+
+enum STATUS {
+  PENDING
+  APPROVED
+  REJECTED
 }

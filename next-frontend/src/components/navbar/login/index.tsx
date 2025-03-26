@@ -30,9 +30,8 @@ const Login:React.FC<LoginProps> = ({setOpen}) => {
     setOpen(false)
   };
 
-  const handleGoogleLogin = () => {
-    console.log("Signing in with Google");
-    // Add Google login logic here
+  const handleGoogleLogin = async () => {
+      window.location.href = "http://localhost:8000/auth/google/signup";
   };
 
   const handleDiscordLogin = () => {
@@ -122,7 +121,7 @@ const Login:React.FC<LoginProps> = ({setOpen}) => {
               <a href="#" className="text-blue-500 hover:underline">
                 Forgot Password?
               </a>
-              <Signup />
+              <Signup setLoginOpen = {setOpen} />
             </div>
           </div>
         </div>

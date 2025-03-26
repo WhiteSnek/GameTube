@@ -4,9 +4,9 @@ type SignUpDTO struct {
 	Fullname   string `json:"fullname" binding:"required"`
 	Email      string `json:"email" binding:"required,email"`
 	Password   string `json:"password" binding:"required,min=8"`
-	Dob        string `json:"dob" binding:"required"`
-	Avatar     string `json:"avatar" binding:"required"`
-	CoverImage string `json:"coverImage" binding:"required"`
+	Dob        *string `json:"dob,omitempty"`
+	Avatar     *string `json:"avatar,omitempty"`
+	CoverImage *string `json:"coverImage,omitempty"`
 }
 
 type LoginDTO struct {

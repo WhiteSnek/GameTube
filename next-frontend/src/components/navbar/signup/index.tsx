@@ -18,7 +18,11 @@ import { SignupImage } from "@/assets";
 import { FcGoogle } from "react-icons/fc";
 import { FaDiscord } from "react-icons/fa";
 import { useUser } from "@/context/user_provider";
-const Signup = () => {
+
+interface SignupProps {
+  setLoginOpen: React.Dispatch<React.SetStateAction<boolean>>;
+}
+const Signup: React.FC<SignupProps> = ({ setLoginOpen }) => {
   const [step, setStep] = useState("account"); // Tracks tab state
   const [open, setOpen] = useState(false); // Controls dialog visibility
   const [form, setForm] = useState({
@@ -31,13 +35,12 @@ const Signup = () => {
     coverImage: null as File | null,
   });
 
-  const {signup, getSignedUrls, uploadImages} = useUser()
+  const { signup, getSignedUrls, uploadImages } = useUser();
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const handleGoogleLogin = () => {
-    console.log("Signing in with Google");
-    // Add Google login logic here
+    window.location.href = "http://localhost:8000/auth/google/signup";
   };
 
   const handleDiscordLogin = () => {
@@ -55,50 +58,57 @@ const Signup = () => {
 
   const handleSignup = async () => {
     try {
-        if (!form.avatar || !form.coverImage) {
-            console.error("Avatar and Cover Image are required");
-            return;
-        }
+      if (!form.avatar || !form.coverImage) {
+        console.error("Avatar and Cover Image are required");
+        return;
+      }
 
-        // Generate unique keys based on user email
-        const emailPrefix = form.email.split("@")[0];
-        const avatarKey = `profile/avatar/${emailPrefix}`;
-        const coverImageKey = `profile/coverImage/${emailPrefix}`;
+      // Generate unique keys based on user email
+      const emailPrefix = form.email.split("@")[0];
+      const avatarKey = `profile/avatar/${emailPrefix}`;
+      const coverImageKey = `profile/coverImage/${emailPrefix}`;
 
-        // Request Presigned URLs from backend
-        const { avatarUrl, coverUrl } = await getSignedUrls(avatarKey, coverImageKey);
-        if (!avatarUrl || !coverUrl) {
-            console.error("Failed to get presigned URLs");
-            return;
-        }
+      // Request Presigned URLs from backend
+      const { avatarUrl, coverUrl } = await getSignedUrls(
+        avatarKey,
+        coverImageKey
+      );
+      if (!avatarUrl || !coverUrl) {
+        console.error("Failed to get presigned URLs");
+        return;
+      }
+      // Send signup request with image keys
+      const signupData = {
+        fullname: form.fullName,
+        email: form.email,
+        password: form.password,
+        avatar: avatarKey, // Store key, NOT URL
+        coverImage: coverImageKey,
+        dob: form.dob,
+      };
 
-        // Upload files to S3
-        const uploadResult = await uploadImages(avatarUrl, coverUrl, form.avatar, form.coverImage);
-        if (!uploadResult.success) {
-            console.error("Image upload failed", uploadResult.error);
-            return;
-        }
+      await signup(signupData);
+      // Upload files to S3
+      const uploadResult = await uploadImages(
+        avatarUrl,
+        coverUrl,
+        form.avatar,
+        form.coverImage
+      );
+      if (!uploadResult.success) {
+        console.error("Image upload failed", uploadResult.error);
+        return;
+      }
 
-        // Send signup request with image keys
-        const signupData = {
-            fullname: form.fullName,
-            email: form.email,
-            password: form.password,
-            avatar: avatarKey, // Store key, NOT URL
-            coverImage: coverImageKey,
-            dob: form.dob
-        };
+      console.log("Signup successful!");
 
-        await signup(signupData);
-        console.log("Signup successful!");
-
-        // 🔹 Close modal or reset form
-        setOpen(false);
+      // 🔹 Close modal or reset form
+      setOpen(false);
+      setLoginOpen(false);
     } catch (error) {
-        console.error("Error during signup:", error);
+      console.error("Error during signup:", error);
     }
-};
-
+  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -128,7 +138,7 @@ const Signup = () => {
                 Sign Up
               </DialogTitle>
             </DialogHeader>
-            
+
             <div className="flex flex-col space-y-2 mt-4">
               <Button
                 onClick={handleGoogleLogin}
@@ -351,7 +361,6 @@ const Signup = () => {
                 </div>
               </TabsContent>
             </Tabs>
-            
           </div>
         </div>
       </DialogContent>

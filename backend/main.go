@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"os"
+	"time"
 
 	"github.com/WhiteSnek/Gametube/src/config"
 	"github.com/WhiteSnek/Gametube/src/routes"
@@ -38,14 +39,20 @@ func main() {
 	r.Use(gin.Logger())
 	
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:3000"},
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowOrigins:     []string{"http://localhost:3000"}, 
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
 		AllowHeaders:     []string{"Content-Type", "Authorization"},
-        ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: true,
+		ExposeHeaders:    []string{"Content-Length", "Location"}, 
+		AllowCredentials: true, 
+		MaxAge:           12 * time.Hour, 
 	}))
 
+	config.InitializeGoogle()
+
 	routes.AuthRoutes(r, db)
+	routes.ImageRoutes(r,db)
+	routes.GuildRoutes(r,db)
+	routes.UserRoutes(r, db)
 
 	r.GET("/health", func(ctx *gin.Context) {
 		ctx.JSON(200, gin.H{"message":"Everything is working fine! :D"})

@@ -10,7 +10,7 @@ const Sidebar = () => {
 
   const menuItems = [
     { name: "Home", icon: Home, link: "/" },
-    { name: "Subscriptions", icon: List, link: "/subscriptions" },
+    { name: "Joined Guilds", icon: List, link: "/joined" },
     { name: "Your Guild", icon: Castle, link: `/guilds/1` },
     { name: "History", icon: History, link: "/history" },
     { name: "Liked Videos", icon: ThumbsUp, link: "/liked-videos" },
