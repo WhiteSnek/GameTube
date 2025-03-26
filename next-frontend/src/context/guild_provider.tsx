@@ -51,6 +51,7 @@ const GuildProvider: React.FC<GuildProviderProps> = ({ children }) => {
     ); 
   const createGuild = async (data: CreateGuildType): Promise<void>  =>  {
     try {
+      console.log(data)
         const response = await axios.post("http://localhost:8000/guild/create",data,{withCredentials: true})
         if(response.data.data){
             setGuild(response.data.data)

@@ -14,43 +14,46 @@ datasource db {
 }
 
 model User {
-  id String @default(cuid()) @id
-  fullname String 
-  email String @unique
-  password String 
-  dob String?
-  avatar String?
+  id         String        @id @default(cuid())
+  fullname   String
+  email      String        @unique
+  password   String
+  dob        String?
+  avatar     String?
   coverImage String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  isVerified Boolean @default(false)
-  guilds      GuildMember[] 
-  ownedGuild  Guild?         @relation("Owner")
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  isVerified Boolean       @default(false)
+  guilds     GuildMember[]
+  videos     Videos[]
+  ownedGuild Guild?        @relation("Owner")
 }
 
 model Guild {
-  id String @default(cuid()) @id
-  ownerId String @unique
-  name String
+  id          String        @id @default(cuid())
+  ownerId     String        @unique
+  name        String
   description String?
-  avatar String?
-  coverImage String?
-  isPrivate Boolean @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  owner       User       @relation("Owner", fields: [ownerId], references: [id])
+  avatar      String?
+  coverImage  String?
+  isPrivate   Boolean       @default(false)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  owner       User          @relation("Owner", fields: [ownerId], references: [id])
   members     GuildMember[]
+  videos      Videos[]
+  tags        Tags[]
 }
 
 model GuildMember {
-   id        String  @id @default(cuid())
-  userId    String
-  guildId   String
-  role      ROLE  @default(MEMBER) 
-  joinedAt  DateTime @default(now())
-  status    STATUS   @default(APPROVED) 
-  user      User   @relation(fields: [userId], references: [id])
-  guild     Guild  @relation(fields: [guildId], references: [id])
+  id       String   @id @default(cuid())
+  userId   String
+  guildId  String
+  role     ROLE     @default(MEMBER)
+  joinedAt DateTime @default(now())
+  status   STATUS   @default(APPROVED)
+  user     User     @relation(fields: [userId], references: [id])
+  guild    Guild    @relation(fields: [guildId], references: [id])
 
   @@unique([userId, guildId])
 }
@@ -66,4 +69,40 @@ enum STATUS {
   PENDING
   APPROVED
   REJECTED
+}
+
+model Videos {
+  id          String         @id @default(cuid())
+  title       String
+  description String
+  thumbnail   String
+  videoUrl    String
+  duration    Int
+  ownerId     String
+  guildId     String
+  createdAt   DateTime       @default(now())
+  owner       User           @relation(fields: [ownerId], references: [id])
+  guild       Guild          @relation(fields: [guildId], references: [id])
+  tags        TagsOnVideos[]
+}
+
+model Tags {
+  id      String         @id @default(cuid())
+  name    String
+  guildId String
+  guild   Guild          @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  videos  TagsOnVideos[]
+
+  @@unique([name, guildId])
+}
+
+model TagsOnVideos {
+  id      String @id @default(cuid())
+  videoId String
+  tagId   String
+
+  video Videos @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  tag   Tags   @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([videoId, tagId])
 }

@@ -2,7 +2,9 @@ package controllers
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
 
 	"github.com/WhiteSnek/Gametube/prisma/db"
@@ -41,7 +43,8 @@ func CreateGuild(client *db.PrismaClient, c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-
+	jsonData, _ := json.MarshalIndent(input, "", "  ")
+	log.Println(string(jsonData))
 	ctx := context.Background()
 
 	// Create guild in database
@@ -66,6 +69,17 @@ func CreateGuild(client *db.PrismaClient, c *gin.Context) {
 		db.GuildMember.Role.Set(db.RoleLeader),
 		db.GuildMember.Status.Set(db.StatusApproved),
 	).Exec(ctx)
+
+	for _, tagName := range input.Tags {
+		_, err := client.Tags.CreateOne(
+			db.Tags.Name.Set(tagName),
+			db.Tags.Guild.Link(db.Guild.ID.Equals(guild.ID)),
+		).Exec(ctx)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to add tags to the guild"})
+			return
+		}
+	}
 
 	if err != nil {
 		// Rollback by deleting the guild since Prisma-Go lacks transactions
@@ -98,7 +112,7 @@ func GetGuild(client *db.PrismaClient, c *gin.Context) {
 		return
 	}
 
-	guild, err := client.Guild.FindFirst(db.Guild.OwnerID.Equals(userIdStr)).Exec(context.Background())
+	guild, err := client.Guild.FindFirst(db.Guild.OwnerID.Equals(userIdStr)).With(db.Guild.Tags.Fetch()).Exec(context.Background())
 
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Guild not found!"})
@@ -115,6 +129,11 @@ func GetGuild(client *db.PrismaClient, c *gin.Context) {
 	response.CoverImage = &coverImage
 	response.OwnerID = guild.OwnerID
 	response.Joined = true
+	var tags []string
+	for _, tag := range guild.Tags() {
+		tags = append(tags, tag.Name)
+	}
+	response.Tags = tags
 
 	c.JSON(http.StatusOK, gin.H{"message": "Guild fetched successfully", "data": response})
 }
@@ -127,7 +146,7 @@ func GetGuildById(client *db.PrismaClient, c *gin.Context) {
 		return
 	}
 	var response dtos.GuildDetails
-	guild, err := client.Guild.FindFirst(db.Guild.ID.Equals(guildId)).Exec(context.Background())
+	guild, err := client.Guild.FindFirst(db.Guild.ID.Equals(guildId)).With(db.Guild.Tags.Fetch()).Exec(context.Background())
 
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Guild not found!"})
@@ -143,6 +162,11 @@ func GetGuildById(client *db.PrismaClient, c *gin.Context) {
 	coverImage, _ := guild.CoverImage()
 	response.CoverImage = &coverImage
 	response.OwnerID = guild.OwnerID
+	var tags []string
+	for _, tag := range guild.Tags() {
+		tags = append(tags, tag.Name)
+	}
+	response.Tags = tags
 
 	userIdStr, ok := userId.(string)
 	if !ok {
@@ -270,8 +294,7 @@ func SearchGuild(client *db.PrismaClient, c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Guilds fetched successfully", "data": results})
 }
 
-
-func GetJoinedGuilds(client *db.PrismaClient, c *gin.Context){
+func GetJoinedGuilds(client *db.PrismaClient, c *gin.Context) {
 	userId, exists := c.Get("userId")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized request"})
@@ -299,5 +322,5 @@ func GetJoinedGuilds(client *db.PrismaClient, c *gin.Context){
 		joinedGuild.Role = string(member.Role)
 		joinedGuilds = append(joinedGuilds, joinedGuild)
 	}
-	c.JSON(http.StatusOK, gin.H{"message":"guilds fetched successfully","data": joinedGuilds})
+	c.JSON(http.StatusOK, gin.H{"message": "guilds fetched successfully", "data": joinedGuilds})
 }

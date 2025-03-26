@@ -16,6 +16,7 @@ export interface CreateGuildType {
     avatar: string | undefined,
     cover_image: string | undefined,
     isPrivate: boolean,
+    tags: string[]
 }
 
 export interface GuildsType {

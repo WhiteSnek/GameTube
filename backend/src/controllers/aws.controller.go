@@ -90,13 +90,8 @@ func GetUserImages(client *db.PrismaClient, c *gin.Context) {
 		return
 	}
 
-	avatarKey, ok1 := user.Avatar()
-	coverKey, ok2 := user.CoverImage()
-
-	if !ok1 || !ok2 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "User does not have an avatar or cover image"})
-		return
-	}
+	avatarKey, hasAvatar := user.Avatar()
+	coverKey, hasCover  := user.CoverImage()
 
 	bucketName := os.Getenv("AWS_BUCKET")
 	var wg sync.WaitGroup
@@ -105,49 +100,61 @@ func GetUserImages(client *db.PrismaClient, c *gin.Context) {
 	var avatarErr, coverErr error
 
 	preSignedClient := s3.NewPresignClient(config.S3Client)
-	if strings.Contains(avatarKey, "googleusercontent") {
-		avatarUrl = avatarKey
-	} else {
+	if hasAvatar {
+		if strings.Contains(avatarKey, "googleusercontent") {
+			avatarUrl = avatarKey
+		} else {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				presignedReq, err := preSignedClient.PresignGetObject(context.TODO(), &s3.GetObjectInput{
+					Bucket: aws.String(bucketName),
+					Key:    aws.String(avatarKey),
+				}, s3.WithPresignExpires(15*time.Minute))
+				if err != nil {
+					avatarErr = err
+					return
+				}
+				avatarUrl = presignedReq.URL
+			}()
+		}
+	}
+	if hasCover {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
 			presignedReq, err := preSignedClient.PresignGetObject(context.TODO(), &s3.GetObjectInput{
 				Bucket: aws.String(bucketName),
-				Key:    aws.String(avatarKey),
-			}, s3.WithPresignExpires(15*time.Minute))
+				Key:    aws.String(coverKey),
+			}, s3.WithPresignExpires(30*time.Minute))
 			if err != nil {
-				avatarErr = err
+				coverErr = err
 				return
 			}
-			avatarUrl = presignedReq.URL
+			coverUrl = presignedReq.URL
 		}()
 	}
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		presignedReq, err := preSignedClient.PresignGetObject(context.TODO(), &s3.GetObjectInput{
-			Bucket: aws.String(bucketName),
-			Key:    aws.String(coverKey),
-		}, s3.WithPresignExpires(30*time.Minute))
-		if err != nil {
-			coverErr = err
-			return
-		}
-		coverUrl = presignedReq.URL
-	}()
 
 	wg.Wait()
 
-	if avatarErr != nil || coverErr != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate presigned URLs"})
+	if avatarErr != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate avatar presigned URL"})
+		return
+	}
+	if hasCover && coverErr != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate cover image presigned URL"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"avatarUrl": avatarUrl,
-		"coverUrl":  coverUrl,
-	})
+	response := gin.H{}
+	if avatarUrl != "" {
+		response["avatarUrl"] = avatarUrl
+	}
+	if coverUrl != "" {
+		response["coverUrl"] = coverUrl
+	}
 
+	c.JSON(http.StatusOK, response)
 }
 
 func GetGuildImages(client *db.PrismaClient, c *gin.Context) {
