@@ -1,6 +1,7 @@
 "use client";
 import { SignUpUser, UserType } from "@/types/user.types";
 import React, { createContext, ReactNode, useContext, useEffect, useState } from "react";
+import api from "@/lib/axios";
 import axios from "axios";
 interface UserContextType {
   User: UserType | null;
@@ -51,7 +52,7 @@ const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   useEffect(() => {
     const getCurrentUser = async () => {
       try {
-        const response = await axios.get("http://localhost:8000/user/", {withCredentials: true})
+        const response = await api.get("/user/", {withCredentials: true})
         if(response.data){
           setUser(response.data.data)
         }
@@ -73,16 +74,16 @@ const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   };
 
   const getUserImages = async (userId: string) => {
-    const response = await axios.get(
-      `http://localhost:8000/image/user/${userId}`
+    const response = await api.get(
+      `/image/user/${userId}`
     );
     setImages(response.data);
     console.log(response.data);
   };
 
   const signup = async (data: SignUpUser) => {
-    const response = await axios.post(
-      "http://localhost:8000/auth/signup",
+    const response = await api.post(
+      "/auth/signup",
       data
     );
     if (response.data.error) {
@@ -93,7 +94,7 @@ const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   };
 
   const signin = async (email: string, password: string) => {
-    const response = await axios.post("http://localhost:8000/auth/signin", {
+    const response = await api.post("/auth/signin", {
       email,
       password,
     }, { withCredentials: true });
@@ -105,7 +106,7 @@ const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   };
 
   const logout = async() => {
-    const response = await axios.post("http://localhost:8000/auth/logout", {}, {withCredentials: true})
+    const response = await api.post("/auth/logout", {}, {withCredentials: true})
     console.log(response)
     setUser(null)
   }

@@ -53,12 +53,12 @@ func main() {
 	routes.ImageRoutes(r,db)
 	routes.GuildRoutes(r,db)
 	routes.UserRoutes(r, db)
+	routes.VideoRoutes(r, db)
+	routes.CommentRoutes(r, db)
 
 	r.GET("/health", func(ctx *gin.Context) {
 		ctx.JSON(200, gin.H{"message":"Everything is working fine! :D"})
 	})
-
-
 
 	port := ":8000"
 	log.Println("Server running on port", port)

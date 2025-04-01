@@ -11,13 +11,17 @@ import {
 } from "lucide-react";
 import VideoDetails from "./details";
 import { SlidersHorizontal, Gauge, Monitor } from "lucide-react";
-const VideoSection: React.FC = () => {
+import { VideoDetailstype } from "@/types/video.types";
+interface VideoSectionProps {
+  video: VideoDetailstype
+}
+const VideoSection: React.FC<VideoSectionProps> = ({video}) => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [showThumbnail, setShowThumbnail] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
+  const [duration, setDuration] = useState<number>(parseInt(video.duration));
   const [isMuted, setIsMuted] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showControls, setShowControls] = useState(true);
@@ -75,21 +79,11 @@ const VideoSection: React.FC = () => {
     if (!video) return;
 
     const updateTime = () => setCurrentTime(video.currentTime);
-    const updateDuration = () => {
-      if (video.duration && !isNaN(video.duration)) {
-        setDuration(video.duration);
-      }
-    };
-    if (video.readyState >= 1) {
-      updateDuration();
-    }
 
     video.addEventListener("timeupdate", updateTime);
-    video.addEventListener("loadedmetadata", updateDuration);
 
     return () => {
       video.removeEventListener("timeupdate", updateTime);
-      video.removeEventListener("loadedmetadata", updateDuration);
     };
   }, []);
 
@@ -162,7 +156,7 @@ const VideoSection: React.FC = () => {
       <div className="relative w-full max-w-3xl">
         <video
           ref={videoRef}
-          src="https://temp-gametube-videos.s3.us-east-1.amazonaws.com/2d125f98-3377-487c-86a3-09a616f41a2a/d3f0e016-6ca9-44c7-b2a9-9529db54b71a/4581188b-bcb6-41fa-98c0-a20fbcd2a39a.mp4"
+          src={video.videoUrl}
           className="w-full rounded-lg shadow-lg"
           style={{ pointerEvents: "none" }}
           onPlay={() => setIsPlaying(true)}
@@ -170,7 +164,7 @@ const VideoSection: React.FC = () => {
         />
         {showThumbnail && (
           <div className="absolute inset-0 flex items-center justify-center bg-black">
-            <img src='https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTNWMEKB19dQr8ikNRrxW09pt7bWpLY7hXtWA&s' alt="Video Thumbnail" className="w-full rounded-lg shadow-lg" />
+            <img src={video.thumbnail} alt="Video Thumbnail" className="w-full h-full rounded-lg shadow-lg" />
             <button
               onClick={togglePlayPause}
               className="absolute text-white bg-black/60 cursor-pointer p-4 rounded-full"
@@ -302,7 +296,7 @@ const VideoSection: React.FC = () => {
           </div>
         </div>
       </div>
-      <VideoDetails />
+      <VideoDetails video={video} />
     </div>
   );
 };

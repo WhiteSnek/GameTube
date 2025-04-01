@@ -7,7 +7,8 @@ export interface GuildDetailsType{
     cover_image: string | undefined,
     isPrivate: boolean,
     joined: boolean,
-    createdAt: string
+    createdAt: string,
+    tags: string[]
 }
 
 export interface CreateGuildType {

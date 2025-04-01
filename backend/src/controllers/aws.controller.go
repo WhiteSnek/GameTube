@@ -350,3 +350,126 @@ func GetVideoUploadUrl(c *gin.Context){
 		"thumbnailKey": thumbnailKey,
 	})
 }
+
+type VideoImages struct {
+	Thumbnail string `json:"thumbnail"`
+	Video string `json:"video"`
+	Avatar string `json:"avatar"`
+}
+
+func GetVideoFiles(client *db.PrismaClient, c *gin.Context) {
+	var request struct {
+		VideoIds []string `json:"videoIds"`
+	}
+
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
+
+	if len(request.VideoIds) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Video IDs are required"})
+		return
+	}
+
+	bucketName := os.Getenv("AWS_BUCKET")
+	videoBucketName := os.Getenv("AWS_VIDEO_BUCKET")
+	preSignedClient := s3.NewPresignClient(config.S3Client)
+
+	var videoImages []VideoImages
+	var mu sync.Mutex  // Mutex to protect shared slice
+	var wg sync.WaitGroup
+	errChan := make(chan error, len(request.VideoIds)*3) // Buffer for errors
+
+	for _, videoId := range request.VideoIds {
+		video, err := client.Videos.FindUnique(db.Videos.ID.Equals(videoId)).With(db.Videos.Guild.Fetch()).Exec(context.Background())
+		if err != nil || video == nil {
+			continue
+		}
+
+		var videoImage VideoImages
+
+		wg.Add(3)
+
+		go func(video *db.VideosModel) {
+			defer wg.Done()
+			presignedReq, err := preSignedClient.PresignGetObject(context.TODO(), &s3.GetObjectInput{
+				Bucket: aws.String(bucketName),
+				Key:    aws.String(video.Thumbnail),
+			}, s3.WithPresignExpires(15*time.Minute))
+
+			if err != nil {
+				errChan <- fmt.Errorf("failed to generate presigned URLs for thumbnail: %w", err)
+				return
+			}
+			videoImage.Thumbnail = presignedReq.URL
+		}(video)
+
+		go func(video *db.VideosModel) {
+			defer wg.Done()
+			presignedReq, err := preSignedClient.PresignGetObject(context.TODO(), &s3.GetObjectInput{
+				Bucket: aws.String(videoBucketName),
+				Key:    aws.String(video.VideoURL),
+			}, s3.WithPresignExpires(15*time.Minute))
+
+			if err != nil {
+				errChan <- fmt.Errorf("failed to generate presigned URLs for video: %w", err)
+				return
+			}
+			videoImage.Video = presignedReq.URL
+		}(video)
+
+		guild := video.Guild()
+		avatarKey, ok := guild.Avatar()
+		if !ok {
+			errChan <- fmt.Errorf("guild does not have an avatar or cover image")
+			wg.Add(-1) // Skip this one
+			continue
+		}
+
+		go func() {
+			defer wg.Done()
+			presignedReq, err := preSignedClient.PresignGetObject(context.TODO(), &s3.GetObjectInput{
+				Bucket: aws.String(bucketName),
+				Key:    aws.String(avatarKey),
+			}, s3.WithPresignExpires(15*time.Minute))
+
+			if err != nil {
+				errChan <- fmt.Errorf("failed to generate presigned URLs for Avatar: %w", err)
+				return
+			}
+			videoImage.Avatar = presignedReq.URL
+		}()
+
+		// Wait for all goroutines for this video to finish
+		wg.Wait()
+
+		// Lock before modifying shared slice
+		mu.Lock()
+		videoImages = append(videoImages, videoImage)
+		mu.Unlock()
+	}
+
+	close(errChan) // Close error channel after all goroutines finish
+
+	// Collect errors
+	var errors []string
+	for err := range errChan {
+		errors = append(errors, err.Error())
+	}
+
+	// If errors occurred, include them in the response
+	if len(errors) > 0 {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":      "Some presigned URLs failed to generate",
+			"errors":     errors,
+			"videoFiles": videoImages,
+		})
+		return
+	}
+
+	// Successful response
+	c.JSON(http.StatusOK, gin.H{
+		"videoFiles": videoImages,
+	})
+}

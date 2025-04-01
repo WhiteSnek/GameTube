@@ -29,5 +29,9 @@ func ImageRoutes(r *gin.Engine, client *db.PrismaClient){
 	imageGroup.GET("/video/upload-url", func(ctx *gin.Context) {
 		controllers.GetVideoUploadUrl(ctx)
 	})
+
+	imageGroup.POST("/video/images", func(ctx *gin.Context) {
+		controllers.GetVideoFiles(client, ctx)
+	})
 	
 }

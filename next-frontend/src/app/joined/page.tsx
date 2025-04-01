@@ -1,41 +1,57 @@
-'use client'
+"use client";
 import SubscriptionList from "@/components/subscriptions";
 import { VideoCards } from "@/components/video_cards";
 import { useGuild } from "@/context/guild_provider";
+import { useVideo } from "@/context/video_provider";
 import { JoinedGuildType } from "@/types/guild.types";
+import { VideoType } from "@/types/video.types";
 import { useEffect, useState } from "react";
 
 export default function Subscriptions() {
-  const [guilds, setGuilds] = useState<JoinedGuildType[] | null>(null);
+  const [guilds, setGuilds] = useState<JoinedGuildType[]>([]);
+  const [videos, setVideos] = useState<VideoType[]>([]);
+  
   const { getJoinedGuilds, getGuildAvatars } = useGuild();
+  const { getJoinedGuildVideos } = useVideo();
+
   useEffect(() => {
-    const getGuilds = async () => {
-      const response = await getJoinedGuilds();
-      if (!response || response.length === 0) return;
-      const guildIds = response.map((guild) => guild.id);
-      if (guildIds.length === 0) return;
+    const fetchData = async () => {
+      try {
+        const [guildResponse, videoResponse] = await Promise.all([
+          getJoinedGuilds(),
+          getJoinedGuildVideos(),
+        ]);
 
-      const avatarUrls = await getGuildAvatars(guildIds);
-      if (!avatarUrls || avatarUrls.length === 0) return;
+        if (guildResponse && guildResponse.length > 0) {
+          const guildIds = guildResponse.map((guild) => guild.id);
+          const avatarUrls = await getGuildAvatars(guildIds);
 
-      const updatedGuilds = response.map((guild, idx) => ({
-        ...guild,
-        avatar: avatarUrls[idx] || guild.avatar, 
-      }));
+          const updatedGuilds = guildResponse.map((guild, idx) => ({
+            ...guild,
+            avatar: avatarUrls?.[idx] || guild.avatar,
+          }));
 
-      setGuilds(updatedGuilds);
+          setGuilds(updatedGuilds);
+        }
+
+        if (videoResponse) {
+          setVideos(videoResponse);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
     };
-    getGuilds();
+
+    fetchData();
   }, []);
-  if (!guilds) return;
+
   return (
     <div className="relative">
       <div className="px-10">
-        <SubscriptionList guilds={guilds} />
+        {guilds.length > 0 && <SubscriptionList guilds={guilds} />}
         <h1 className="font-bold text-5xl mt-4">Latest</h1>
       </div>
-      <VideoCards />
+      <VideoCards videos={videos} />
     </div>
-    //
   );
 }

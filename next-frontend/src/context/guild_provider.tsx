@@ -1,7 +1,8 @@
 "use client";
 import { CreateGuildType, GuildDetailsType, GuildsType, JoinedGuildType } from "@/types/guild.types";
-import axios from "axios";
+import api from "@/lib/axios";
 import React, { createContext, ReactNode, useContext, useEffect, useState } from "react";
+import axios from "axios";
 
 interface GuildContextType {
   Guild: GuildDetailsType | undefined;
@@ -52,7 +53,7 @@ const GuildProvider: React.FC<GuildProviderProps> = ({ children }) => {
   const createGuild = async (data: CreateGuildType): Promise<void>  =>  {
     try {
       console.log(data)
-        const response = await axios.post("http://localhost:8000/guild/create",data,{withCredentials: true})
+        const response = await api.post("/guild/create",data,{withCredentials: true})
         if(response.data.data){
             setGuild(response.data.data)
         }
@@ -73,8 +74,8 @@ const GuildProvider: React.FC<GuildProviderProps> = ({ children }) => {
   };
 
   const getGuildImages = async (guildId: string) => {
-    const response = await axios.get(
-      `http://localhost:8000/image/guild/${guildId}`
+    const response = await api.get(
+      `/image/guild/${guildId}`
     );
     setImages(response.data);
     console.log(response.data);
@@ -112,10 +113,10 @@ const GuildProvider: React.FC<GuildProviderProps> = ({ children }) => {
     try {
         let response;
         if(guildId){
-          response = await axios.get(`http://localhost:8000/guild/${guildId}`,{withCredentials: true})
+          response = await api.get(`/guild/${guildId}`,{withCredentials: true})
         }
         else{
-          response = await axios.get("http://localhost:8000/guild/",{withCredentials: true})
+          response = await api.get("/guild/",{withCredentials: true})
         }
         if (response.data.data){
             setGuild(response.data.data)
@@ -130,8 +131,8 @@ const GuildProvider: React.FC<GuildProviderProps> = ({ children }) => {
 
   const searchGuilds = async (query: string): Promise<GuildsType[] | null> => {
     try {
-      const response = await axios.get(
-        `http://localhost:8000/guild/search?q=${encodeURIComponent(query)}`,
+      const response = await api.get(
+        `/guild/search?q=${encodeURIComponent(query)}`,
         { withCredentials: true }
       );
       console.log(response.data?.data)
@@ -144,7 +145,7 @@ const GuildProvider: React.FC<GuildProviderProps> = ({ children }) => {
 
   const getGuildAvatars = async(guildIds: string[]): Promise<string[] | null> => {
     try {
-      const response = await axios.post("http://localhost:8000/image/guilds", {guildIds}, {withCredentials: true})
+      const response = await api.post("/image/guilds", {guildIds}, {withCredentials: true})
       return response.data.avatarUrls
     } catch (error) {
       console.log(error)
@@ -154,7 +155,7 @@ const GuildProvider: React.FC<GuildProviderProps> = ({ children }) => {
 
   const joinGuild = async (guildId: string): Promise<string | null> => {
     try {
-      const response = await axios.patch(`http://localhost:8000/guild/join/${guildId}`,{},{withCredentials: true})
+      const response = await api.patch(`/guild/join/${guildId}`,{},{withCredentials: true})
       return response.data.message
     } catch (error) {
       console.log(error)
@@ -164,7 +165,7 @@ const GuildProvider: React.FC<GuildProviderProps> = ({ children }) => {
 
   const leaveGuild = async (guildId: string): Promise<string | null> => {
     try {
-      const response = await axios.patch(`http://localhost:8000/guild/leave/${guildId}`,{},{withCredentials: true})
+      const response = await api.patch(`/guild/leave/${guildId}`,{},{withCredentials: true})
       return response.data.message
     } catch (error) {
       console.log(error)
@@ -174,7 +175,7 @@ const GuildProvider: React.FC<GuildProviderProps> = ({ children }) => {
 
   const getJoinedGuilds = async(): Promise<JoinedGuildType[] | null> => {
     try {
-      const response = await axios.get('http://localhost:8000/guild/joined',{withCredentials: true})
+      const response = await api.get('/guild/joined',{withCredentials: true})
       return response.data.data
     } catch (error) {
       console.log(error)

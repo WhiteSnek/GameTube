@@ -7,6 +7,7 @@ import { ParticlesBackground } from "@/components/particles";
 import ThemeProvider from "@/context/theme_provider";
 import UserProvider from "@/context/user_provider";
 import GuildProvider from "@/context/guild_provider";
+import VideoProvider from "@/context/video_provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -36,14 +37,16 @@ export default function RootLayout({
         <ThemeProvider>
           <UserProvider>
             <GuildProvider>
-              <Navbar />
-              <div className="pt-20 flex">
-                <Sidebar />
-                <main className="ml-64 w-full">
-                  <ParticlesBackground />
-                  {children}
-                </main>
-              </div>
+              <VideoProvider>
+                <Navbar />
+                <div className="pt-20 flex">
+                  <Sidebar />
+                  <main className="ml-64 w-full">
+                    <ParticlesBackground />v
+                    {children}
+                  </main>
+                </div>
+              </VideoProvider>
             </GuildProvider>
           </UserProvider>
         </ThemeProvider>

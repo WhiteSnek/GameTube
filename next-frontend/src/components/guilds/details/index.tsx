@@ -3,6 +3,7 @@ import { useUser } from "@/context/user_provider";
 import { GuildDetailsType } from "@/types/guild.types";
 import truncateText from "@/utils/truncate_text";
 import { Crown, DoorOpen } from "lucide-react";
+import Image from "next/image";
 import React, { useEffect, useState } from "react";
 
 interface DetailsProps {
@@ -10,7 +11,7 @@ interface DetailsProps {
 }
 
 const Details: React.FC<DetailsProps> = ({ guild }) => {
-  const { getGuildImages, images, Guild, joinGuild, leaveGuild } = useGuild();
+  const { getGuildImages, images, joinGuild, leaveGuild } = useGuild();
   const [joined, setJoined] = useState<boolean>(guild.joined)
   const { User } = useUser();
   const toggleMembership = async () => {
@@ -26,23 +27,33 @@ const Details: React.FC<DetailsProps> = ({ guild }) => {
   }
   useEffect(() => {
     getGuildImages(guild.id);
-  }, [Guild]);
+  }, [guild.id]);
   return (
     <div className="w-full bg-white dark:bg-zinc-800 shadow-lg rounded-2xl overflow-hidden">
       {/* Cover Image */}
       <div className="h-48 bg-gray-300 flex items-center justify-center">
-        <img
+      <Image
           src={images?.coverUrl || "/default-cover.png"}
+          priority
           alt="Cover"
+          width={1920}
+          height={1080}
+          placeholder="blur"
           className="w-full h-full object-cover"
+          blurDataURL="/placeholder.jpg"
         />
       </div>
 
       {/* Avatar & Channel Info */}
       <div className="p-6 flex items-center space-x-4">
-        <img
+        <Image
           src={images?.avatarUrl || "/default-avatar.png"}
           alt="Avatar"
+          width={40}
+          height={40}
+          priority
+          placeholder="blur"
+          blurDataURL="/placeholder.jpg"
           className="w-20 h-20 object-cover aspect-square rounded-full border-4 border-zinc-950 dark:border-white shadow-md"
         />
         <div>
@@ -57,7 +68,13 @@ const Details: React.FC<DetailsProps> = ({ guild }) => {
       </div>
 
       {/* Manage Button */}
-      <div className="p-6 flex justify-end">
+      <div className="p-6 flex justify-between">
+        <div>
+          {guild.tags && guild.tags.map((tag,idx)=>(
+            <span key={idx} className="bg-red-500 text-sm text-white rounded-full px-2 py-1 mx-1">{tag}</span>
+          ))}
+        </div>
+        <div>
           {guild.ownerId === User?.id ? (
             <button className="px-4 bg-red-500 cursor-pointer text-white py-2 rounded-lg hover:bg-red-600 transition flex items-center gap-2">
               <Crown className="w-5 h-5" /> Manage Guild
@@ -67,6 +84,7 @@ const Details: React.FC<DetailsProps> = ({ guild }) => {
               <DoorOpen className="w-5 h-5" />{joined ? "Leave Guild" : "Join Guild"}
             </button>
           )}
+          </div>
       </div>
     </div>
   );
