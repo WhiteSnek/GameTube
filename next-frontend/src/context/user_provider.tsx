@@ -1,6 +1,12 @@
 "use client";
 import { SignUpUser, UserType } from "@/types/user.types";
-import React, { createContext, ReactNode, useContext, useEffect, useState } from "react";
+import React, {
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import api from "@/lib/axios";
 import axios from "axios";
 interface UserContextType {
@@ -23,7 +29,8 @@ interface UserContextType {
   setImages: React.Dispatch<
     React.SetStateAction<{ avatarUrl: string; coverUrl: string }>
   >;
-  logout: () => Promise<void>
+  logout: () => Promise<void>;
+  getMultipleUserAvatars: (avatarKeys: string[]) => Promise<string[] | null>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -52,18 +59,16 @@ const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   useEffect(() => {
     const getCurrentUser = async () => {
       try {
-        const response = await api.get("/user/", {withCredentials: true})
-        if(response.data){
-          setUser(response.data.data)
+        const response = await api.get("/user/", { withCredentials: true });
+        if (response.data) {
+          setUser(response.data.data);
         }
       } catch (error) {
         console.error("Token expired or invalid:", error);
       }
-    }
-    getCurrentUser()
+    };
+    getCurrentUser();
   }, []);
-
-  
 
   const getSignedUrls = async (avatar: string, coverImage: string) => {
     const response = await axios.get(
@@ -74,18 +79,13 @@ const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   };
 
   const getUserImages = async (userId: string) => {
-    const response = await api.get(
-      `/image/user/${userId}`
-    );
+    const response = await api.get(`/image/user/${userId}`);
     setImages(response.data);
     console.log(response.data);
   };
 
   const signup = async (data: SignUpUser) => {
-    const response = await api.post(
-      "/auth/signup",
-      data
-    );
+    const response = await api.post("/auth/signup", data);
     if (response.data.error) {
       console.log(response.data.error);
     } else {
@@ -94,10 +94,14 @@ const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   };
 
   const signin = async (email: string, password: string) => {
-    const response = await api.post("/auth/signin", {
-      email,
-      password,
-    }, { withCredentials: true });
+    const response = await api.post(
+      "/auth/signin",
+      {
+        email,
+        password,
+      },
+      { withCredentials: true }
+    );
     if (response.data.error) {
       console.log(response.data.error);
     } else {
@@ -105,11 +109,15 @@ const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     }
   };
 
-  const logout = async() => {
-    const response = await api.post("/auth/logout", {}, {withCredentials: true})
-    console.log(response)
-    setUser(null)
-  }
+  const logout = async () => {
+    const response = await api.post(
+      "/auth/logout",
+      {},
+      { withCredentials: true }
+    );
+    console.log(response);
+    setUser(null);
+  };
 
   const uploadImages = async (
     avatarUrl: string,
@@ -138,6 +146,23 @@ const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
       return { success: false, error };
     }
   };
+
+  const getMultipleUserAvatars = async (
+    avatarKeys: string[]
+  ): Promise<string[] | null> => {
+    console.log(avatarKeys)
+    try {
+      const response = await api.post(
+        "/image/users",
+        { avatarKeys },
+      );
+      return response.data.avatarUrls;
+    } catch (error) {
+      console.log(error);
+      return null;
+    }
+  };
+
   return (
     <UserContext.Provider
       value={{
@@ -150,7 +175,8 @@ const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         getUserImages,
         images,
         setImages,
-        logout
+        logout,
+        getMultipleUserAvatars
       }}
     >
       {children}

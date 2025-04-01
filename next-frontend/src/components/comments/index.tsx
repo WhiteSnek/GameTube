@@ -2,9 +2,10 @@
 import React, { useEffect, useState } from "react";
 import { ArrowUp, MessageCircle, PlusCircle } from "lucide-react";
 import { useComment } from "@/context/comment_provider";
+import { useUser } from "@/context/user_provider";
 
 interface CommentType {
-  id: number;
+  id: string;
   ownerAvatar: string;
   ownerName: string;
   role: string;
@@ -17,6 +18,58 @@ const Comment = ({ comment, depth = 0 }: { comment: CommentType; depth?: number 
   const [likes, setLikes] = useState<number>(comment.likes);
   const [showReplies, setShowReplies] = useState<boolean>(false);
   const [replyText, setReplyText] = useState<string>("");
+  const [replies, setReplies] = useState<CommentType[]>([])
+  const {getReplies, addReply} = useComment()
+  const { getMultipleUserAvatars } = useUser()
+  useEffect(() => {
+    const fetchReplies = async () => {
+      const response = await getReplies(comment.id);
+      if (response && response.length > 0) {
+        setReplies(response);
+
+        // Fetch avatars only once after fetching replies
+        getUserAvatars(response);
+      }
+    };
+    fetchReplies();
+  }, [comment.id, getReplies]);
+
+  const getUserAvatars = async (loadedReplies: CommentType[]) => {
+    const avatarKeys = loadedReplies.map((reply) => reply.ownerAvatar);
+    if (avatarKeys.length === 0) return;
+
+    const avatarUrls = await getMultipleUserAvatars(avatarKeys);
+    if (!avatarUrls) return;
+
+    setReplies((prevReplies) =>
+      prevReplies.map((reply, idx) => ({
+        ...reply,
+        ownerAvatar: avatarUrls[idx] ?? reply.ownerAvatar, 
+      }))
+    );
+  };
+  const addCommentReply = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (replyText.trim()) {
+      const response = await addReply(comment.id, replyText);
+      if (response) {
+        // Fetch avatar immediately after adding reply
+        const avatarUrls = await getMultipleUserAvatars([response.ownerAvatar]);
+        if(!avatarUrls) return;
+        setReplies([
+          ...replies,
+          {
+            ...response,
+            ownerAvatar: avatarUrls[0] ?? response.ownerAvatar, // Update avatar for the new reply
+          },
+        ]);
+        setReplyText("");
+      }
+    } else {
+      // TODO: Error handling
+      return;
+    }
+  };
   
   return (
     <div className="border-l-4 border-zinc-500 dark:border-zinc-700 pl-6 my-4">
@@ -38,13 +91,13 @@ const Comment = ({ comment, depth = 0 }: { comment: CommentType; depth?: number 
               <MessageCircle size={16} /> {comment.replies}
             </button>}
           </div>
-          {/* {showReplies && (
-            <div className="ml-8 border-l-2 border-zinc-200 dark:border-zinc-700 pl-4 mt-3">
-              {comment.replies.map((reply) => (
-                <Comment key={reply.id} comment={reply} addReply={addReply} depth={depth + 1} />
+          {showReplies && (
+            <div className="border-l-2 border-zinc-200 dark:border-zinc-700 pl-4 mt-3">
+              {replies.map((reply) => (
+                <Comment key={reply.id} comment={reply} depth={depth + 1} />
               ))}
               {depth < 2 && (
-                <div className="mt-3 flex gap-2">
+                <form className="mt-3 flex gap-2" onSubmit={addCommentReply}>
                   <input
                     type="text"
                     placeholder="Reply..."
@@ -53,20 +106,15 @@ const Comment = ({ comment, depth = 0 }: { comment: CommentType; depth?: number 
                     className="flex-1 p-2 border rounded-md dark:bg-zinc-700 dark:text-white"
                   />
                   <button
-                    onClick={() => {
-                      if (replyText.trim()) {
-                        addReply(comment.id, replyText, depth + 1);
-                        setReplyText("");
-                      }
-                    }}
+                    type="submit"
                     className="px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
                   >
                     <MessageCircle size={20} />
                   </button>
-                </div>
+                </form>
               )}
             </div>
-          )} */}
+          )}
         </div>
       </div>
     </div>
@@ -74,78 +122,82 @@ const Comment = ({ comment, depth = 0 }: { comment: CommentType; depth?: number 
 };
 
 const Comments = ({videoId}: {videoId: string}) => {
-  const [comments, setComments] = useState<CommentType[] | null>(null);
+  const [comments, setComments] = useState<CommentType[]>([]);
   const [newComment, setNewComment] = useState<string>("");
-  const {getComments} = useComment()
-  useEffect(()=>{
+  const {getComments, addComment} = useComment()
+  const { getMultipleUserAvatars } = useUser()
+  useEffect(() => {
     const fetchComments = async () => {
-      const response = await getComments(videoId)
-      setComments(response)
-    }
-    fetchComments()
-  },[])
-  const addComment = () => {
-    // if (newComment.trim()) {
-    //   setComments([
-    //     ...comments,
-    //     {
-    //       id: comments.length + 1,
-    //       avatar: "https://i1.sndcdn.com/avatars-1F5ymBCxBLO7BeF6-FWifBQ-t1080x1080.jpg",
-    //       name: "Ichiban Kasuga",
-    //       role: "Member",
-    //       comment: newComment,
-    //       likes: 0,
-    //       replies: [],
-    //     },
-    //   ]);
-    //   setNewComment("");
-    // }
+      const response = await getComments(videoId);
+      if (response && response.length > 0) {
+        setComments(response);
+
+        // Fetch avatars only once after fetching comments
+        getUserAvatars(response);
+      }
+    };
+    fetchComments();
+  }, [videoId, getComments]);
+
+  const getUserAvatars = async (loadedComments: CommentType[]) => {
+    const avatarKeys = loadedComments.map((comment) => comment.ownerAvatar);
+    if (avatarKeys.length === 0) return;
+
+    const avatarUrls = await getMultipleUserAvatars(avatarKeys);
+    if (!avatarUrls) return;
+
+    setComments((prevComments) =>
+      prevComments.map((comment, idx) => ({
+        ...comment,
+        ownerAvatar: avatarUrls[idx] ?? comment.ownerAvatar, 
+      }))
+    );
   };
-  // const addReply = (id: number, text: string, depth: number) => {
-  //   if (depth >= 3) return;
-  //   const updateReplies = (commentsList: CommentType[]): CommentType[] => {
-  //     return commentsList.map((comment) => {
-  //       if (comment.id === id) {
-  //         return {
-  //           ...comment,
-  //           replies: [
-  //             ...comment.replies,
-  //             {
-  //               id: Date.now(),
-  //               avatar: "https://i1.sndcdn.com/avatars-1F5ymBCxBLO7BeF6-FWifBQ-t1080x1080.jpg",
-  //               name: "Ichiban Kasuga",
-  //               role: "Member",
-  //               comment: text,
-  //               likes: 0,
-  //               replies: [],
-  //             },
-  //           ],
-  //         };
-  //       }
-  //       return { ...comment, replies: updateReplies(comment.replies) };
-  //     });
-  //   };
-  //   setComments(updateReplies(comments));
-  // };
+  const addVideoComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newComment.trim()) {
+      const response = await addComment(videoId, newComment);
+      console.log(response)
+      if (response) {
+        // Fetch avatar immediately after adding comment
+        const avatarUrls = await getMultipleUserAvatars([response.ownerAvatar]);
+        if (!avatarUrls) return;
+        setComments([
+          ...comments,
+          {
+            ...response,
+            ownerAvatar: avatarUrls[0] ?? response.ownerAvatar, // Update avatar for the new comment
+          },
+        ]);
+        setNewComment("");
+      }
+    } else {
+      // TODO: Error handling
+      return;
+    }
+  };
+  
+  
 
   return (
     <div className="p-6 max-w-3xl mx-auto bg-white dark:bg-zinc-900 shadow-lg rounded-lg">
       <h2 className="text-2xl font-semibold mb-6 text-zinc-900 dark:text-white">Comments</h2>
-      <div className="mb-4 flex gap-2">
+      <form className="mb-4 flex gap-2" onSubmit={addVideoComment}>
+        
         <input
           type="text"
           placeholder="Add a comment..."
-          // value={newComment}
-          // onChange={(e) => setNewComment(e.target.value)}
-          className="flex-1 p-2 border rounded-md dark:bg-zinc-700 dark:text-white"
+          value={newComment}
+          onChange={(e) => setNewComment(e.target.value)}
+          className="flex-1 p-2 border rounded-md dark:bg-zinc-700 dark:text-white focus:outline-none"
         />
         <button
-          onClick={addComment}
+          type="submit"
           className="px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 flex items-center gap-1"
         >
           <MessageCircle size={25} />
         </button>
-      </div>
+      </form>
       {!comments || comments.length === 0 ? (<p className="text-center text-zinc-500">This section feels like a ghost town. Add a comment to bring it to life!</p>) : (comments.map((comment) => (
         <Comment key={comment.id} comment={comment} />
       )))}

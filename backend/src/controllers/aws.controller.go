@@ -473,3 +473,47 @@ func GetVideoFiles(client *db.PrismaClient, c *gin.Context) {
 		"videoFiles": videoImages,
 	})
 }
+
+func GetUserAvatars(client *db.PrismaClient, c *gin.Context) {
+	var request struct {
+		AvatarKeys []string `json:"avatarKeys"`
+	}
+	log.Println(request)
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
+
+	if len(request.AvatarKeys) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "avatarKeys are required"})
+		return
+	}
+
+	bucketName := os.Getenv("AWS_BUCKET")
+	preSignedClient := s3.NewPresignClient(config.S3Client)
+
+	var avatarUrls []string
+
+	for _, avatarKey := range request.AvatarKeys {
+		if avatarKey == "" || strings.Contains(avatarKey, "googleusercontent") {
+			avatarUrls = append(avatarUrls, avatarKey)
+			continue
+		}
+		// Generate pre-signed URL
+		presignedReq, err := preSignedClient.PresignGetObject(context.TODO(), &s3.GetObjectInput{
+			Bucket: aws.String(bucketName),
+			Key:    aws.String(avatarKey),
+		}, s3.WithPresignExpires(15*time.Minute))
+
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate presigned URLs"})
+			return
+		}
+
+		avatarUrls = append(avatarUrls, presignedReq.URL)
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"avatarUrls": avatarUrls,
+	})
+}

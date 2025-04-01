@@ -86,7 +86,6 @@ model Videos {
   owner       User           @relation(fields: [ownerId], references: [id])
   guild       Guild          @relation(fields: [guildId], references: [id])
   tags        TagsOnVideos[]
-  comments    Comments[]
   isPrivate   Boolean        @default(false)
 }
 
@@ -110,17 +109,14 @@ model TagsOnVideos {
 
   @@unique([videoId, tagId])
 }
-
 model Comments {
-  id String @default(cuid()) @id
-  ownerId String
-  role ROLE 
-  videoId String
-  content String
-  likes Int @default(0)
-  video Videos @relation(fields: [videoId], references: [id], onDelete: Cascade)
-  owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  replies Replies[] 
+  id        String   @id @default(cuid())
+  ownerId   String
+  role      ROLE 
+  videoId   String
+  content   String
+  likes     Int      @default(0)
+  owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 }
 
@@ -128,16 +124,13 @@ model Replies {
   id        String   @id @default(cuid())
   ownerId   String
   role      ROLE
-  commentId String
+  commentId String?
+  replyId   String?
   content   String
   likes     Int      @default(0)
   createdAt DateTime @default(now())
-
-  comment   Comments @relation(fields: [commentId], references: [id], onDelete: Cascade)
-  owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-
-  replyId   String?  
-  reply     Replies? @relation("ReplyThread", fields: [replyId], references: [id], onDelete: Cascade) 
-  replies   Replies[] @relation("ReplyThread") 
+  videoId  String
+  owner     User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 }
+
 

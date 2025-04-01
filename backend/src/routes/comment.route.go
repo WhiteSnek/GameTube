@@ -21,4 +21,12 @@ func CommentRoutes(r *gin.Engine, client *db.PrismaClient){
 	commentGroup.DELETE("/:commentId", middlewares.VerifyToken(),func(ctx *gin.Context) {
 		controllers.DeleteComment(client, ctx)
 	})
+
+	commentGroup.POST("/reply/:commentId", middlewares.VerifyToken(), func(ctx *gin.Context) {
+		controllers.AddReply(client, ctx)
+	})
+
+	commentGroup.GET("/reply/:commentId", func(ctx *gin.Context) {
+		controllers.GetCommentReplies(client, ctx)
+	})
 }

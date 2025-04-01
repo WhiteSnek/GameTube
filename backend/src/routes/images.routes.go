@@ -34,4 +34,8 @@ func ImageRoutes(r *gin.Engine, client *db.PrismaClient){
 		controllers.GetVideoFiles(client, ctx)
 	})
 	
+	imageGroup.POST("/users", func(ctx *gin.Context) {
+		controllers.GetUserAvatars(client, ctx)
+	})
+
 }
