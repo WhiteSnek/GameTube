@@ -22,6 +22,7 @@ type VideoDetails struct {
 	GuildAvatar string   `json:"guildAvatar,omitempty"`
 	GuildName   string   `json:"guildName" binding:"required"`
 	Tags        []string `json:"tags" binding:"required"`
+	Likes       int      `json:"likes" binding:"required"`
 	CreatedAt   string   `json:"uploadDate" binding:"required"`
 }
 
@@ -34,5 +35,5 @@ type MultiVideos struct {
 	OwnerName   string `json:"ownerName" binding:"required"`
 	GuildAvatar string `json:"guildAvatar,omitempty"`
 	GuildName   string `json:"guildName" binding:"required"`
-	CreatedAt   string   `json:"uploadDate" binding:"required"`
+	CreatedAt   string `json:"uploadDate" binding:"required"`
 }

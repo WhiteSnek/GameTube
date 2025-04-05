@@ -4,8 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
+	"strconv"
+	"strings"
 
 	"github.com/WhiteSnek/Gametube/prisma/db"
 	"github.com/WhiteSnek/Gametube/src/dtos"
@@ -223,7 +226,6 @@ func JoinGuild(client *db.PrismaClient, c *gin.Context) {
 	_, err = client.GuildMember.CreateOne(
 		db.GuildMember.User.Link(db.User.ID.Equals(userIdStr)),
 		db.GuildMember.Guild.Link(db.Guild.ID.Equals(guildId)),
-		db.GuildMember.Role.Set(db.RoleLeader),
 		db.GuildMember.Status.Set(db.StatusApproved),
 	).Exec(context.Background())
 
@@ -324,3 +326,320 @@ func GetJoinedGuilds(client *db.PrismaClient, c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "guilds fetched successfully", "data": joinedGuilds})
 }
+
+func GetGuildMembers(client *db.PrismaClient, c *gin.Context){
+	guildId := c.Param("guildId")
+	if guildId == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Guild id is required!"})
+		return
+	}
+	guildMembers, err := client.GuildMember.FindMany(db.GuildMember.GuildID.Equals(guildId)).With(db.GuildMember.User.Fetch().Select(db.User.Fullname.Field(), db.User.Avatar.Field())).Exec(context.Background())
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Guild has no members"})
+		return
+	}
+
+	var response []dtos.GuildMembersResponse
+	for _, member := range guildMembers{
+		avatar, _ := member.User().Avatar()
+		res := dtos.GuildMembersResponse{
+			UserID: member.UserID,
+			UserName: member.User().Fullname,
+			UserAvatar: avatar,
+			Role: string(member.Role),
+		}
+		response = append(response, res)
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Guild members not found!", "data": response})
+}
+
+func PromoteMember(client *db.PrismaClient, c *gin.Context){
+	guildId := c.Param("guildId")
+	memberId := c.Param("memberId")
+	if memberId == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "memberId is required"})
+		return
+	}
+	if guildId == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "guildId is required"})
+		return
+	}
+	userId, exists := c.Get("userId")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized request"})
+		return
+	}
+	userIdStr, ok := userId.(string)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error parsing user id"})
+		return
+	}
+	
+	userRole, err := client.GuildMember.FindFirst(db.GuildMember.GuildID.Equals(guildId), db.GuildMember.UserID.Equals(userIdStr)).Exec(context.Background())
+
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "You are not a part of guild!"})
+		return
+	}
+	role := userRole.Role
+	if role != db.RoleLeader && role != db.RoleCoLeader {
+		c.JSON(http.StatusForbidden, gin.H{"error": "You do not have the authority to promote"})
+		return
+	}
+	member, err := client.GuildMember.FindFirst(db.GuildMember.GuildID.Equals(guildId), db.GuildMember.UserID.Equals(memberId)).Exec(context.Background())
+
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "The user is not a part of guild!"})
+		return
+	}
+	role = member.Role
+	if role == db.RoleCoLeader || role == db.RoleLeader {
+		c.JSON(http.StatusNotAcceptable, gin.H{"error": "Can't promote further"})
+		return
+	}
+	var newRole db.Role;
+	if role == db.RoleMember {
+		newRole = db.RoleElder
+	} else if role == db.RoleElder {
+		newRole = db.RoleCoLeader
+	}
+	_, err = client.GuildMember.FindMany(db.GuildMember.GuildID.Equals(guildId), db.GuildMember.UserID.Equals(memberId)).Update(db.GuildMember.Role.Set(newRole)).Exec(context.Background())
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "User promoted successfully!"})
+}
+
+func DemoteMember(client *db.PrismaClient, c *gin.Context){
+	guildId := c.Param("guildId")
+	memberId := c.Param("memberId")
+	if memberId == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "memberId is required"})
+		return
+	}
+	if guildId == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "guildId is required"})
+		return
+	}
+	userId, exists := c.Get("userId")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized request"})
+		return
+	}
+	userIdStr, ok := userId.(string)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error parsing user id"})
+		return
+	}
+	
+	userRole, err := client.GuildMember.FindFirst(db.GuildMember.GuildID.Equals(guildId), db.GuildMember.UserID.Equals(userIdStr)).Exec(context.Background())
+
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "You are not a part of guild!"})
+		return
+	}
+	role := userRole.Role
+	if role != db.RoleLeader && role != db.RoleCoLeader {
+		c.JSON(http.StatusForbidden, gin.H{"error": "You do not have the authority to demote"})
+		return
+	}
+	member, err := client.GuildMember.FindFirst(db.GuildMember.GuildID.Equals(guildId), db.GuildMember.UserID.Equals(memberId)).Exec(context.Background())
+
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "The user is not a part of guild!"})
+		return
+	}
+	role = member.Role
+	if role == db.RoleMember || role == db.RoleLeader {
+		c.JSON(http.StatusNotAcceptable, gin.H{"error": "Can't promote further"})
+		return
+	}
+	var newRole db.Role;
+	if role == db.RoleElder {
+		newRole = db.RoleMember
+	} else if role == db.RoleCoLeader {
+		newRole = db.RoleElder
+	}
+	_, err = client.GuildMember.FindMany(db.GuildMember.GuildID.Equals(guildId), db.GuildMember.UserID.Equals(memberId)).Update(db.GuildMember.Role.Set(newRole)).Exec(context.Background())
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "User demoted successfully!"})
+}
+
+func KickUser(client *db.PrismaClient, c *gin.Context){
+	guildId := c.Param("guildId")
+	memberId := c.Param("memberId")
+	if memberId == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "memberId is required"})
+		return
+	}
+	if guildId == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "guildId is required"})
+		return
+	}
+	userId, exists := c.Get("userId")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized request"})
+		return
+	}
+	userIdStr, ok := userId.(string)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error parsing user id"})
+		return
+	}
+	
+	userRole, err := client.GuildMember.FindFirst(db.GuildMember.GuildID.Equals(guildId), db.GuildMember.UserID.Equals(userIdStr)).Exec(context.Background())
+
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "You are not a part of guild!"})
+		return
+	}
+	role := userRole.Role
+	if role != db.RoleLeader && role != db.RoleCoLeader {
+		c.JSON(http.StatusForbidden, gin.H{"error": "You do not have the authority to kick"})
+		return
+	}
+	_, err = client.GuildMember.FindMany(db.GuildMember.GuildID.Equals(guildId), db.GuildMember.UserID.Equals(memberId)).Delete().Exec(context.Background())
+
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "The user is not a part of guild!"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "User kicked successfully!"})
+}
+
+type RawGuild struct {
+	ID          string  `json:"id"`
+	Name        string  `json:"name"`
+	Description *string `json:"description"`
+	Avatar      *string `json:"avatar"`
+}
+
+func GetAllGuilds(client *db.PrismaClient, c *gin.Context) {
+	userId, exists := c.Get("userId")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized request"})
+		return
+	}
+
+	userIdStr, ok := userId.(string)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid user ID"})
+		return
+	}
+
+	limitStr := c.DefaultQuery("limit", "20")
+	skipStr := c.DefaultQuery("skip", "0")
+	search := c.Query("search")
+	filter := c.Query("filter") 
+	tagFilter := c.QueryArray("tags")
+
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil || limit < 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid limit"})
+		return
+	}
+	skip, err := strconv.Atoi(skipStr)
+	if err != nil || skip < 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid skip"})
+		return
+	}
+
+	// Build dynamic SQL query
+	var (
+		query  string
+		args   []interface{}
+		argIdx = 1
+	)
+	
+	if search != "" {
+		query = `
+			SELECT DISTINCT g.id, g.name, g.description, g.avatar, similarity(g.name, $1) AS sim_score
+			FROM "Guild" g
+			LEFT JOIN "Tags" t ON g.id = t."guildId"
+			WHERE g."isPrivate" = false AND similarity(g.name, $1) > 0.20
+		`
+		args = append(args, search)
+		argIdx++
+	
+		query += ` ORDER BY sim_score DESC`
+	} else {
+		query = `
+			SELECT DISTINCT g.id, g.name, g.description, g.avatar
+			FROM "Guild" g
+			LEFT JOIN "Tags" t ON g.id = t."guildId"
+			WHERE g."isPrivate" = false
+		`
+	}
+	
+
+	if len(tagFilter) > 0 {
+		tagPlaceholders := []string{}
+		for _, tag := range tagFilter {
+			tagPlaceholders = append(tagPlaceholders, fmt.Sprintf("$%d", argIdx))
+			args = append(args, tag)
+			argIdx++
+		}
+		query += " AND t.name IN (" + strings.Join(tagPlaceholders, ", ") + ")"
+	}
+
+	query += fmt.Sprintf(" LIMIT $%d OFFSET $%d", argIdx, argIdx+1)
+	args = append(args, limit, skip)
+
+	// Execute raw SQL
+	var rawGuilds []RawGuild
+	err = client.Prisma.QueryRaw(query, args...).Exec(context.Background(), &rawGuilds)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Build response
+	var response []dtos.ExploreGuildsType
+	for _, guild := range rawGuilds {
+		guildMembers, err := client.GuildMember.FindMany(
+			db.GuildMember.GuildID.Equals(guild.ID),
+		).Select(db.GuildMember.UserID.Field()).Exec(context.Background())
+
+		if err != nil {
+			continue
+		}
+
+		joined := false
+		for _, member := range guildMembers {
+			if member.UserID == userIdStr {
+				joined = true
+				break
+			}
+		}
+
+		if (filter == "joined" && !joined) || (filter == "not_joined" && joined) {
+			continue
+		}
+
+		response = append(response, dtos.ExploreGuildsType{
+			ID:          guild.ID,
+			Name:        guild.Name,
+			Description: guild.Description,
+			Avatar:      guild.Avatar,
+			Members:     len(guildMembers),
+			Joined:      joined,
+		})
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Guilds fetched successfully",
+		"data":    response,
+	})
+}
+
+

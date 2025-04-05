@@ -31,6 +31,9 @@ interface UserContextType {
   >;
   logout: () => Promise<void>;
   getMultipleUserAvatars: (avatarKeys: string[]) => Promise<string[] | null>;
+  addLike: (entityId: string, entityType: "video"|"comment"|"reply") => Promise<string>;
+  removeLike: (entityId: string, entityType: "video"|"comment"|"reply") => Promise<string>;
+  getLike: (entityId: string, entityType: "video"|"comment"|"reply") => Promise<boolean>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -163,6 +166,35 @@ const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     }
   };
 
+  const addLike = async(entityId: string, entityType: "video"|"comment"|"reply"): Promise<string> => {
+    try {
+      const response = await api.patch(`/like/${entityType}/${entityId}`)
+      return response.data.message
+    } catch (error) {
+      console.log(error)
+      return "error"
+    }
+  }
+
+  const removeLike = async(entityId: string, entityType: "video"|"comment"|"reply"): Promise<string> => {
+    try {
+      const response = await api.delete(`/like/${entityType}/${entityId}`)
+      return response.data.message
+    } catch (error) {
+      console.log(error)
+      return "error"
+    }
+  }
+  const getLike = async(entityId: string, entityType: "video"|"comment"|"reply"): Promise<boolean> => {
+    try {
+      const response = await api.get(`/like/${entityType}/${entityId}`)
+      return response.data.liked
+    } catch (error) {
+      console.log(error)
+      return false
+    }
+  }
+
   return (
     <UserContext.Provider
       value={{
@@ -176,7 +208,10 @@ const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         images,
         setImages,
         logout,
-        getMultipleUserAvatars
+        getMultipleUserAvatars,
+        addLike,
+        removeLike,
+        getLike
       }}
     >
       {children}

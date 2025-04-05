@@ -29,6 +29,7 @@ model User {
   ownedGuild Guild?        @relation("Owner")
   comments Comments[]
   replies Replies[] 
+  likes Likes[]
 }
 
 model Guild {
@@ -87,6 +88,7 @@ model Videos {
   guild       Guild          @relation(fields: [guildId], references: [id])
   tags        TagsOnVideos[]
   isPrivate   Boolean        @default(false)
+  likes Likes[]
 }
 
 model Tags {
@@ -115,7 +117,7 @@ model Comments {
   role      ROLE 
   videoId   String
   content   String
-  likes     Int      @default(0)
+  likes Likes[]
   owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 }
@@ -127,10 +129,32 @@ model Replies {
   commentId String?
   replyId   String?
   content   String
-  likes     Int      @default(0)
+  likes Likes[]
   createdAt DateTime @default(now())
   videoId  String
   owner     User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 }
 
 
+model Likes {
+  id         String   @id @default(cuid())
+  entityType ENTITY
+  ownerId    String
+
+  videoId    String? 
+  commentId  String?
+  replyId    String?
+
+  owner   User     @relation(fields: [ownerId], references: [id], onDelete: Cascade) 
+
+  video   Videos?   @relation(fields: [videoId], references: [id])
+  comment Comments? @relation(fields: [commentId], references: [id])
+  reply   Replies?  @relation(fields: [replyId], references: [id])
+}
+
+
+enum ENTITY {
+  VIDEO
+  COMMENT
+  REPLY
+}

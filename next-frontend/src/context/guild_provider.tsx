@@ -1,8 +1,17 @@
 "use client";
-import { CreateGuildType, GuildDetailsType, GuildsType, JoinedGuildType } from "@/types/guild.types";
+import { CreateGuildType, GuildDetailsType, GuildMembersType, GuildsType, JoinedGuildType } from "@/types/guild.types";
 import api from "@/lib/axios";
-import React, { createContext, ReactNode, useContext, useEffect, useState } from "react";
+import React, { createContext, ReactNode, useContext,useState } from "react";
 import axios from "axios";
+
+interface SearchGuildsParams {
+  query?: string;
+  filter?: 'joined' | 'not_joined';
+  tags?: string[];
+  limit?: number;
+  skip?: number;
+}
+
 
 interface GuildContextType {
   Guild: GuildDetailsType | undefined;
@@ -21,11 +30,13 @@ interface GuildContextType {
     coverImage: File
   ) => Promise<any>;
   getGuild: (guildId?: string) => Promise<void>;
-  searchGuilds: (query: string) => Promise<GuildsType[] | null>;
+  searchGuilds: (params: SearchGuildsParams) => Promise<GuildsType[] | null>;
   getGuildAvatars: (guildIds: string[]) => Promise<string[] | null>;
   joinGuild: (guildId: string) => Promise<string | null>;
   leaveGuild: (guildId: string) => Promise<string | null>;
   getJoinedGuilds: () => Promise<JoinedGuildType[] | null>;
+  getGuildMembers: (guildId: string) => Promise<GuildMembersType[]>;
+  manageRoles: (guildId: string, memberId: string, action: "promote" | "demote" | "kick") => Promise<string>
 }
 
 const GuildContext = createContext<GuildContextType | undefined>(undefined);
@@ -129,19 +140,30 @@ const GuildProvider: React.FC<GuildProviderProps> = ({ children }) => {
     }
   }
 
-  const searchGuilds = async (query: string): Promise<GuildsType[] | null> => {
+  const searchGuilds = async (params: SearchGuildsParams): Promise<GuildsType[] | null> => {
     try {
-      const response = await api.get(
-        `/guild/search?q=${encodeURIComponent(query)}`,
-        { withCredentials: true }
-      );
-      console.log(response.data?.data)
+      const searchParams = new URLSearchParams();
+  
+      if (params.query) searchParams.append("search", params.query);
+      if (params.filter) searchParams.append("filter", params.filter);
+      if (params.limit !== undefined) searchParams.append("limit", params.limit.toString());
+      if (params.skip !== undefined) searchParams.append("skip", params.skip.toString());
+  
+      if (params.tags && params.tags.length > 0) {
+        params.tags.forEach(tag => searchParams.append("tags", tag));
+      }
+  
+      const response = await api.get(`/guild/all?${searchParams.toString()}`, {
+        withCredentials: true,
+      });
+  
+      console.log(response.data?.data);
       return response.data?.data ?? null;
     } catch (error: any) {
       console.error("Error searching guilds:", error.response?.data || error.message);
       return null;
     }
-  };
+  };  
 
   const getGuildAvatars = async(guildIds: string[]): Promise<string[] | null> => {
     try {
@@ -183,8 +205,30 @@ const GuildProvider: React.FC<GuildProviderProps> = ({ children }) => {
     }
   }
 
+  const getGuildMembers = async(guildId: string): Promise<GuildMembersType[]> => {
+    try {
+      const response = await api.get(`/guild/members/${guildId}`)
+      if (response.data.data) return response.data.data
+      return []
+    } catch (error) {
+      console.log(error)
+      return []
+    }
+  }
+
+  const manageRoles = async(guildId: string, memberId: string, action: "promote" | "demote" | "kick"): Promise<string> => {
+    try {
+      const response = await api.patch(`/guild/members/${action}/${guildId}/${memberId}`)
+      return response.data.message
+    } catch (error) {
+      console.log(error)
+      return "error"
+    }
+  }
+
+
   return (
-    <GuildContext.Provider value={{ Guild, setGuild, createGuild, getSignedUrls, getGuildImages, images, uploadImages, getGuild, searchGuilds, getGuildAvatars, joinGuild, leaveGuild,getJoinedGuilds }}>
+    <GuildContext.Provider value={{ Guild, setGuild, createGuild, getSignedUrls, getGuildImages, images, uploadImages, getGuild, searchGuilds, getGuildAvatars, joinGuild, leaveGuild,getJoinedGuilds,getGuildMembers,manageRoles }}>
       {children}
     </GuildContext.Provider>
   );

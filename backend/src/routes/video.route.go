@@ -30,4 +30,12 @@ func VideoRoutes(r *gin.Engine, client *db.PrismaClient){
 	videoGroup.GET("/guild/joined", middlewares.VerifyToken(), func(ctx *gin.Context) {
 		controllers.GetJoinedGuildsVideos(client, ctx)
 	})
+
+	videoGroup.GET("/search", func(ctx *gin.Context) {
+		controllers.SearchVideo(client, ctx)
+	})
+
+	videoGroup.GET("/liked", middlewares.VerifyToken(), func(ctx *gin.Context) {
+		controllers.GetLikedVideos(client, ctx)
+	})
 }

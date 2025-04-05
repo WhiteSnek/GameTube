@@ -26,6 +26,8 @@ export interface GuildsType {
     name: string,
     description: string | undefined;
     avatar: string | undefined;
+    members: number;
+    joined: boolean
 }
 
 export interface JoinedGuildType {
@@ -33,5 +35,12 @@ export interface JoinedGuildType {
     ownerId: string;
     name: string,
     avatar: string | undefined;
+    role: string;
+}
+
+export interface GuildMembersType{
+    userId: string;
+    username: string;
+    userAvatar: string;
     role: string;
 }

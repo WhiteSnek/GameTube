@@ -29,4 +29,5 @@ func CommentRoutes(r *gin.Engine, client *db.PrismaClient){
 	commentGroup.GET("/reply/:commentId", func(ctx *gin.Context) {
 		controllers.GetCommentReplies(client, ctx)
 	})
+
 }

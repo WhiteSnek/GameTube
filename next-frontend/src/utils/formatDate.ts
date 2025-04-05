@@ -1,34 +1,29 @@
-const formatDate = (dateString: string): string => {
-  const date = new Date(dateString);
+export default function formatDate(dateString: string): string {
+  if (!dateString || typeof dateString !== "string") return "Invalid date";
+  const parsedDate = new Date(dateString.replace(" +0000 UTC", "Z"));
   const now = new Date();
-  const diff = now.getTime() - date.getTime();
+  const seconds = Math.floor((now.getTime() - parsedDate.getTime()) / 1000);
 
-  const seconds = Math.floor(diff / 1000);
-  const minutes = Math.floor(seconds / 60);
-  const hours = Math.floor(minutes / 60);
-  const days = Math.floor(hours / 24);
-  const months = Math.floor(days / 30); // Approximate number of months
-  const years = Math.floor(days / 365);
+  if (isNaN(seconds)) return "Invalid date";
 
-  // Adjust dateString to local time zone if necessary
-  const localDate = new Date(date.toLocaleString());
-  console.log(localDate)
+  const intervals: { [key: string]: number } = {
+    year: 31536000,
+    month: 2592000,
+    week: 604800,
+    day: 86400,
+    hour: 3600,
+    minute: 60,
+  };
 
-  if (years > 0) {
-    return `${years} year${years > 1 ? "s" : ""} ago`;
-  } else if (months > 0) {
-    return `${months} month${months > 1 ? "s" : ""} ago`;
-  } else if (days > 0) {
-    return `${days} day${days > 1 ? "s" : ""} ago`;
-  } else if (hours > 0) {
-    return `${hours} hour${hours > 1 ? "s" : ""} ago`;
-  } else if (minutes > 0) {
-    return `${minutes} minute${minutes > 1 ? "s" : ""} ago`;
-  } else {
-    return `a few seconds ago`;
+  if (seconds < 30) return "just now";
+  if (seconds < 60) return `${seconds} seconds ago`;
+
+  for (const [unit, value] of Object.entries(intervals)) {
+    const count = Math.floor(seconds / value);
+    if (count >= 1) {
+      return `${count} ${unit}${count > 1 ? "s" : ""} ago`;
+    }
   }
+
+  return "just now";
 }
-
-
-
-export default formatDate

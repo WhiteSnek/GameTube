@@ -55,7 +55,7 @@ func main() {
 	routes.UserRoutes(r, db)
 	routes.VideoRoutes(r, db)
 	routes.CommentRoutes(r, db)
-
+	routes.LikeRoutes(r, db)
 	r.GET("/health", func(ctx *gin.Context) {
 		ctx.JSON(200, gin.H{"message":"Everything is working fine! :D"})
 	})

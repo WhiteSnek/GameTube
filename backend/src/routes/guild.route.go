@@ -27,8 +27,8 @@ func GuildRoutes(r *gin.Engine, client *db.PrismaClient){
 		controllers.LeaveGuild(client, ctx)
 	})
 	
-	guildGroup.GET("/search", func(ctx *gin.Context) {
-		controllers.SearchGuild(client, ctx)
+	guildGroup.GET("/all", middlewares.VerifyToken(), func(ctx *gin.Context) {
+		controllers.GetAllGuilds(client, ctx)
 	})
 
 	guildGroup.GET("/:guildId", middlewares.VerifyToken(), func(ctx *gin.Context) {
@@ -45,5 +45,19 @@ func GuildRoutes(r *gin.Engine, client *db.PrismaClient){
 
 	guildGroup.GET("/joined", middlewares.VerifyToken(), func(ctx *gin.Context) {
 		controllers.GetJoinedGuilds(client, ctx)
+	})
+
+	guildGroup.GET("/members/:guildId", middlewares.VerifyToken(), func(ctx *gin.Context) {
+		controllers.GetGuildMembers(client, ctx)
+	})
+
+	guildGroup.PATCH("/members/promote/:guildId/:memberId", middlewares.VerifyToken(), func(ctx *gin.Context) {
+		controllers.PromoteMember(client, ctx)
+	})
+	guildGroup.PATCH("/members/demote/:guildId/:memberId", middlewares.VerifyToken(), func(ctx *gin.Context) {
+		controllers.DemoteMember(client, ctx)
+	})
+	guildGroup.PATCH("/members/kick/:guildId/:memberId", middlewares.VerifyToken(), func(ctx *gin.Context) {
+		controllers.KickUser(client, ctx)
 	})
 }

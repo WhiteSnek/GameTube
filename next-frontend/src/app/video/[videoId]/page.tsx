@@ -19,7 +19,7 @@ export default function Video() {
   if (!videoId) return null;
 
   useEffect(() => {
-    document.title = "Epic Gameplay Highlights";
+    
 
     const fetchVideo = async () => {
       try {
@@ -41,6 +41,7 @@ export default function Video() {
     };
 
     fetchVideo();
+    
   }, [videoId]);
 
   console.log("Current Video:", video);

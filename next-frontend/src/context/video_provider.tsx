@@ -34,6 +34,8 @@ interface VideoContextType {
   getVideoFiles: (guildIds: string[] ) => Promise<VideoImages[] | null>;
   getVideoById: (videoId: string) => Promise<any>
   getJoinedGuildVideos: () => Promise<VideoType[] | null>;
+  getLikedVideos: () => Promise<VideoType[] | null>;
+  searchVideos: (query: string) => Promise<VideoType[]>
 }
 
 const VideoContext = createContext<VideoContextType | undefined>(undefined);
@@ -150,8 +152,30 @@ const VideoProvider: React.FC<VideoProviderProps> = ({ children }) => {
     }
   }
 
+  const getLikedVideos = async (): Promise<VideoType[] | null> => {
+    try {
+      const response = await api.get("/video/liked")
+      if(response.data.data) return response.data.data
+      return null
+    } catch (error) {
+      console.log(error)
+      return null
+    }
+  }
+
+  const searchVideos = async(query: string): Promise<VideoType[]> => {
+    try {
+      const response = await api.get(`/video/search?q=${encodeURIComponent(query)}`)
+      if (response.data.data) return response.data.data;
+      return [];
+    } catch (error) {
+      console.log(error)
+      return [];
+    }
+  }
+
   return (
-    <VideoContext.Provider value={{ videos, setVideos, addVideo, uploadFiles,getSignedUrls, getVideos,getVideoFiles,getVideoById,getJoinedGuildVideos }}>
+    <VideoContext.Provider value={{ videos, setVideos, addVideo, uploadFiles,getSignedUrls, getVideos,getVideoFiles,getVideoById,getJoinedGuildVideos,getLikedVideos,searchVideos }}>
       {children}
     </VideoContext.Provider>
   );

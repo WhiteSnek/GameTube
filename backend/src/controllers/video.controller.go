@@ -91,6 +91,7 @@ func GetVideoById(client *db.PrismaClient, c *gin.Context) {
 	).With(
 		db.Videos.Guild.Fetch(),
 		db.Videos.Owner.Fetch(),
+		db.Videos.Likes.Fetch(),
 	).Exec(context.Background())
 
 	if err != nil {
@@ -130,11 +131,12 @@ func GetVideoById(client *db.PrismaClient, c *gin.Context) {
 		Thumbnail:   video.Thumbnail,
 		VideoUrl:    video.VideoURL,
 		CreatedAt:   video.CreatedAt.String(),
-		Duration: int64(video.Duration),
+		Duration:    int64(video.Duration),
 		OwnerName:   "",
 		GuildName:   "",
 		GuildAvatar: "",
 		Tags:        tagNames,
+		Likes:       len(video.Likes()),
 	}
 	if owner != nil {
 		response.OwnerName = owner.Fullname
@@ -168,7 +170,7 @@ func GetVideos(client *db.PrismaClient, c *gin.Context) {
 			Title:       video.Title,
 			Thumbnail:   video.Thumbnail,
 			VideoUrl:    video.VideoURL,
-			Duration: int64(video.Duration),
+			Duration:    int64(video.Duration),
 			CreatedAt:   video.CreatedAt.String(),
 			OwnerName:   "",
 			GuildName:   "",
@@ -207,7 +209,7 @@ func GetGuildVideos(client *db.PrismaClient, c *gin.Context) {
 	}
 
 	_, err := client.GuildMember.FindFirst(db.GuildMember.UserID.Equals(userIdStr), db.GuildMember.GuildID.Equals(guildId)).Exec(context.Background())
-	var videos []db.VideosModel;
+	var videos []db.VideosModel
 	if err != nil {
 		if errors.Is(err, db.ErrNotFound) {
 			videos, err = client.Videos.FindMany(db.Videos.IsPrivate.Equals(false), db.Videos.GuildID.Equals(guildId)).With(
@@ -240,7 +242,7 @@ func GetGuildVideos(client *db.PrismaClient, c *gin.Context) {
 			Title:       video.Title,
 			Thumbnail:   video.Thumbnail,
 			VideoUrl:    video.VideoURL,
-			Duration: int64(video.Duration),
+			Duration:    int64(video.Duration),
 			CreatedAt:   video.CreatedAt.String(),
 			OwnerName:   "",
 			GuildName:   "",
@@ -261,73 +263,174 @@ func GetGuildVideos(client *db.PrismaClient, c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Videos fetched successfully!", "data": response})
 }
 
-
 func GetJoinedGuildsVideos(client *db.PrismaClient, c *gin.Context) {
-    userId, exists := c.Get("userId")
-    if !exists {
-        c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized request"})
-        return
-    }
-    userIdStr, ok := userId.(string)
-    if !ok {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse userId"})
-        return
-    }
+	userId, exists := c.Get("userId")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized request"})
+		return
+	}
+	userIdStr, ok := userId.(string)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse userId"})
+		return
+	}
 
-    // Fetch all joined guilds in one query
-    joinedGuilds, err := client.GuildMember.FindMany(
-        db.GuildMember.UserID.Equals(userIdStr),
-    ).Exec(context.Background())
-    if err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-        return
-    }
-    if len(joinedGuilds) == 0 {
-        c.JSON(http.StatusNotFound, gin.H{"error": "Videos not found!"})
-        return
-    }
+	// Fetch all joined guilds in one query
+	joinedGuilds, err := client.GuildMember.FindMany(
+		db.GuildMember.UserID.Equals(userIdStr),
+	).Exec(context.Background())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	if len(joinedGuilds) == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Videos not found!"})
+		return
+	}
 
-    // Extract guild IDs in a single slice to optimize the next query
-    guildIDs := make([]string, len(joinedGuilds))
-    for i, guild := range joinedGuilds {
-        guildIDs[i] = guild.GuildID
-    }
+	// Extract guild IDs in a single slice to optimize the next query
+	guildIDs := make([]string, len(joinedGuilds))
+	for i, guild := range joinedGuilds {
+		guildIDs[i] = guild.GuildID
+	}
 	fmt.Println("Guild IDs:", guildIDs)
 
-    // Fetch all videos for the joined guilds in a single query
-    videos, err := client.Videos.FindMany(
-        db.Videos.GuildID.In(guildIDs),
-    ).With(
-        db.Videos.Guild.Fetch(),
-        db.Videos.Owner.Fetch(),
-    ).OrderBy(db.Videos.CreatedAt.Order(db.SortOrderAsc)).Exec(context.Background())
-    if err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-        return
-    }
+	// Fetch all videos for the joined guilds in a single query
+	videos, err := client.Videos.FindMany(
+		db.Videos.GuildID.In(guildIDs),
+	).With(
+		db.Videos.Guild.Fetch(),
+		db.Videos.Owner.Fetch(),
+	).OrderBy(db.Videos.CreatedAt.Order(db.SortOrderAsc)).Exec(context.Background())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 	fmt.Println("Fetched Videos:", videos)
 
-    // Process videos in a single loop
-    response := make([]dtos.MultiVideos, len(videos))
-    for i, video := range videos {
-        res := dtos.MultiVideos{
-            Id:        video.ID,
-            Title:     video.Title,
-            Thumbnail: video.Thumbnail,
-            VideoUrl:  video.VideoURL,
-            Duration:  int64(video.Duration),
-            CreatedAt: video.CreatedAt.String(),
-        }
-        
-        if owner := video.Owner(); owner != nil {
-            res.OwnerName = owner.Fullname
-        }
-        if guild := video.Guild(); guild != nil {
-            res.GuildName = guild.Name
-            res.GuildAvatar, _ = guild.Avatar()
-        }
-        response[i] = res
-    }
+	// Process videos in a single loop
+	response := make([]dtos.MultiVideos, len(videos))
+	for i, video := range videos {
+		res := dtos.MultiVideos{
+			Id:        video.ID,
+			Title:     video.Title,
+			Thumbnail: video.Thumbnail,
+			VideoUrl:  video.VideoURL,
+			Duration:  int64(video.Duration),
+			CreatedAt: video.CreatedAt.String(),
+		}
 
-    c.JSON(http.StatusOK, gin.H{"message": "Joined guild videos fetched successfully", "data": response})
+		if owner := video.Owner(); owner != nil {
+			res.OwnerName = owner.Fullname
+		}
+		if guild := video.Guild(); guild != nil {
+			res.GuildName = guild.Name
+			res.GuildAvatar, _ = guild.Avatar()
+		}
+		response[i] = res
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Joined guild videos fetched successfully", "data": response})
 }
+
+func SearchVideo(client *db.PrismaClient, c *gin.Context) {
+	query := c.Query("q")
+	if query == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Query parameter 'q' is required"})
+		return
+	}
+
+	rawQuery := `
+		SELECT DISTINCT ON (v.id)
+			v.id,
+			v.title,
+			v.thumbnail,
+			v."videoUrl",
+			v.duration,
+			u.fullname AS "ownerName",
+			g.avatar AS "guildAvatar",
+			g.name AS "guildName",
+			v."createdAt" AS "uploadDate"
+		FROM "Videos" v
+		JOIN "User" u ON u.id = v."ownerId"
+		JOIN "Guild" g ON g.id = v."guildId"
+		LEFT JOIN "TagsOnVideos" tov ON tov."videoId" = v.id
+		LEFT JOIN "Tags" t ON t.id = tov."tagId"
+		WHERE (
+			similarity(v.title, $1) > 0.3 OR
+			similarity(g.name, $1) > 0.3 OR
+			similarity(t.name, $1) > 0.3
+		)
+		AND v."isPrivate" = FALSE
+		ORDER BY v.id, similarity(v.title, $1) DESC
+		LIMIT 10;
+	`
+
+	var results []dtos.MultiVideos
+	if err := client.Prisma.QueryRaw(rawQuery, query).Exec(context.Background(), &results); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Videos fetched successfully", "data": results})
+}
+
+func GetLikedVideos(client *db.PrismaClient, c *gin.Context) {
+	userId, exists := c.Get("userId")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized request"})
+		return
+	}
+	userIdStr, ok := userId.(string)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse userId"})
+		return
+	}
+
+	ctx := context.Background()
+	// Find all likes by the user where the entityType is VIDEO and include related video
+	likes, err := client.Likes.FindMany(
+		db.Likes.EntityType.Equals(db.EntityVideo),
+		db.Likes.OwnerID.Equals(userIdStr),
+	).With(
+		db.Likes.Video.Fetch().With(
+			db.Videos.Guild.Fetch(),
+			db.Videos.Owner.Fetch(),
+		),
+	).Exec(ctx)
+
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Liked videos not found"})
+		return
+	}
+
+	var response []dtos.MultiVideos
+	for _, like := range likes {
+		video, _ := like.Video()
+		if video == nil {
+			continue
+		}
+
+		res := dtos.MultiVideos{
+			Id:        video.ID,
+			Title:     video.Title,
+			Thumbnail: video.Thumbnail,
+			VideoUrl:  video.VideoURL,
+			Duration:  int64(video.Duration),
+			CreatedAt: video.CreatedAt.String(),
+		}
+
+		if owner := video.Owner(); owner != nil {
+			res.OwnerName = owner.Fullname
+		}
+		if guild := video.Guild(); guild != nil {
+			res.GuildName = guild.Name
+			res.GuildAvatar, _ = guild.Avatar()
+		}
+
+		response = append(response, res)
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Liked videos fetched successfully", "data": response})
+}
+

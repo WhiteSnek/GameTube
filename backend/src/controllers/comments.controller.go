@@ -59,7 +59,7 @@ func AddComment(client *db.PrismaClient, c *gin.Context) {
 	}
 	comment, err = client.Comments.FindFirst(
 		db.Comments.ID.Equals(comment.ID),
-	).With(db.Comments.Owner.Fetch().Select(db.User.Fullname.Field(), db.User.ID.Field(), db.User.Avatar.Field())).Exec(context.Background())
+	).With(db.Comments.Owner.Fetch().Select(db.User.Fullname.Field(), db.User.ID.Field(), db.User.Avatar.Field()), db.Comments.Likes.Fetch()).Exec(context.Background())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -71,7 +71,7 @@ func AddComment(client *db.PrismaClient, c *gin.Context) {
 		OwnerName:   comment.Owner().Fullname,
 		OwnerAvatar: avatar,
 		Role:        comment.Role,
-		Likes:       comment.Likes,
+		Likes:       len(comment.Likes()),
 	}
 	c.JSON(http.StatusCreated, gin.H{"message": "Comment added successfully!", "data": response})
 }
@@ -82,7 +82,7 @@ func GetVideoComments(client *db.PrismaClient, c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "videoId is required"})
 		return
 	}
-	comments, err := client.Comments.FindMany(db.Comments.VideoID.Equals(videoId)).With(db.Comments.Owner.Fetch().Select(db.User.Fullname.Field(), db.User.ID.Field(), db.User.Avatar.Field())).Exec(context.Background())
+	comments, err := client.Comments.FindMany(db.Comments.VideoID.Equals(videoId)).With(db.Comments.Owner.Fetch().Select(db.User.Fullname.Field(), db.User.ID.Field(), db.User.Avatar.Field()), db.Comments.Likes.Fetch()).Exec(context.Background())
 	if err != nil {
 		if errors.Is(err, db.ErrNotFound) {
 			c.JSON(http.StatusNoContent, gin.H{"data": nil})
@@ -102,7 +102,7 @@ func GetVideoComments(client *db.PrismaClient, c *gin.Context) {
 			OwnerName:   comment.Owner().Fullname,
 			OwnerAvatar: avatar,
 			Role:        comment.Role,
-			Likes:       comment.Likes,
+			Likes:       len(comment.Likes()),
 		}
 		response = append(response, res)
 	}
@@ -126,19 +126,40 @@ func DeleteComment(client *db.PrismaClient, c *gin.Context) {
 		return
 	}
 	comment, err := client.Comments.FindUnique(db.Comments.ID.Equals(commentId)).Exec(context.Background())
-	if err != nil {
+	if err != nil && !errors.Is(err, db.ErrNotFound) {
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	}
+	reply, err := client.Replies.FindUnique(db.Replies.ID.Equals(commentId)).Exec(context.Background())
+	if err != nil && !errors.Is(err, db.ErrNotFound) {
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	}
+	if comment == nil && reply == nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Comment not found!"})
 		return
 	}
-	if comment.OwnerID != userIdStr {
-		c.JSON(http.StatusForbidden, gin.H{"error": "You don't have the authority to delete this comment"})
-		return
-	}
-	_, err = client.Comments.FindUnique(db.Comments.ID.Equals(comment.ID)).Delete().Exec(context.Background())
+	if comment != nil {
+		if comment.OwnerID != userIdStr {
+			c.JSON(http.StatusForbidden, gin.H{"error": "You don't have the authority to delete this comment"})
+			return
+		}
+		_, err = client.Comments.FindUnique(db.Comments.ID.Equals(comment.ID)).Delete().Exec(context.Background())
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
 
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
+	} else {
+		if reply.OwnerID != userIdStr {
+			c.JSON(http.StatusForbidden, gin.H{"error": "You don't have the authority to delete this comment"})
+			return
+		}
+		_, err = client.Replies.FindUnique(db.Replies.ID.Equals(reply.ID)).Delete().Exec(context.Background())
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Comment deleted successfully!"})
@@ -175,7 +196,7 @@ func AddReply(client *db.PrismaClient, c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Comment not found!"})
 		return
 	}
-	var videoId string;
+	var videoId string
 	if comment != nil {
 		videoId = comment.VideoID
 	} else {
@@ -201,7 +222,7 @@ func AddReply(client *db.PrismaClient, c *gin.Context) {
 	userRole := guildMember.Role
 	fmt.Println("userRole:", userRole)
 	fmt.Println("userIdStr:", userIdStr)
-	var createdReply *db.RepliesModel;
+	var createdReply *db.RepliesModel
 	if comment != nil {
 		createdReply, err = client.Replies.CreateOne(
 			db.Replies.Role.Set(userRole),
@@ -227,11 +248,11 @@ func AddReply(client *db.PrismaClient, c *gin.Context) {
 			return
 		}
 	}
-	
+
 	reply, err = client.Replies.FindFirst(
 		db.Replies.ID.Equals(createdReply.ID),
 	).With(
-		db.Replies.Owner.Fetch().Select(db.User.Fullname.Field(), db.User.ID.Field(), db.User.Avatar.Field()),
+		db.Replies.Owner.Fetch().Select(db.User.Fullname.Field(), db.User.ID.Field(), db.User.Avatar.Field()), db.Replies.Likes.Fetch(),
 	).Exec(context.Background())
 
 	if err != nil {
@@ -245,7 +266,7 @@ func AddReply(client *db.PrismaClient, c *gin.Context) {
 		OwnerName:   reply.Owner().Fullname,
 		OwnerAvatar: avatar,
 		Role:        reply.Role,
-		Likes:       reply.Likes,
+		Likes:       len(reply.Likes()),
 	}
 	c.JSON(http.StatusCreated, gin.H{"message": "Reply added successfully!", "data": response})
 }
@@ -256,17 +277,17 @@ func GetCommentReplies(client *db.PrismaClient, c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "commentId is required"})
 		return
 	}
-	var replies []db.RepliesModel;
+	var replies []db.RepliesModel
 	replies, err := client.Replies.FindMany(
 		db.Replies.CommentID.Equals(commentId),
 	).With(
-		db.Replies.Owner.Fetch().Select(db.User.Fullname.Field(), db.User.ID.Field(), db.User.Avatar.Field()),
+		db.Replies.Owner.Fetch().Select(db.User.Fullname.Field(), db.User.ID.Field(), db.User.Avatar.Field()), db.Replies.Likes.Fetch(),
 	).Exec(context.Background())
 	if err != nil || len(replies) == 0 {
 		replies, err = client.Replies.FindMany(
 			db.Replies.ReplyID.Equals(commentId),
 		).With(
-			db.Replies.Owner.Fetch().Select(db.User.Fullname.Field(), db.User.ID.Field(), db.User.Avatar.Field()),
+			db.Replies.Owner.Fetch().Select(db.User.Fullname.Field(), db.User.ID.Field(), db.User.Avatar.Field()), db.Replies.Likes.Fetch(),
 		).Exec(context.Background())
 
 		if err != nil || len(replies) == 0 {
@@ -284,7 +305,7 @@ func GetCommentReplies(client *db.PrismaClient, c *gin.Context) {
 			OwnerName:   reply.Owner().Fullname,
 			OwnerAvatar: avatar,
 			Role:        reply.Role,
-			Likes:       reply.Likes,
+			Likes:       len(reply.Likes()),
 		}
 		response = append(response, res)
 	}
