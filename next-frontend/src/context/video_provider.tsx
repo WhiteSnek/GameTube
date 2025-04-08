@@ -2,14 +2,7 @@
 import api from "@/lib/axios";
 import { UploadVideoType, VideoImages, VideoType } from "@/types/video.types";
 import axios from "axios";
-import React, {
-  createContext,
-  ReactNode,
-  useContext,
-  useState,
-} from "react";
-
-
+import React, { createContext, ReactNode, useContext, useState } from "react";
 
 interface VideoContextType {
   videos: VideoType[] | null;
@@ -30,12 +23,17 @@ interface VideoContextType {
     thumbnailUrl: string;
     thumbnailKey: string;
   }>;
-  getVideos: (guildId? :string) => Promise<VideoType[] | null>;
-  getVideoFiles: (guildIds: string[] ) => Promise<VideoImages[] | null>;
-  getVideoById: (videoId: string) => Promise<any>
+  getVideos: (guildId?: string) => Promise<VideoType[] | null>;
+  getVideoFiles: (guildIds: string[]) => Promise<VideoImages[] | null>;
+  getVideoById: (videoId: string) => Promise<any>;
   getJoinedGuildVideos: () => Promise<VideoType[] | null>;
   getLikedVideos: () => Promise<VideoType[] | null>;
-  searchVideos: (query: string) => Promise<VideoType[]>
+  searchVideos: (query: string) => Promise<VideoType[]>;
+  addView: (videoId: string) => Promise<string>;
+  addToWatchLater: (videoId: string) => Promise<string>;
+  removeFromWatchLater: (videoId: string) => Promise<string>;
+  checkVideoInWatchLater: (videoId: string) => Promise<boolean>;
+  removeFromHistory: (entityId: string) => Promise<string>;
 }
 
 const VideoContext = createContext<VideoContextType | undefined>(undefined);
@@ -56,7 +54,7 @@ const VideoProvider: React.FC<VideoProviderProps> = ({ children }) => {
   const [videos, setVideos] = useState<VideoType[] | null>(null);
 
   const addVideo = async (data: UploadVideoType): Promise<void> => {
-    console.log(data)
+    console.log(data);
     try {
       const response = await api.post("/video/upload", data);
       console.log(response.data);
@@ -93,89 +91,173 @@ const VideoProvider: React.FC<VideoProviderProps> = ({ children }) => {
     }
   };
 
-  const getSignedUrls = async (email: string, guild: string): Promise<{videoUrl: string, videoKey: string, thumbnailUrl: string, thumbnailKey: string}> => {
+  const getSignedUrls = async (
+    email: string,
+    guild: string
+  ): Promise<{
+    videoUrl: string;
+    videoKey: string;
+    thumbnailUrl: string;
+    thumbnailKey: string;
+  }> => {
     const username = email.split("@")[0];
     const response = await axios.get(
       `http://localhost:8000/image/video/upload-url?email=${username}&guild=${guild}`
     );
     const { videoUrl, videoKey, thumbnailUrl, thumbnailKey } = response.data;
-    return { videoUrl, videoKey, thumbnailUrl, thumbnailKey } 
+    return { videoUrl, videoKey, thumbnailUrl, thumbnailKey };
   };
 
-  const getVideos = async(guildId?: string): Promise<VideoType[] | null> => {
+  const getVideos = async (guildId?: string): Promise<VideoType[] | null> => {
     try {
       let response;
-      if(guildId){
-        response = await api.get(`/video/guild/${guildId}`)
-      }
-      else response = await api.get("/video/")
-      if(response.data.data) return response.data.data
-      return null
+      if (guildId) {
+        response = await api.get(`/video/guild/${guildId}`);
+      } else response = await api.get("/video/");
+      if (response.data.data) return response.data.data;
+      return null;
     } catch (error) {
-      console.log(error)
-      return null
+      console.log(error);
+      return null;
     }
-  }
+  };
 
-  const getVideoFiles = async (videoIds: string[]): Promise<VideoImages[] | null> => {
+  const getVideoFiles = async (
+    videoIds: string[]
+  ): Promise<VideoImages[] | null> => {
     try {
-      const response = await api.post("/image/video/images", {videoIds})
-      console.log(response.data.videoFiles)
-      return response.data.videoFiles
+      const response = await api.post("/image/video/images", { videoIds });
+      console.log(response.data.videoFiles);
+      return response.data.videoFiles;
     } catch (error) {
-      console.log(error)
-      return null
+      console.log(error);
+      return null;
     }
   };
 
   const getVideoById = async (videoId: string): Promise<any> => {
     try {
-      console.log(videoId)
-      const response = await api.get(`/video/${videoId}`)
-      console.log(response.data.data)
-      return response.data.data
+      console.log(videoId);
+      const response = await api.get(`/video/${videoId}`);
+      console.log(response.data.data);
+      return response.data.data;
     } catch (error) {
-      console.log(error)
-      return null
+      console.log(error);
+      return null;
     }
-  }
+  };
 
   const getJoinedGuildVideos = async (): Promise<VideoType[] | null> => {
     try {
-      const response = await api.get("/video/guild/joined")
-      console.log(response.data)
-      if(response.data.data) return response.data.data
-      return null
+      const response = await api.get("/video/guild/joined");
+      console.log(response.data);
+      if (response.data.data) return response.data.data;
+      return null;
     } catch (error) {
-      console.log(error)
-      return null
+      console.log(error);
+      return null;
     }
-  }
+  };
 
   const getLikedVideos = async (): Promise<VideoType[] | null> => {
     try {
-      const response = await api.get("/video/liked")
-      if(response.data.data) return response.data.data
-      return null
+      const response = await api.get("/video/liked");
+      if (response.data.data) return response.data.data;
+      return null;
     } catch (error) {
-      console.log(error)
-      return null
+      console.log(error);
+      return null;
     }
-  }
+  };
 
-  const searchVideos = async(query: string): Promise<VideoType[]> => {
+  const searchVideos = async (query: string): Promise<VideoType[]> => {
     try {
-      const response = await api.get(`/video/search?q=${encodeURIComponent(query)}`)
+      const response = await api.get(
+        `/video/search?q=${encodeURIComponent(query)}`
+      );
       if (response.data.data) return response.data.data;
       return [];
     } catch (error) {
-      console.log(error)
+      console.log(error);
       return [];
+    }
+  };
+
+  const addView = async (videoId: string): Promise<string> => {
+    try {
+      const response = await api.patch(`/video/view/${videoId}`);
+      if (response) return response.data.message;
+      return "error";
+    } catch (error) {
+      console.log(error);
+      return "error";
+    }
+  };
+
+  const addToWatchLater = async (videoId: string): Promise<string> => {
+    try {
+      const response = await api.post(`/video/watchlater/${videoId}`);
+      if (response) return response.data.message;
+      return "error";
+    } catch (error) {
+      console.log(error);
+      return "error";
+    }
+  }
+  const removeFromWatchLater = async (videoId: string): Promise<string> => {
+    try {
+      const response = await api.delete(`/video/watchlater/${videoId}`);
+      if (response) return response.data.message;
+      return "error";
+    } catch (error) {
+      console.log(error);
+      return "error";
+    }
+  }
+
+  const checkVideoInWatchLater = async (videoId: string): Promise<boolean> => {
+    try {
+      const response = await api.get(`/video/watchlater/${videoId}`);
+      if (response) return response.data.data;
+      return false;
+    } catch (error) {
+      console.log(error);
+      return false;
+    }
+  }
+
+  const removeFromHistory = async (entityId: string): Promise<string> => {
+    try {
+      const response = await api.patch(`/video/history/${entityId}`);
+      if (response) return response.data.message;
+      return "error";
+    } catch (error) {
+      console.log(error);
+      return "error";
     }
   }
 
   return (
-    <VideoContext.Provider value={{ videos, setVideos, addVideo, uploadFiles,getSignedUrls, getVideos,getVideoFiles,getVideoById,getJoinedGuildVideos,getLikedVideos,searchVideos }}>
+    <VideoContext.Provider
+      value={{
+        videos,
+        setVideos,
+        addVideo,
+        uploadFiles,
+        getSignedUrls,
+        getVideos,
+        getVideoFiles,
+        getVideoById,
+        getJoinedGuildVideos,
+        getLikedVideos,
+        searchVideos,
+        addView,
+        addToWatchLater,
+        removeFromWatchLater,
+        checkVideoInWatchLater,
+        removeFromHistory
+      }}
+    >
       {children}
     </VideoContext.Provider>
   );

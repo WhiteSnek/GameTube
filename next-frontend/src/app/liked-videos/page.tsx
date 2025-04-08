@@ -1,5 +1,6 @@
 'use client'
 import VideoList from "@/components/videolist";
+import { useUser } from "@/context/user_provider";
 import { useVideo } from "@/context/video_provider";
 import { VideoImages, VideoType } from "@/types/video.types";
 import { ThumbsUp } from "lucide-react";
@@ -7,6 +8,7 @@ import { useEffect, useState } from "react";
 export default function LikedVideos() {
   const [videos, setVideos] = useState<VideoType[]>([])
   const { getLikedVideos, getVideoFiles } = useVideo()
+  const { removeLike } = useUser() 
   useEffect(()=>{
     const fetchVideos = async() =>{
       try {
@@ -30,6 +32,14 @@ export default function LikedVideos() {
     fetchVideos()
     
   },[])
+  const deleteFromLikedVideos = async (videoId: string | undefined) => {
+    if(!videoId) return
+    const response = await removeLike(videoId, "video");
+    if (!response) return;
+    const newVideos = videos.filter((video) => video.id !== videoId);
+    setVideos(newVideos);
+  }
+
   if(videos.length === 0) return <div>Loading...</div>
   return (
     <div className="relative max-w-5xl mx-auto">
@@ -38,7 +48,7 @@ export default function LikedVideos() {
         <h1 className="text-5xl font-bold">Liked Videos</h1>
       </div>
       <hr className="border-t border-red-700 my-4" />
-      <VideoList videos={videos} />
+      <VideoList videos={videos} listname="Liked Videos" deleteFromList={deleteFromLikedVideos}/>
     </div>
   );
 }

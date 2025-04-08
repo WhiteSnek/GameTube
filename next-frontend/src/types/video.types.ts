@@ -1,9 +1,11 @@
 export interface VideoType {
+    entityId?: string;
     id: string;
     title: string;
     thumbnail: string;
     videoUrl: string;
     duration: string;
+    views: number;
     ownerName: string;
     guildName: string;
     guildAvatar: string;
@@ -38,6 +40,11 @@ export interface VideoImages {
     guildName: string;
     guildAvatar: string;
     uploadDate: string;
+    views: number;
     tags: string[];
     likes: number;
+}
+
+export interface HistoryType{
+    [date: string]: VideoType[]
 }

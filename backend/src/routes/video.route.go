@@ -38,4 +38,24 @@ func VideoRoutes(r *gin.Engine, client *db.PrismaClient){
 	videoGroup.GET("/liked", middlewares.VerifyToken(), func(ctx *gin.Context) {
 		controllers.GetLikedVideos(client, ctx)
 	})
+
+	videoGroup.PATCH("/view/:videoId", middlewares.VerifyToken(), func(ctx *gin.Context) {
+		controllers.AddView(client, ctx)
+	})
+
+	videoGroup.POST("/watchlater/:videoId", middlewares.VerifyToken(), func(ctx *gin.Context) {
+		controllers.AddToWatchLater(client, ctx)
+	})
+
+	videoGroup.DELETE("/watchlater/:videoId", middlewares.VerifyToken(), func(ctx *gin.Context) {
+		controllers.RemoveFromWatchLater(client, ctx)
+	})
+
+	videoGroup.GET("/watchlater/:videoId", middlewares.VerifyToken(), func(ctx *gin.Context) {
+		controllers.CheckVideoInWatchLater(client, ctx)
+	})
+
+	videoGroup.PATCH("/history/:entryId", middlewares.VerifyToken(), func(ctx *gin.Context) {
+		controllers.RemoveFromHistory(client, ctx)
+	})
 }

@@ -1,16 +1,27 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ThumbsUp, Download, Share2 } from "lucide-react";
+import { ThumbsUp, Download, Share2, Bookmark } from "lucide-react";
 import { VideoDetailstype } from "@/types/video.types";
 import formatDate from "@/utils/formatDate";
 import { useUser } from "@/context/user_provider";
+import formatViews from "@/utils/formatViews";
+import { useVideo } from "@/context/video_provider";
 interface VideoDetailsProps {
   video: VideoDetailstype;
 }
 const VideoDetails: React.FC<VideoDetailsProps> = ({ video }) => {
   const [likes, setLikes] = useState<number>(video.likes);
   const [liked, setLiked] = useState<boolean>(true);
+  const [saved, setSaved] = useState<boolean>(false);
+  const { addToWatchLater, removeFromWatchLater, checkVideoInWatchLater } = useVideo();
+  useEffect(() => {
+    const handleCheckSaved = async () => {
+      const response = await checkVideoInWatchLater(video.id);
+      setSaved(response);
+    };
+    handleCheckSaved();
+  }, []);
   const { addLike, removeLike, getLike } = useUser();
   useEffect(() => {
     const handleIsLiked = async () => {
@@ -29,6 +40,16 @@ const VideoDetails: React.FC<VideoDetailsProps> = ({ video }) => {
       response = await addLike(video.id, "video");
       setLiked(true);
       setLikes((likes) => likes + 1);
+    }
+  };
+  const handleToggleSave = async () => {
+    let response;
+    if (saved) {
+      response = await removeFromWatchLater(video.id);
+      setSaved(false);
+    } else {
+      response = await addToWatchLater(video.id);
+      setSaved(true);
     }
   };
   return (
@@ -56,15 +77,32 @@ const VideoDetails: React.FC<VideoDetailsProps> = ({ video }) => {
             1.2M Subscribers
           </p>
         </div>
-        <Button className="ml-auto bg-red-500 text-white px-4 py-2 rounded-full cursor-pointer hover:bg-red-700">
-          Subscribe
-        </Button>
+        <div className="flex gap-2">
+          <Button className="ml-auto bg-red-500 text-white px-4 py-2 rounded-full cursor-pointer hover:bg-red-700">
+            Subscribe
+          </Button>
+          <Button
+            onClick={handleToggleSave}
+            className="ml-auto bg-red-500 text-white px-4 py-2 rounded-full cursor-pointer hover:bg-red-700"
+          >
+            {saved ? (
+              <>
+                <Bookmark size={16} fill="white" /> Remove from Watch Later
+              </>
+            ) : (
+              <>
+                <Bookmark size={16} />
+                Add to Watch Later
+              </>
+            )}
+          </Button>
+        </div>
       </div>
 
       {/* Video Details */}
       <div className="mt-4">
         <p className="text-gray-600 dark:text-gray-300">
-          1.5M views • {formatDate(video.uploadDate)}
+          {formatViews(video.views)} views • {formatDate(video.uploadDate)}
         </p>
         <p className="mt-2 text-gray-700 dark:text-gray-300">
           {video.description}

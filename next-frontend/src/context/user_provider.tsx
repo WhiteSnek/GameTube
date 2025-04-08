@@ -9,6 +9,9 @@ import React, {
 } from "react";
 import api from "@/lib/axios";
 import axios from "axios";
+import { HistoryType, VideoType } from "@/types/video.types";
+
+
 interface UserContextType {
   User: UserType | null;
   setUser: React.Dispatch<React.SetStateAction<UserType | null>>;
@@ -34,6 +37,8 @@ interface UserContextType {
   addLike: (entityId: string, entityType: "video"|"comment"|"reply") => Promise<string>;
   removeLike: (entityId: string, entityType: "video"|"comment"|"reply") => Promise<string>;
   getLike: (entityId: string, entityType: "video"|"comment"|"reply") => Promise<boolean>;
+  getHistory: () => Promise<HistoryType>;
+  getWatchLater: () => Promise<VideoType[]>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -195,6 +200,24 @@ const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     }
   }
 
+  const getHistory = async(): Promise<HistoryType> => {
+    try {
+      const response = await api.get('user/history')
+      return response.data.data
+    } catch (error) {
+      return {}
+    }
+  }
+
+  const getWatchLater = async(): Promise<VideoType[]> => {
+    try {
+      const response = await api.get('user/watchlater')
+      return response.data.data
+    } catch (error) {
+      return []
+    }
+  }
+
   return (
     <UserContext.Provider
       value={{
@@ -211,7 +234,9 @@ const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         getMultipleUserAvatars,
         addLike,
         removeLike,
-        getLike
+        getLike,
+        getHistory,
+        getWatchLater,
       }}
     >
       {children}

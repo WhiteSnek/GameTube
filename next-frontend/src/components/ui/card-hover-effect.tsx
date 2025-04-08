@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { VideoType } from "@/types/video.types";
 import formatDate from "@/utils/formatDate";
 import formatDuration from "@/utils/formateDuration";
+import formatViews from "@/utils/formatViews";
 import truncateText from "@/utils/truncate_text";
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
@@ -72,7 +73,7 @@ export const VideoHoverEffect = ({
                     {item.guildName} · <span className="text-zinc-500">posted by {item.ownerName}</span>
                   </p>
                   <div className="flex gap-3 font-medium text-zinc-600 dark:text-gray-300">
-                    {/* <p>0 views</p> */}
+                    <p>{formatViews(item.views)} views</p>
                     <p>{formatDate(item.uploadDate)}</p>
                   </div>
                 </div>

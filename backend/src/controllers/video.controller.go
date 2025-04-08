@@ -136,6 +136,7 @@ func GetVideoById(client *db.PrismaClient, c *gin.Context) {
 		GuildName:   "",
 		GuildAvatar: "",
 		Tags:        tagNames,
+		Views:       video.Views,
 		Likes:       len(video.Likes()),
 	}
 	if owner != nil {
@@ -171,6 +172,7 @@ func GetVideos(client *db.PrismaClient, c *gin.Context) {
 			Thumbnail:   video.Thumbnail,
 			VideoUrl:    video.VideoURL,
 			Duration:    int64(video.Duration),
+			Views:       video.Views,
 			CreatedAt:   video.CreatedAt.String(),
 			OwnerName:   "",
 			GuildName:   "",
@@ -243,6 +245,7 @@ func GetGuildVideos(client *db.PrismaClient, c *gin.Context) {
 			Thumbnail:   video.Thumbnail,
 			VideoUrl:    video.VideoURL,
 			Duration:    int64(video.Duration),
+			Views:       video.Views,
 			CreatedAt:   video.CreatedAt.String(),
 			OwnerName:   "",
 			GuildName:   "",
@@ -317,6 +320,7 @@ func GetJoinedGuildsVideos(client *db.PrismaClient, c *gin.Context) {
 			Thumbnail: video.Thumbnail,
 			VideoUrl:  video.VideoURL,
 			Duration:  int64(video.Duration),
+			Views:       video.Views,
 			CreatedAt: video.CreatedAt.String(),
 		}
 
@@ -347,6 +351,7 @@ func SearchVideo(client *db.PrismaClient, c *gin.Context) {
 			v.thumbnail,
 			v."videoUrl",
 			v.duration,
+			v.views,
 			u.fullname AS "ownerName",
 			g.avatar AS "guildAvatar",
 			g.name AS "guildName",
@@ -417,6 +422,7 @@ func GetLikedVideos(client *db.PrismaClient, c *gin.Context) {
 			Thumbnail: video.Thumbnail,
 			VideoUrl:  video.VideoURL,
 			Duration:  int64(video.Duration),
+			Views:       video.Views,
 			CreatedAt: video.CreatedAt.String(),
 		}
 
@@ -432,5 +438,170 @@ func GetLikedVideos(client *db.PrismaClient, c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Liked videos fetched successfully", "data": response})
+}
+
+func AddView(client *db.PrismaClient, c *gin.Context) {
+	userId, exists := c.Get("userId")
+	videoId := c.Param("videoId")
+	if videoId == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "videoId is required!"})
+	}
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized request"})
+		return
+	}
+	userIdStr, ok := userId.(string)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse userId"})
+		return
+	}
+
+	ctx := context.Background()
+
+	_, err := client.History.FindFirst(db.History.UserID.Equals(userIdStr), db.History.VideoID.Equals(videoId)).Exec(ctx)
+	if err != nil {
+		if errors.Is(err, db.ErrNotFound) {
+			_, err := client.Videos.FindUnique(db.Videos.ID.Equals(videoId)).Update(db.Videos.Views.Increment(1)).Exec(ctx)
+			if err != nil {
+				c.JSON(http.StatusNotFound, gin.H{"error": "Video not found!"})
+				return
+			}
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+	}
+	_, err = client.History.CreateOne(db.History.UserID.Set(userIdStr), db.History.Video.Link(db.Videos.ID.Equals(videoId))).Exec(ctx)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Video not found!"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "View added successfully!"})
+}
+
+func RemoveFromHistory(client *db.PrismaClient, c *gin.Context) {
+	userId, exists := c.Get("userId")
+	entryId := c.Param("entryId")
+	if entryId == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "entryId is required!"})
+	}
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized request"})
+		return
+	}
+	userIdStr, ok := userId.(string)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse userId"})
+		return
+	}
+	history, err := client.History.FindUnique(db.History.ID.Equals(entryId)).Exec(context.Background())
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Entry not found!"})
+		return
+	}
+	if history.UserID != userIdStr {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized request"})
+		return
+	}
+	_, err = client.History.FindUnique(db.History.ID.Equals(history.ID)).Delete().Exec(context.Background())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Video removed from history successfully!"})
+}
+
+func AddToWatchLater(client *db.PrismaClient, c *gin.Context){
+	userId, exists := c.Get("userId")
+	videoId := c.Param("videoId")
+	if videoId == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "videoId is required!"})
+	}
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized request"})
+		return
+	}
+	userIdStr, ok := userId.(string)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse userId"})
+		return
+	}
+
+	ctx := context.Background()
+
+	watchlater, err := client.WatchLater.FindFirst(db.WatchLater.UserID.Equals(userIdStr), db.WatchLater.VideoID.Equals(videoId)).Exec(ctx)
+	if watchlater != nil && err == nil {
+		c.JSON(http.StatusConflict, gin.H{"error": "Video already in watch later"});
+		return
+	}
+	_, err = client.WatchLater.CreateOne(
+		db.WatchLater.UserID.Set(userIdStr),
+		db.WatchLater.Video.Link(db.Videos.ID.Equals(videoId)),
+	).Exec(ctx)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Video added to watch later successfully!"})
+}
+
+func RemoveFromWatchLater(client *db.PrismaClient, c *gin.Context){
+	userId, exists := c.Get("userId")
+	videoId := c.Param("videoId")
+	if videoId == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "videoId is required!"})
+	}
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized request"})
+		return
+	}
+	userIdStr, ok := userId.(string)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse userId"})
+		return
+	}
+
+	ctx := context.Background()
+
+	watchlater, err := client.WatchLater.FindFirst(db.WatchLater.UserID.Equals(userIdStr), db.WatchLater.VideoID.Equals(videoId)).Exec(ctx)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Entry not found!"});
+		return
+	}
+	_, err = client.WatchLater.FindUnique(
+		db.WatchLater.ID.Equals(watchlater.ID),
+	).Delete().Exec(ctx)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Video removed from watch later successfully!"})
+}
+
+func CheckVideoInWatchLater(client *db.PrismaClient, c *gin.Context) {
+	userId, exists := c.Get("userId")
+	videoId := c.Param("videoId")
+	if videoId == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "videoId is required!"})
+	}
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized request"})
+		return
+	}
+	userIdStr, ok := userId.(string)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse userId"})
+		return
+	}
+
+	ctx := context.Background()
+
+	watchlater, err := client.WatchLater.FindFirst(db.WatchLater.UserID.Equals(userIdStr), db.WatchLater.VideoID.Equals(videoId)).Exec(ctx)
+	if watchlater != nil && err == nil {
+		c.JSON(http.StatusOK, gin.H{"message": "Video already in watch later", "data": true});
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Video not in watch later", "data": false});
 }
 

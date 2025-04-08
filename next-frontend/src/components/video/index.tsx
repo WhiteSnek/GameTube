@@ -12,12 +12,17 @@ import {
 import VideoDetails from "./details";
 import { SlidersHorizontal, Gauge, Monitor } from "lucide-react";
 import { VideoDetailstype } from "@/types/video.types";
+import { useVideo } from "@/context/video_provider";
 interface VideoSectionProps {
-  video: VideoDetailstype
+  video: VideoDetailstype;
 }
-const VideoSection: React.FC<VideoSectionProps> = ({video}) => {
+const VideoSection: React.FC<VideoSectionProps> = ({ video }) => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const watchedTimeRef = useRef(0);
+  const lastTimeRef = useRef(0);
+  const hasCountedViewRef = useRef(false);
+
   const [showThumbnail, setShowThumbnail] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -31,18 +36,65 @@ const VideoSection: React.FC<VideoSectionProps> = ({video}) => {
   const [showSettings, setShowSettings] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [videoQuality, setVideoQuality] = useState("720p");
-
+  const { addView } = useVideo();
   const handlePlaybackSpeedChange = (speed: number) => {
     if (videoRef.current) {
-      videoRef.current.playbackRate = speed; // Ensure TypeScript recognizes this
+      videoRef.current.playbackRate = speed;
     }
     setPlaybackSpeed(speed);
   };
 
   const handleVideoQualityChange = (quality: string) => {
-    // Logic to handle video quality change (implement adaptive streaming or switch video source)
     setVideoQuality(quality);
   };
+  useEffect(() => {
+    const videoData = videoRef.current;
+    if (!videoData) return;
+  
+    const onMetadataLoaded = () => {
+      const handleTimeUpdate = () => {
+        const currentTime = videoData.currentTime;
+        const delta = currentTime - lastTimeRef.current;
+  
+        if (delta > 0 && delta < 1.5) {
+          watchedTimeRef.current += delta;
+        }
+  
+        lastTimeRef.current = currentTime;
+  
+        if (
+          !hasCountedViewRef.current &&
+          watchedTimeRef.current >= videoData.duration / 3
+        ) {
+          hasCountedViewRef.current = true;
+          console.log("✅ Calling addView API");
+          addView(video.id);
+        }
+  
+        setCurrentTime(currentTime);
+      };
+  
+      const handleSeeked = () => {
+        lastTimeRef.current = videoData.currentTime;
+      };
+  
+      videoData.addEventListener("timeupdate", handleTimeUpdate);
+      videoData.addEventListener("seeked", handleSeeked);
+  
+      // Cleanup
+      return () => {
+        videoData.removeEventListener("timeupdate", handleTimeUpdate);
+        videoData.removeEventListener("seeked", handleSeeked);
+      };
+    };
+  
+    videoData.addEventListener("loadedmetadata", onMetadataLoaded);
+  
+    return () => {
+      videoData.removeEventListener("loadedmetadata", onMetadataLoaded);
+    };
+  }, [video.id]);
+  
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -96,7 +148,7 @@ const VideoSection: React.FC<VideoSectionProps> = ({video}) => {
       videoRef.current.pause();
       setIsPlaying(false);
     }
-    setShowThumbnail(false)
+    setShowThumbnail(false);
   };
 
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -110,8 +162,8 @@ const VideoSection: React.FC<VideoSectionProps> = ({video}) => {
     const muteState = !videoRef.current.muted;
     videoRef.current.muted = muteState;
     setIsMuted(muteState);
-    if(!isMuted) setVolume(0)
-    else setVolume(videoRef.current.volume)
+    if (!isMuted) setVolume(0);
+    else setVolume(videoRef.current.volume);
   };
 
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -122,8 +174,6 @@ const VideoSection: React.FC<VideoSectionProps> = ({video}) => {
     }
     setVolume(newVolume);
   };
-
-  
 
   const formatTime = (time: number) => {
     const minutes = Math.floor(time / 60);
@@ -164,7 +214,11 @@ const VideoSection: React.FC<VideoSectionProps> = ({video}) => {
         />
         {showThumbnail && (
           <div className="absolute inset-0 flex items-center justify-center bg-black">
-            <img src={video.thumbnail} alt="Video Thumbnail" className="w-full h-full rounded-lg shadow-lg" />
+            <img
+              src={video.thumbnail}
+              alt="Video Thumbnail"
+              className="w-full h-full rounded-lg shadow-lg"
+            />
             <button
               onClick={togglePlayPause}
               className="absolute text-white bg-black/60 cursor-pointer p-4 rounded-full"
@@ -194,9 +248,9 @@ const VideoSection: React.FC<VideoSectionProps> = ({video}) => {
             onChange={handleSeek}
             className="w-full mx-3 appearance-none h-2 bg-gray-700 rounded-lg cursor-pointer"
             style={{
-              background: `linear-gradient(to right, red ${(currentTime / duration) * 100}%, gray ${
+              background: `linear-gradient(to right, red ${
                 (currentTime / duration) * 100
-              }%)`,
+              }%, gray ${(currentTime / duration) * 100}%)`,
             }}
           />
 
@@ -212,7 +266,10 @@ const VideoSection: React.FC<VideoSectionProps> = ({video}) => {
             onMouseLeave={handleMouseLeaveVolume}
           >
             {/* Mute/Unmute Button */}
-            <button onClick={toggleMute} className="text-white ml-3 cursor-pointer">
+            <button
+              onClick={toggleMute}
+              className="text-white ml-3 cursor-pointer"
+            >
               {volume === 0 ? <VolumeX size={24} /> : <Volume2 size={24} />}
             </button>
 
@@ -240,58 +297,66 @@ const VideoSection: React.FC<VideoSectionProps> = ({video}) => {
           </div>
 
           {/* Fullscreen */}
-          <button onClick={toggleFullscreen} className="text-white ml-3 cursor-pointer">
+          <button
+            onClick={toggleFullscreen}
+            className="text-white ml-3 cursor-pointer"
+          >
             {isFullscreen ? <Minimize size={24} /> : <Maximize size={24} />}
           </button>
           {/* Settings Button */}
           <div className="relative">
-            <button onClick={() => setShowSettings(!showSettings)} className="text-white ml-3 cursor-pointer mt-1">
+            <button
+              onClick={() => setShowSettings(!showSettings)}
+              className="text-white ml-3 cursor-pointer mt-1"
+            >
               <Settings size={24} />
             </button>
 
             {/* Settings Menu */}
             {showSettings && (
               <div className="absolute bottom-12 right-0 bg-black/60  text-white p-4 rounded-xl w-48 shadow-lg">
-              <div className="flex items-center gap-2 mb-3 border-b border-gray-600 pb-2">
-                <SlidersHorizontal size={20} />
-                <p className="text-sm font-semibold">Settings</p>
-              </div>
-        
-              {/* Playback Speed */}
-              <div className="mb-3">
-                <div className="flex items-center gap-2 mb-1">
-                  <Gauge size={16} />
-                  <p className="text-sm">Speed</p>
+                <div className="flex items-center gap-2 mb-3 border-b border-gray-600 pb-2">
+                  <SlidersHorizontal size={20} />
+                  <p className="text-sm font-semibold">Settings</p>
                 </div>
-                <select
-                  value={playbackSpeed}
-                  onChange={(e) => handlePlaybackSpeedChange(parseFloat(e.target.value))}
-                  className="w-full bg-zinc-800 text-white rounded-lg p-2 outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="0.5">0.5x</option>
-                  <option value="1">1x</option>
-                  <option value="1.5">1.5x</option>
-                  <option value="2">2x</option>
-                </select>
-              </div>
-        
-              {/* Video Quality */}
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <Monitor size={16} />
-                  <p className="text-sm">Quality</p>
+
+                {/* Playback Speed */}
+                <div className="mb-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Gauge size={16} />
+                    <p className="text-sm">Speed</p>
+                  </div>
+                  <select
+                    value={playbackSpeed}
+                    onChange={(e) =>
+                      handlePlaybackSpeedChange(parseFloat(e.target.value))
+                    }
+                    className="w-full bg-zinc-800 text-white rounded-lg p-2 outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="0.5">0.5x</option>
+                    <option value="1">1x</option>
+                    <option value="1.5">1.5x</option>
+                    <option value="2">2x</option>
+                  </select>
                 </div>
-                <select
-                  value={videoQuality}
-                  onChange={(e) => handleVideoQualityChange(e.target.value)}
-                  className="w-full bg-zinc-800 text-white rounded-lg p-2 outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="480p">480p</option>
-                  <option value="720p">720p</option>
-                  <option value="1080p">1080p</option>
-                </select>
+
+                {/* Video Quality */}
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Monitor size={16} />
+                    <p className="text-sm">Quality</p>
+                  </div>
+                  <select
+                    value={videoQuality}
+                    onChange={(e) => handleVideoQualityChange(e.target.value)}
+                    className="w-full bg-zinc-800 text-white rounded-lg p-2 outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="480p">480p</option>
+                    <option value="720p">720p</option>
+                    <option value="1080p">1080p</option>
+                  </select>
+                </div>
               </div>
-            </div>
             )}
           </div>
         </div>

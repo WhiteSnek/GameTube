@@ -89,6 +89,9 @@ model Videos {
   tags        TagsOnVideos[]
   isPrivate   Boolean        @default(false)
   likes Likes[]
+  views Int @default(0)
+  history history[]
+  watchLater WatchLater[]
 }
 
 model Tags {
@@ -157,4 +160,20 @@ enum ENTITY {
   VIDEO
   COMMENT
   REPLY
+}
+
+model history {
+  id String @id @default(cuid())
+  userId String
+  videoId String
+  video Videos @relation(fields: [videoId], references: [id])
+  viewedAt DateTime @default(now())
+}
+
+model WatchLater {
+  id String @id @default(cuid())
+  userId String
+  videoId String
+  video Videos @relation(fields: [videoId], references: [id])
+  createdAt DateTime @default(now())
 }
