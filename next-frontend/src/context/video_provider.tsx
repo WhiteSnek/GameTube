@@ -146,7 +146,6 @@ const VideoProvider: React.FC<VideoProviderProps> = ({ children }) => {
 
   const getVideoById = async (videoId: string): Promise<any> => {
     try {
-      console.log(videoId);
       const response = await api.get(`/video/${videoId}`);
       console.log(response.data.data);
       return response.data.data;
