@@ -11,6 +11,7 @@ import { GuildDetailsType } from "@/types/guild.types";
 import truncateText from "@/utils/truncate_text";
 import Image from "next/image";
 import { useEffect } from "react";
+import { DefaultGuildCover, DefaultGuildavatar } from "@/assets";
 
 interface ManageGuildProps {
   guild: GuildDetailsType;
@@ -77,7 +78,7 @@ const Details: React.FC<DetailsProps> = ({ guild }) => {
       {/* Cover Image */}
       <div className="h-48 bg-gray-300 flex items-center justify-center">
         <Image
-          src={images?.coverUrl || "/default-cover.png"}
+          src={images?.coverUrl || DefaultGuildCover.src}
           priority
           alt="Cover"
           width={1920}
@@ -91,7 +92,7 @@ const Details: React.FC<DetailsProps> = ({ guild }) => {
       {/* Avatar & Channel Info */}
       <div className="p-6 flex items-center space-x-4">
         <Image
-          src={images?.avatarUrl || "/default-avatar.png"}
+          src={images?.avatarUrl || DefaultGuildavatar.src}
           alt="Avatar"
           width={40}
           height={40}

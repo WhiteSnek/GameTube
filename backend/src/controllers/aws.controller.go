@@ -23,6 +23,29 @@ import (
 func GetUploadUrl(c *gin.Context) {
 	bucketName := os.Getenv("AWS_BUCKET")
 	avatarKey := c.Query("avatar")
+	if avatarKey == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Avatar is required are required"})
+		return
+	}
+
+	preSignedClient := s3.NewPresignClient(config.S3Client)
+
+	presignedReq, err := preSignedClient.PresignPutObject(context.TODO(), &s3.PutObjectInput{
+		Bucket: aws.String(bucketName),
+		Key:    aws.String(avatarKey),
+	}, s3.WithPresignExpires(15*time.Minute))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate presigned URLs"})
+		return
+	} 
+	c.JSON(http.StatusOK, gin.H{
+		"avatarUrl": presignedReq.URL,
+	})
+}
+
+func GetGuildUploadUrl(c *gin.Context) {
+	bucketName := os.Getenv("AWS_BUCKET")
+	avatarKey := c.Query("avatar")
 	coverImageKey := c.Query("coverImage")
 	if avatarKey == "" || coverImageKey == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Both files are required"})
@@ -76,6 +99,7 @@ func GetUploadUrl(c *gin.Context) {
 	})
 }
 
+
 func GetUserImages(client *db.PrismaClient, c *gin.Context) {
 	userId := c.Param("userId")
 	if userId == "" {
@@ -84,78 +108,29 @@ func GetUserImages(client *db.PrismaClient, c *gin.Context) {
 	}
 
 	user, err := client.User.FindUnique(db.User.ID.Equals(userId)).Exec(context.Background())
-
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "User not found!"})
 		return
 	}
 
-	avatarKey, hasAvatar := user.Avatar()
-	coverKey, hasCover  := user.CoverImage()
+	avatarKey := user.Avatar
+	cloudfrontURL := os.Getenv("CLOUDFRONT_URL") 
+	var avatarUrl string
 
-	bucketName := os.Getenv("AWS_BUCKET")
-	var wg sync.WaitGroup
-
-	var avatarUrl, coverUrl string
-	var avatarErr, coverErr error
-
-	preSignedClient := s3.NewPresignClient(config.S3Client)
-	if hasAvatar {
-		if strings.Contains(avatarKey, "googleusercontent") {
-			avatarUrl = avatarKey
-		} else {
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				presignedReq, err := preSignedClient.PresignGetObject(context.TODO(), &s3.GetObjectInput{
-					Bucket: aws.String(bucketName),
-					Key:    aws.String(avatarKey),
-				}, s3.WithPresignExpires(15*time.Minute))
-				if err != nil {
-					avatarErr = err
-					return
-				}
-				avatarUrl = presignedReq.URL
-			}()
-		}
-	}
-	if hasCover {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			presignedReq, err := preSignedClient.PresignGetObject(context.TODO(), &s3.GetObjectInput{
-				Bucket: aws.String(bucketName),
-				Key:    aws.String(coverKey),
-			}, s3.WithPresignExpires(30*time.Minute))
-			if err != nil {
-				coverErr = err
-				return
-			}
-			coverUrl = presignedReq.URL
-		}()
-	}
-
-	wg.Wait()
-
-	if avatarErr != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate avatar presigned URL"})
-		return
-	}
-	if hasCover && coverErr != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate cover image presigned URL"})
-		return
+	if strings.Contains(avatarKey, "googleusercontent") {
+		avatarUrl = avatarKey
+	} else {
+		// Serve via CloudFront
+		avatarUrl = fmt.Sprintf("%s/%s", strings.TrimRight(cloudfrontURL, "/"), avatarKey)
 	}
 
 	response := gin.H{}
 	if avatarUrl != "" {
 		response["avatarUrl"] = avatarUrl
 	}
-	if coverUrl != "" {
-		response["coverUrl"] = coverUrl
-	}
-
 	c.JSON(http.StatusOK, response)
 }
+
 
 func GetGuildImages(client *db.PrismaClient, c *gin.Context) {
 	guildId := c.Param("guildId")
@@ -165,7 +140,6 @@ func GetGuildImages(client *db.PrismaClient, c *gin.Context) {
 	}
 
 	guild, err := client.Guild.FindUnique(db.Guild.ID.Equals(guildId)).Exec(context.Background())
-
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Guild not found!"})
 		return
@@ -179,57 +153,24 @@ func GetGuildImages(client *db.PrismaClient, c *gin.Context) {
 		return
 	}
 
-	bucketName := os.Getenv("AWS_BUCKET")
-	var wg sync.WaitGroup
+	cloudfrontURL := os.Getenv("CLOUDFRONT_URL") 
 
 	var avatarUrl, coverUrl string
-	var avatarErr, coverErr error
 
-	preSignedClient := s3.NewPresignClient(config.S3Client)
 	if strings.Contains(avatarKey, "googleusercontent") {
 		avatarUrl = avatarKey
 	} else {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			presignedReq, err := preSignedClient.PresignGetObject(context.TODO(), &s3.GetObjectInput{
-				Bucket: aws.String(bucketName),
-				Key:    aws.String(avatarKey),
-			}, s3.WithPresignExpires(15*time.Minute))
-			if err != nil {
-				avatarErr = err
-				return
-			}
-			avatarUrl = presignedReq.URL
-		}()
+		avatarUrl = fmt.Sprintf("%s/%s", strings.TrimRight(cloudfrontURL, "/"), avatarKey)
 	}
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		presignedReq, err := preSignedClient.PresignGetObject(context.TODO(), &s3.GetObjectInput{
-			Bucket: aws.String(bucketName),
-			Key:    aws.String(coverKey),
-		}, s3.WithPresignExpires(30*time.Minute))
-		if err != nil {
-			coverErr = err
-			return
-		}
-		coverUrl = presignedReq.URL
-	}()
 
-	wg.Wait()
-
-	if avatarErr != nil || coverErr != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate presigned URLs"})
-		return
-	}
+	coverUrl = fmt.Sprintf("%s/%s", strings.TrimRight(cloudfrontURL, "/"), coverKey)
 
 	c.JSON(http.StatusOK, gin.H{
 		"avatarUrl": avatarUrl,
 		"coverUrl":  coverUrl,
 	})
-
 }
+
 
 func GetGuildAvatars(client *db.PrismaClient, c *gin.Context) {
 	var request struct {
@@ -246,15 +187,12 @@ func GetGuildAvatars(client *db.PrismaClient, c *gin.Context) {
 		return
 	}
 
-	bucketName := os.Getenv("AWS_BUCKET")
-	preSignedClient := s3.NewPresignClient(config.S3Client)
-
 	var avatarUrls []string
-
+	cloudfrontURL := os.Getenv("CLOUDFRONT_URL")
 	for _, guildId := range request.GuildIDs {
 		guild, err := client.Guild.FindUnique(db.Guild.ID.Equals(guildId)).Exec(context.Background())
 		if err != nil || guild == nil {
-			avatarUrls = append(avatarUrls, "") 
+			avatarUrls = append(avatarUrls, "")
 			continue
 		}
 
@@ -262,24 +200,13 @@ func GetGuildAvatars(client *db.PrismaClient, c *gin.Context) {
 		if !ok {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Guild does not have an avatar"})
 			return
-		} 
+		}
 		if avatarKey == "" {
 			avatarUrls = append(avatarUrls, "")
 			continue
 		}
-
-		// Generate pre-signed URL
-		presignedReq, err := preSignedClient.PresignGetObject(context.TODO(), &s3.GetObjectInput{
-			Bucket: aws.String(bucketName),
-			Key:    aws.String(avatarKey),
-		}, s3.WithPresignExpires(15*time.Minute))
-
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate presigned URLs"})
-			return
-		}
-
-		avatarUrls = append(avatarUrls, presignedReq.URL)
+		avatarUrl := fmt.Sprintf("%s/%s", strings.TrimRight(cloudfrontURL, "/"), avatarKey)
+		avatarUrls = append(avatarUrls, avatarUrl)
 	}
 
 	c.JSON(http.StatusOK, gin.H{
@@ -287,8 +214,8 @@ func GetGuildAvatars(client *db.PrismaClient, c *gin.Context) {
 	})
 }
 
-func GetVideoUploadUrl(c *gin.Context){
-	
+func GetVideoUploadUrl(c *gin.Context) {
+
 	email := c.Query("email")
 	guildName := c.Query("guild")
 	if email == "" || guildName == "" {
@@ -298,7 +225,6 @@ func GetVideoUploadUrl(c *gin.Context){
 	videoId := uuid.New().String()[:8]
 	thumbnailKey := fmt.Sprintf("thumbnail/%s/%s/%s.png", guildName, email, videoId)
 	videoKey := fmt.Sprintf("%s/%s/%s.mp4", guildName, email, videoId)
-
 
 	var wg sync.WaitGroup
 	wg.Add(2)
@@ -344,17 +270,17 @@ func GetVideoUploadUrl(c *gin.Context){
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"videoUrl": videoUrl,
-		"videoKey": videoKey,
-		"thumbnailUrl":  thumbnailUrl,
+		"videoUrl":     videoUrl,
+		"videoKey":     videoKey,
+		"thumbnailUrl": thumbnailUrl,
 		"thumbnailKey": thumbnailKey,
 	})
 }
 
 type VideoImages struct {
 	Thumbnail string `json:"thumbnail"`
-	Video string `json:"video"`
-	Avatar string `json:"avatar"`
+	Video     string `json:"video"`
+	Avatar    string `json:"avatar"`
 }
 
 func GetVideoFiles(client *db.PrismaClient, c *gin.Context) {
@@ -372,107 +298,49 @@ func GetVideoFiles(client *db.PrismaClient, c *gin.Context) {
 		return
 	}
 
-	bucketName := os.Getenv("AWS_BUCKET")
-	videoBucketName := os.Getenv("AWS_VIDEO_BUCKET")
-	preSignedClient := s3.NewPresignClient(config.S3Client)
+	cloudfrontURL := os.Getenv("CLOUDFRONT_URL")
+	videoCloudfrontUrl := os.Getenv("VIDEO_CLOUDFRONT_URL")
 
 	var videoImages []VideoImages
-	var mu sync.Mutex  // Mutex to protect shared slice
-	var wg sync.WaitGroup
-	errChan := make(chan error, len(request.VideoIds)*3) // Buffer for errors
+	var errors []string
 
 	for _, videoId := range request.VideoIds {
 		video, err := client.Videos.FindUnique(db.Videos.ID.Equals(videoId)).With(db.Videos.Guild.Fetch()).Exec(context.Background())
 		if err != nil || video == nil {
 			continue
 		}
-
 		var videoImage VideoImages
-
-		wg.Add(3)
-
-		go func(video *db.VideosModel) {
-			defer wg.Done()
-			presignedReq, err := preSignedClient.PresignGetObject(context.TODO(), &s3.GetObjectInput{
-				Bucket: aws.String(bucketName),
-				Key:    aws.String(video.Thumbnail),
-			}, s3.WithPresignExpires(15*time.Minute))
-
-			if err != nil {
-				errChan <- fmt.Errorf("failed to generate presigned URLs for thumbnail: %w", err)
-				return
-			}
-			videoImage.Thumbnail = presignedReq.URL
-		}(video)
-
-		go func(video *db.VideosModel) {
-			defer wg.Done()
-			presignedReq, err := preSignedClient.PresignGetObject(context.TODO(), &s3.GetObjectInput{
-				Bucket: aws.String(videoBucketName),
-				Key:    aws.String(video.VideoURL),
-			}, s3.WithPresignExpires(15*time.Minute))
-
-			if err != nil {
-				errChan <- fmt.Errorf("failed to generate presigned URLs for video: %w", err)
-				return
-			}
-			videoImage.Video = presignedReq.URL
-		}(video)
-
-		guild := video.Guild()
-		avatarKey, ok := guild.Avatar()
-		if !ok {
-			errChan <- fmt.Errorf("guild does not have an avatar or cover image")
-			wg.Add(-1) // Skip this one
-			continue
+		videoImage.Video = fmt.Sprintf("%s/%s/master.m3u8", strings.TrimRight(videoCloudfrontUrl, "/"), video.VideoURL)
+		if video.Thumbnail != "" {
+			videoImage.Thumbnail = fmt.Sprintf("%s/%s", strings.TrimRight(cloudfrontURL, "/"), video.Thumbnail)
 		}
 
-		go func() {
-			defer wg.Done()
-			presignedReq, err := preSignedClient.PresignGetObject(context.TODO(), &s3.GetObjectInput{
-				Bucket: aws.String(bucketName),
-				Key:    aws.String(avatarKey),
-			}, s3.WithPresignExpires(15*time.Minute))
-
-			if err != nil {
-				errChan <- fmt.Errorf("failed to generate presigned URLs for Avatar: %w", err)
-				return
+		guild := video.Guild()
+		if avatarKey, ok := guild.Avatar(); ok {
+			if strings.Contains(avatarKey, "googleusercontent") {
+				videoImage.Avatar = avatarKey
+			} else {
+				videoImage.Avatar = fmt.Sprintf("%s/%s", strings.TrimRight(cloudfrontURL, "/"), avatarKey)
 			}
-			videoImage.Avatar = presignedReq.URL
-		}()
+		}
 
-		// Wait for all goroutines for this video to finish
-		wg.Wait()
-
-		// Lock before modifying shared slice
-		mu.Lock()
 		videoImages = append(videoImages, videoImage)
-		mu.Unlock()
 	}
 
-	close(errChan) // Close error channel after all goroutines finish
-
-	// Collect errors
-	var errors []string
-	for err := range errChan {
-		errors = append(errors, err.Error())
-	}
-
-	// If errors occurred, include them in the response
 	if len(errors) > 0 {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":      "Some presigned URLs failed to generate",
+			"error":      "Some URLs failed to generate",
 			"errors":     errors,
 			"videoFiles": videoImages,
 		})
 		return
 	}
 
-	// Successful response
 	c.JSON(http.StatusOK, gin.H{
 		"videoFiles": videoImages,
 	})
 }
+
 
 func GetUserAvatars(client *db.PrismaClient, c *gin.Context) {
 	var request struct {
@@ -488,9 +356,7 @@ func GetUserAvatars(client *db.PrismaClient, c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "avatarKeys are required"})
 		return
 	}
-
-	bucketName := os.Getenv("AWS_BUCKET")
-	preSignedClient := s3.NewPresignClient(config.S3Client)
+	cloudfrontURL := os.Getenv("CLOUDFRONT_URL") 
 
 	var avatarUrls []string
 
@@ -500,20 +366,31 @@ func GetUserAvatars(client *db.PrismaClient, c *gin.Context) {
 			continue
 		}
 		// Generate pre-signed URL
-		presignedReq, err := preSignedClient.PresignGetObject(context.TODO(), &s3.GetObjectInput{
-			Bucket: aws.String(bucketName),
-			Key:    aws.String(avatarKey),
-		}, s3.WithPresignExpires(15*time.Minute))
+		avatarUrl := fmt.Sprintf("%s/%s", strings.TrimRight(cloudfrontURL, "/"), avatarKey)
 
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate presigned URLs"})
-			return
-		}
-
-		avatarUrls = append(avatarUrls, presignedReq.URL)
+		avatarUrls = append(avatarUrls, avatarUrl)
 	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"avatarUrls": avatarUrls,
 	})
+}
+
+
+func CheckVideoAvailability(c *gin.Context){
+	key := c.Query("key")
+	bucketName := os.Getenv("AWS_TRANSCODED_VIDEO_BUCKET")
+	params := &s3.HeadObjectInput{
+		Bucket: aws.String(bucketName),
+		Key:    aws.String(key),
+	}
+
+	_, err := config.S3Client.HeadObject(context.TODO(), params)
+	if err != nil {
+
+		c.JSON(http.StatusOK, gin.H{"result": false})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"result": true})
 }

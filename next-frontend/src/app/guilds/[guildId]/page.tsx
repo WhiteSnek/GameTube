@@ -12,17 +12,13 @@ import { VideoCards } from "@/components/video_cards";
 import { useGuild } from "@/context/guild_provider";
 import { useVideo } from "@/context/video_provider";
 import { VideoType } from "@/types/video.types";
-
 export default function Guild() {
   const [isUploadOpen, setIsUploadOpen] = useState(false);
-  const [videos, setVideos] = useState<VideoType[] | null>(null);
-  
+  const [videos, setVideos] = useState<VideoType[]>([]);
   const { Guild, getGuild } = useGuild();
   const { getVideos } = useVideo();
   const params = useParams();
-  
   const guildId = Array.isArray(params.guildId) ? params.guildId[0] : params.guildId;
-
   // Fetch guild details
   useEffect(() => {
     if (!guildId) return;
@@ -49,8 +45,8 @@ export default function Guild() {
   if (!Guild) return <CreateGuild />;
 
   return (
-    <div className="relative flex justify-between gap-4 px-6 py-2">
-      <div className="flex-1 max-w-4xl">
+    <div className="relative flex justify-between px-6 py-2">
+      <div className="flex-1 max-w-4xl h-[calc(100vh-100px)] overflow-y-scroll px-4">
         <Details guild={Guild} />
 
         {/* Guild Videos Header with Upload Button */}

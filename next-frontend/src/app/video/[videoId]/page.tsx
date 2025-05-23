@@ -1,5 +1,6 @@
 "use client";
 import Comments from "@/components/comments";
+import RecommendedVideoList from "@/components/recommended";
 import VideoSection from "@/components/video";
 import CommentProvider from "@/context/comment_provider";
 import { useVideo } from "@/context/video_provider";
@@ -57,7 +58,7 @@ export default function Video() {
       <div className="col-span-4">
         <h1 className="text-2xl font-bold">Recommended Videos</h1>
         <hr className="border-t border-red-700 my-4" />
-        {/* <VideoList videos={videos} /> */}
+        <RecommendedVideoList videoId={video.id} />
       </div>
     </div>
   );

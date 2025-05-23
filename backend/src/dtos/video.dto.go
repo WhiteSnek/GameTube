@@ -19,6 +19,7 @@ type VideoDetails struct {
 	VideoUrl    string   `json:"videoUrl" binding:"required"`
 	Duration    int64    `json:"duration" binding:"required"`
 	OwnerName   string   `json:"ownerName" binding:"required"`
+	GuildId 	string   `json:"guildId" binding:"required"`
 	GuildAvatar string   `json:"guildAvatar,omitempty"`
 	GuildName   string   `json:"guildName" binding:"required"`
 	Tags        []string `json:"tags" binding:"required"`

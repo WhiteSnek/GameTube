@@ -5,14 +5,15 @@ import axios from "axios";
 import React, { createContext, ReactNode, useContext, useState } from "react";
 
 interface VideoContextType {
-  videos: VideoType[] | null;
-  setVideos: React.Dispatch<React.SetStateAction<VideoType[] | null>>;
+  videos: VideoType[];
+  setVideos: React.Dispatch<React.SetStateAction<VideoType[]>>;
   addVideo: (data: UploadVideoType) => Promise<void>;
   uploadFiles: (
     videoUrl: string,
     thumbnailUrl: string,
     videoFile: File,
-    thumbnaiFile: File
+    thumbnaiFile: File,
+    setProgress: React.Dispatch<React.SetStateAction<number>>
   ) => Promise<any>;
   getSignedUrls: (
     email: string,
@@ -23,17 +24,18 @@ interface VideoContextType {
     thumbnailUrl: string;
     thumbnailKey: string;
   }>;
-  getVideos: (guildId?: string) => Promise<VideoType[] | null>;
-  getVideoFiles: (guildIds: string[]) => Promise<VideoImages[] | null>;
+  getVideos: (guildId?: string) => Promise<VideoType[]>;
+  getVideoFiles: (guildIds: string[]) => Promise<VideoImages[]>;
   getVideoById: (videoId: string) => Promise<any>;
-  getJoinedGuildVideos: () => Promise<VideoType[] | null>;
-  getLikedVideos: () => Promise<VideoType[] | null>;
+  getJoinedGuildVideos: () => Promise<VideoType[]>;
+  getLikedVideos: () => Promise<VideoType[]>;
   searchVideos: (query: string) => Promise<VideoType[]>;
   addView: (videoId: string) => Promise<string>;
   addToWatchLater: (videoId: string) => Promise<string>;
   removeFromWatchLater: (videoId: string) => Promise<string>;
   checkVideoInWatchLater: (videoId: string) => Promise<boolean>;
   removeFromHistory: (entityId: string) => Promise<string>;
+  checkVideo: (key: string) => Promise<boolean>;
 }
 
 const VideoContext = createContext<VideoContextType | undefined>(undefined);
@@ -51,7 +53,7 @@ interface VideoProviderProps {
 }
 
 const VideoProvider: React.FC<VideoProviderProps> = ({ children }) => {
-  const [videos, setVideos] = useState<VideoType[] | null>(null);
+  const [videos, setVideos] = useState<VideoType[]>([]);
 
   const addVideo = async (data: UploadVideoType): Promise<void> => {
     console.log(data);
@@ -67,7 +69,8 @@ const VideoProvider: React.FC<VideoProviderProps> = ({ children }) => {
     videoUrl: string,
     thumbnailUrl: string,
     videoFile: File,
-    thumbnailFile: File
+    thumbnailFile: File,
+    setProgress: React.Dispatch<React.SetStateAction<number>>
   ) => {
     try {
       // Upload Video
@@ -75,6 +78,12 @@ const VideoProvider: React.FC<VideoProviderProps> = ({ children }) => {
         headers: {
           "Content-Type": videoFile.type,
         },
+        onUploadProgress: (progressEvent) => {
+          if (progressEvent.total) {
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            setProgress(percentCompleted);  
+          }
+        }
       });
       console.log("Video uploaded successfully");
       // Upload Thumbnail
@@ -108,30 +117,30 @@ const VideoProvider: React.FC<VideoProviderProps> = ({ children }) => {
     return { videoUrl, videoKey, thumbnailUrl, thumbnailKey };
   };
 
-  const getVideos = async (guildId?: string): Promise<VideoType[] | null> => {
+  const getVideos = async (guildId?: string): Promise<VideoType[]> => {
     try {
       let response;
       if (guildId) {
         response = await api.get(`/video/guild/${guildId}`);
       } else response = await api.get("/video/");
       if (response.data.data) return response.data.data;
-      return null;
+      return [];
     } catch (error) {
       console.log(error);
-      return null;
+      return [];
     }
   };
 
   const getVideoFiles = async (
     videoIds: string[]
-  ): Promise<VideoImages[] | null> => {
+  ): Promise<VideoImages[]> => {
     try {
       const response = await api.post("/image/video/images", { videoIds });
       console.log(response.data.videoFiles);
       return response.data.videoFiles;
     } catch (error) {
       console.log(error);
-      return null;
+      return [];
     }
   };
 
@@ -147,26 +156,26 @@ const VideoProvider: React.FC<VideoProviderProps> = ({ children }) => {
     }
   };
 
-  const getJoinedGuildVideos = async (): Promise<VideoType[] | null> => {
+  const getJoinedGuildVideos = async (): Promise<VideoType[]> => {
     try {
       const response = await api.get("/video/guild/joined");
       console.log(response.data);
       if (response.data.data) return response.data.data;
-      return null;
+      return [];
     } catch (error) {
       console.log(error);
-      return null;
+      return [];
     }
   };
 
-  const getLikedVideos = async (): Promise<VideoType[] | null> => {
+  const getLikedVideos = async (): Promise<VideoType[]> => {
     try {
       const response = await api.get("/video/liked");
       if (response.data.data) return response.data.data;
-      return null;
+      return [];
     } catch (error) {
       console.log(error);
-      return null;
+      return [];
     }
   };
 
@@ -237,6 +246,25 @@ const VideoProvider: React.FC<VideoProviderProps> = ({ children }) => {
     }
   }
 
+  const checkVideo = async(key: string): Promise<boolean> => {
+    try {
+      const getPathFromUrl = (url: string): string => {
+        const parsedUrl = new URL(url);
+        return parsedUrl.pathname.startsWith("/")
+          ? parsedUrl.pathname.slice(1) 
+          : parsedUrl.pathname;
+      };
+      const path = getPathFromUrl(key);
+    const response = await api.get(`/image/check?key=${path}`)
+    if (response) return response.data.result
+      return false;
+    } catch (error) {
+      console.log(error);
+      return false;
+    }
+  }
+
+
   return (
     <VideoContext.Provider
       value={{
@@ -255,7 +283,8 @@ const VideoProvider: React.FC<VideoProviderProps> = ({ children }) => {
         addToWatchLater,
         removeFromWatchLater,
         checkVideoInWatchLater,
-        removeFromHistory
+        removeFromHistory,
+        checkVideo
       }}
     >
       {children}

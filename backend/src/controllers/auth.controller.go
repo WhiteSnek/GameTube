@@ -101,9 +101,9 @@ func SignUp(client *db.PrismaClient,c *gin.Context) {
 		db.User.Fullname.Set(input.Fullname),
 		db.User.Email.Set(input.Email),
 		db.User.Password.Set(string(hashedPassword)),
+		db.User.Avatar.Set(input.Avatar),
 		db.User.Dob.Set(*input.Dob),
-		db.User.Avatar.Set(*input.Avatar),
-		db.User.CoverImage.Set(*input.CoverImage),
+		
 	).Exec(context.Background())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error registering user"})

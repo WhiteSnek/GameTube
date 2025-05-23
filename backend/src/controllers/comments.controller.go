@@ -64,7 +64,7 @@ func AddComment(client *db.PrismaClient, c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	avatar, _ := comment.Owner().Avatar()
+	avatar := comment.Owner().Avatar
 	response := dtos.CommentType{
 		Id:          comment.ID,
 		Content:     comment.Content,
@@ -95,7 +95,7 @@ func GetVideoComments(client *db.PrismaClient, c *gin.Context) {
 
 	var response []dtos.CommentType
 	for _, comment := range comments {
-		avatar, _ := comment.Owner().Avatar()
+		avatar := comment.Owner().Avatar
 		res := dtos.CommentType{
 			Id:          comment.ID,
 			Content:     comment.Content,
@@ -259,7 +259,7 @@ func AddReply(client *db.PrismaClient, c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	avatar, _ := reply.Owner().Avatar()
+	avatar := reply.Owner().Avatar
 	response := dtos.CommentType{
 		Id:          reply.ID,
 		Content:     reply.Content,
@@ -298,7 +298,7 @@ func GetCommentReplies(client *db.PrismaClient, c *gin.Context) {
 
 	var response []dtos.CommentType
 	for _, reply := range replies {
-		avatar, _ := reply.Owner().Avatar()
+		avatar := reply.Owner().Avatar
 		res := dtos.CommentType{
 			Id:          reply.ID,
 			Content:     reply.Content,

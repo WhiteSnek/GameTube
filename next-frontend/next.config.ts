@@ -2,7 +2,14 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
-    domains: ["s3.ap-south-1.amazonaws.com"], 
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: process.env.NEXT_CLOUDFRONT_URL?.replace(/^https?:\/\//, '') || '',
+        port: '',
+        pathname: '/**',
+      },
+    ],
   },
 };
 

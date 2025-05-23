@@ -23,8 +23,8 @@ interface SignupProps {
   setLoginOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
 const Signup: React.FC<SignupProps> = ({ setLoginOpen }) => {
-  const [step, setStep] = useState("account"); // Tracks tab state
-  const [open, setOpen] = useState(false); // Controls dialog visibility
+  const [step, setStep] = useState("account"); 
+  const [open, setOpen] = useState(false); 
   const [form, setForm] = useState({
     fullName: "",
     email: "",
@@ -32,7 +32,6 @@ const Signup: React.FC<SignupProps> = ({ setLoginOpen }) => {
     confirmPassword: "",
     dob: "",
     avatar: null as File | null,
-    coverImage: null as File | null,
   });
 
   const { signup, getSignedUrls, uploadImages } = useUser();
@@ -58,7 +57,7 @@ const Signup: React.FC<SignupProps> = ({ setLoginOpen }) => {
 
   const handleSignup = async () => {
     try {
-      if (!form.avatar || !form.coverImage) {
+      if (!form.avatar) {
         console.error("Avatar and Cover Image are required");
         return;
       }
@@ -66,14 +65,12 @@ const Signup: React.FC<SignupProps> = ({ setLoginOpen }) => {
       // Generate unique keys based on user email
       const emailPrefix = form.email.split("@")[0];
       const avatarKey = `profile/avatar/${emailPrefix}`;
-      const coverImageKey = `profile/coverImage/${emailPrefix}`;
 
       // Request Presigned URLs from backend
-      const { avatarUrl, coverUrl } = await getSignedUrls(
+      const { avatarUrl } = await getSignedUrls(
         avatarKey,
-        coverImageKey
       );
-      if (!avatarUrl || !coverUrl) {
+      if (!avatarUrl) {
         console.error("Failed to get presigned URLs");
         return;
       }
@@ -82,8 +79,7 @@ const Signup: React.FC<SignupProps> = ({ setLoginOpen }) => {
         fullname: form.fullName,
         email: form.email,
         password: form.password,
-        avatar: avatarKey, // Store key, NOT URL
-        coverImage: coverImageKey,
+        avatar: avatarKey, 
         dob: form.dob,
       };
 
@@ -91,9 +87,7 @@ const Signup: React.FC<SignupProps> = ({ setLoginOpen }) => {
       // Upload files to S3
       const uploadResult = await uploadImages(
         avatarUrl,
-        coverUrl,
         form.avatar,
-        form.coverImage
       );
       if (!uploadResult.success) {
         console.error("Image upload failed", uploadResult.error);
@@ -102,7 +96,6 @@ const Signup: React.FC<SignupProps> = ({ setLoginOpen }) => {
 
       console.log("Signup successful!");
 
-      // 🔹 Close modal or reset form
       setOpen(false);
       setLoginOpen(false);
     } catch (error) {
@@ -159,10 +152,9 @@ const Signup: React.FC<SignupProps> = ({ setLoginOpen }) => {
               onValueChange={setStep}
               className="w-full h-[350px]"
             >
-              <TabsList className="grid grid-cols-3 w-full">
+              <TabsList className="grid grid-cols-2 w-full">
                 <TabsTrigger value="account">Account</TabsTrigger>
                 <TabsTrigger value="profile">Profile</TabsTrigger>
-                <TabsTrigger value="images">Images</TabsTrigger>
               </TabsList>
 
               {/* Account Tab */}
@@ -190,23 +182,6 @@ const Signup: React.FC<SignupProps> = ({ setLoginOpen }) => {
                     onChange={(e) =>
                       setForm({ ...form, email: e.target.value })
                     }
-                  />
-                </div>
-
-                <Button className="w-full" onClick={() => setStep("profile")}>
-                  Next
-                </Button>
-              </TabsContent>
-
-              {/* Profile Tab */}
-              <TabsContent value="profile" className="space-y-4">
-                <div className="flex flex-col space-y-1">
-                  <Label htmlFor="dob">Date of Birth</Label>
-                  <Input
-                    id="dob"
-                    type="date"
-                    value={form.dob}
-                    onChange={(e) => setForm({ ...form, dob: e.target.value })}
                   />
                 </div>
 
@@ -260,17 +235,23 @@ const Signup: React.FC<SignupProps> = ({ setLoginOpen }) => {
                   </div>
                 </div>
 
-                <div className="flex justify-between">
-                  <Button variant="outline" onClick={() => setStep("account")}>
-                    Back
-                  </Button>
-                  <Button onClick={() => setStep("images")}>Next</Button>
-                </div>
+                <Button className="w-full" onClick={() => setStep("profile")}>
+                  Next
+                </Button>
               </TabsContent>
 
-              {/* Images Tab */}
-              <TabsContent value="images" className="space-y-6">
-                {/* Avatar Upload */}
+              {/* Profile Tab */}
+              <TabsContent value="profile" className="space-y-4">
+                <div className="flex flex-col space-y-1">
+                  <Label htmlFor="dob">Date of Birth</Label>
+                  <Input
+                    id="dob"
+                    type="date"
+                    value={form.dob}
+                    onChange={(e) => setForm({ ...form, dob: e.target.value })}
+                  />
+                </div>
+                <p className="text-sm">Uplaod Avatar</p>
                 <div
                   className="flex flex-col items-center justify-center border-2 border-dashed border-gray-400 rounded-lg p-6 cursor-pointer hover:border-gray-600"
                   onClick={() =>
@@ -310,49 +291,6 @@ const Signup: React.FC<SignupProps> = ({ setLoginOpen }) => {
                   />
                 </div>
 
-                {/* Cover Image Upload */}
-                <div
-                  className="flex flex-col items-center justify-center border-2 border-dashed border-gray-400 rounded-lg p-6 cursor-pointer hover:border-gray-600"
-                  onClick={() =>
-                    document.getElementById("coverImageUpload")?.click()
-                  }
-                  onDragOver={(e) => e.preventDefault()} // Prevent default behavior
-                  onDrop={(e) => {
-                    e.preventDefault(); // Prevent image from opening
-                    if (e.dataTransfer.files.length > 0) {
-                      handleFileChange(
-                        {
-                          target: { files: e.dataTransfer.files },
-                        } as React.ChangeEvent<HTMLInputElement>,
-                        "coverImage"
-                      );
-                    }
-                  }}
-                >
-                  {form.coverImage ? (
-                    <img
-                      src={URL.createObjectURL(form.coverImage)}
-                      alt="Cover Preview"
-                      className="w-full h-32 object-cover rounded-lg"
-                    />
-                  ) : (
-                    <div className="flex flex-col items-center text-gray-500">
-                      <ImagePlus size={40} />
-                      <p className="text-sm">
-                        Click or Drag to Upload Cover Image
-                      </p>
-                    </div>
-                  )}
-                  <Input
-                    id="coverImageUpload"
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => handleFileChange(e, "coverImage")}
-                  />
-                </div>
-
-                {/* Navigation Buttons */}
                 <div className="flex justify-between">
                   <Button variant="outline" onClick={() => setStep("profile")}>
                     Back

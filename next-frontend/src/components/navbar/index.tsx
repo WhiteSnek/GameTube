@@ -1,6 +1,7 @@
 "use client";
 
 import { Sun, Moon, LogIn, Search, LogOut } from "lucide-react";
+import { DefaultAvatar } from "@/assets";
 import { useTheme } from "@/context/theme_provider";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import Login from "./login";
@@ -57,7 +58,7 @@ const Navbar: React.FC = () => {
             <DropdownMenuTrigger asChild>
               <button className="w-14">
                 <img
-                  src={images?.avatarUrl || "/default-avatar.png"}
+                  src={images?.avatarUrl || DefaultAvatar.src}
                   alt="User Avatar"
                   className="w-full aspect-square object-cover rounded-full cursor-pointer "
                 />

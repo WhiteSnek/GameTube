@@ -13,6 +13,9 @@ func ImageRoutes(r *gin.Engine, client *db.PrismaClient){
 	imageGroup.GET("/upload-url", func(ctx *gin.Context) {
 		controllers.GetUploadUrl(ctx)
 	})
+	imageGroup.GET("/guild/upload-url", func(ctx *gin.Context) {
+		controllers.GetGuildUploadUrl(ctx)
+	})
 
 	imageGroup.GET("/user/:userId", func(ctx *gin.Context) {
 		controllers.GetUserImages(client, ctx)
@@ -36,6 +39,10 @@ func ImageRoutes(r *gin.Engine, client *db.PrismaClient){
 	
 	imageGroup.POST("/users", func(ctx *gin.Context) {
 		controllers.GetUserAvatars(client, ctx)
+	})
+
+	imageGroup.GET("/check", func(ctx *gin.Context) {
+		controllers.CheckVideoAvailability(ctx)
 	})
 
 }

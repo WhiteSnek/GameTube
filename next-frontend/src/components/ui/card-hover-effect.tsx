@@ -1,4 +1,5 @@
 'use client'
+import { useVideo } from "@/context/video_provider";
 import { cn } from "@/lib/utils";
 import { VideoType } from "@/types/video.types";
 import formatDate from "@/utils/formatDate";
@@ -106,6 +107,10 @@ export const Card = ({
   );
 };
 
+import videojs from "video.js";
+import "video.js/dist/video-js.css";
+
+
 interface HoverThumbnailProps {
   duration: string;
   thumbnail: string;
@@ -121,32 +126,65 @@ export const HoverThumbnail: React.FC<HoverThumbnailProps> = ({
   const [currentDuration, setCurrentDuration] = useState<number>(
     parseDuration(duration)
   );
-  const intervalRef = useRef<number | null>(null);
-
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const playerRef = useRef<any | null>(null);
+  const { checkVideo } = useVideo();
+  const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
   function parseDuration(duration: string): number {
     const parts = duration.split(":").map(Number);
     return parts.reduce((total, part) => total * 60 + part, 0);
   }
-  
+
   useEffect(() => {
-    
-    if (isHovered) {
-      intervalRef.current = window.setInterval(() => {
-        setCurrentDuration((prev) => (prev > 0 ? prev - 1 : 0));
-      }, 1000);
-    } else {
-      setCurrentDuration(parseDuration(duration));
-      if (intervalRef.current !== null) {
-        window.clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
+    const checkAvailability = async () => {
+      const available = await checkVideo(video);
+      setIsAvailable(available);
+    };
+
+    checkAvailability();
+  }, [video]);
+
+  useEffect(() => {
+    if (isHovered && videoRef.current && isAvailable) {
+      // Initialize video.js player
+      const player = videojs(videoRef.current, {
+        autoplay: true,
+        muted: true,
+        loop: true,
+        controls: false,
+        preload: "auto",
+        fluid: true,
+        responsive: true,
+        sources: [
+          {
+            src: video,
+            type: "application/x-mpegURL", 
+          },
+        ],
+      });
+
+      playerRef.current = player;
     }
 
     return () => {
-      if (intervalRef.current !== null) {
-        window.clearInterval(intervalRef.current);
+      // Dispose of the player on unmount or when hover ends
+      if (playerRef.current) {
+        playerRef.current.dispose();
+        playerRef.current = null;
       }
     };
+  }, [isHovered, video]);
+
+  useEffect(() => {
+    if (isHovered) {
+      const interval = setInterval(() => {
+        setCurrentDuration((prev) => (prev > 0 ? prev - 1 : 0));
+      }, 1000);
+
+      return () => clearInterval(interval);
+    } else {
+      setCurrentDuration(parseDuration(duration));
+    }
   }, [isHovered, duration]);
 
   return (
@@ -156,13 +194,18 @@ export const HoverThumbnail: React.FC<HoverThumbnailProps> = ({
       onMouseLeave={() => setIsHovered(false)}
     >
       {isHovered ? (
-        <video
-          src={video}
-          className="aspect-video w-full object-contain rounded-t-md bg-zinc-950"
-          autoPlay
-          muted
-          loop
-        />
+        isAvailable === false ? (
+          <div className="aspect-video w-full bg-zinc-950 flex items-center justify-center text-sm text-white rounded-t-md">
+             This video is still processing. Please come again later.
+          </div>
+        ) : (
+          <div data-vjs-player>
+            <video
+              ref={videoRef}
+              className="video-js aspect-video w-full object-contain rounded-t-md bg-zinc-950"
+            />
+          </div>
+        )
       ) : (
         <Image
           src={thumbnail}

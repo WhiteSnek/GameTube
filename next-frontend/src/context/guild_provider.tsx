@@ -78,7 +78,7 @@ const GuildProvider: React.FC<GuildProviderProps> = ({ children }) => {
 
   const getSignedUrls = async (avatar: string, coverImage: string) => {
     const response = await axios.get(
-      `http://localhost:8000/image/upload-url?avatar=${avatar}&coverImage=${coverImage}`
+      `http://localhost:8000/image/guild/upload-url?avatar=${avatar}&coverImage=${coverImage}`
     );
     const { avatarUrl, coverUrl } = response.data;
     return { avatarUrl, coverUrl };

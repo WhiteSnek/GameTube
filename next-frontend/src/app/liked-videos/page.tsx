@@ -15,7 +15,7 @@ export default function LikedVideos() {
         const response = await getLikedVideos()
         if(!response) return
         const videoIds = response.map((video) => video.id);
-        const videoFiles: VideoImages[] | null = await getVideoFiles(videoIds);
+        const videoFiles: VideoImages[] = await getVideoFiles(videoIds);
         if (!videoFiles || videoFiles.length === 0) return;
   
           const newVideos = response.map((video, idx) => ({
@@ -39,8 +39,6 @@ export default function LikedVideos() {
     const newVideos = videos.filter((video) => video.id !== videoId);
     setVideos(newVideos);
   }
-
-  if(videos.length === 0) return <div>Loading...</div>
   return (
     <div className="relative max-w-5xl mx-auto">
       <div className="flex items-end gap-4">

@@ -341,7 +341,7 @@ func GetGuildMembers(client *db.PrismaClient, c *gin.Context){
 
 	var response []dtos.GuildMembersResponse
 	for _, member := range guildMembers{
-		avatar, _ := member.User().Avatar()
+		avatar := member.User().Avatar
 		res := dtos.GuildMembersResponse{
 			UserID: member.UserID,
 			UserName: member.User().Fullname,

@@ -7,6 +7,7 @@ export interface VideoType {
     duration: string;
     views: number;
     ownerName: string;
+    
     guildName: string;
     guildAvatar: string;
     uploadDate: string;
@@ -37,6 +38,7 @@ export interface VideoImages {
     videoUrl: string;
     duration: string;
     ownerName: string;
+    guildId: string;
     guildName: string;
     guildAvatar: string;
     uploadDate: string;

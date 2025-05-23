@@ -11,26 +11,22 @@ import api from "@/lib/axios";
 import axios from "axios";
 import { HistoryType, VideoType } from "@/types/video.types";
 
-
 interface UserContextType {
   User: UserType | null;
   setUser: React.Dispatch<React.SetStateAction<UserType | null>>;
   signup: (data: SignUpUser) => Promise<void>;
   getSignedUrls: (
     avatar: string,
-    coverImage: string
-  ) => Promise<{ avatarUrl: string; coverUrl: string }>;
+  ) => Promise<{ avatarUrl: string}>;
   uploadImages: (
     avatarUrl: string,
-    coverUrl: string,
     avatar: File,
-    coverImage: File
   ) => Promise<any>;
   signin: (email: string, password: string) => Promise<void>;
   getUserImages: (userId: string) => Promise<void>;
-  images: { avatarUrl: string; coverUrl: string };
+  images: { avatarUrl: string; };
   setImages: React.Dispatch<
-    React.SetStateAction<{ avatarUrl: string; coverUrl: string }>
+    React.SetStateAction<{ avatarUrl: string;}>
   >;
   logout: () => Promise<void>;
   getMultipleUserAvatars: (avatarKeys: string[]) => Promise<string[] | null>;
@@ -39,6 +35,7 @@ interface UserContextType {
   getLike: (entityId: string, entityType: "video"|"comment"|"reply") => Promise<boolean>;
   getHistory: () => Promise<HistoryType>;
   getWatchLater: () => Promise<VideoType[]>;
+  clearHistory: () => Promise<string>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -57,13 +54,11 @@ interface UserProviderProps {
 
 const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   const [User, setUser] = useState<UserType | null>(null);
-  const [images, setImages] = useState<{ avatarUrl: string; coverUrl: string }>(
+  const [images, setImages] = useState<{ avatarUrl: string}>(
     {
       avatarUrl: "",
-      coverUrl: "",
     }
   );
-
   useEffect(() => {
     const getCurrentUser = async () => {
       try {
@@ -78,12 +73,12 @@ const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     getCurrentUser();
   }, []);
 
-  const getSignedUrls = async (avatar: string, coverImage: string) => {
+  const getSignedUrls = async (avatar: string) => {
     const response = await axios.get(
-      `http://localhost:8000/image/upload-url?avatar=${avatar}&coverImage=${coverImage}`
+      `http://localhost:8000/image/upload-url?avatar=${avatar}`
     );
-    const { avatarUrl, coverUrl } = response.data;
-    return { avatarUrl, coverUrl };
+    const { avatarUrl } = response.data;
+    return { avatarUrl };
   };
 
   const getUserImages = async (userId: string) => {
@@ -101,6 +96,7 @@ const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     }
   };
 
+
   const signin = async (email: string, password: string) => {
     const response = await api.post(
       "/auth/signin",
@@ -114,6 +110,7 @@ const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
       console.log(response.data.error);
     } else {
       setUser(response.data.data);
+      window.location.reload();
     }
   };
 
@@ -125,13 +122,12 @@ const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     );
     console.log(response);
     setUser(null);
+    window.location.reload();
   };
 
   const uploadImages = async (
     avatarUrl: string,
-    coverUrl: string,
     avatarFile: File,
-    coverFile: File
   ) => {
     try {
       // Upload Avatar
@@ -141,13 +137,6 @@ const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         },
       });
       console.log("Avatar uploaded successfully");
-      // Upload Cover Image
-      await axios.put(coverUrl, coverFile, {
-        headers: {
-          "Content-Type": coverFile.type,
-        },
-      });
-      console.log("Cover image uploaded successfully");
       return { success: true };
     } catch (error) {
       console.error("Error uploading images:", error);
@@ -218,6 +207,15 @@ const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     }
   }
 
+  const clearHistory = async(): Promise<string> => {
+    try {
+      const response = await api.delete('user/history')
+      return response.data.message
+    } catch (error) {
+      return "error"
+    }
+  }
+
   return (
     <UserContext.Provider
       value={{
@@ -237,6 +235,7 @@ const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         getLike,
         getHistory,
         getWatchLater,
+        clearHistory
       }}
     >
       {children}

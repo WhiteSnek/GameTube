@@ -38,7 +38,7 @@ const Chat = () => {
   }, [messages, isTyping]);
 
   return (
-    <div className="fixed right-4 bottom-4 w-80 h-[calc(100vh-100px)] flex flex-col bg-zinc-100 dark:bg-zinc-800  rounded-2xl shadow-lg ">
+    <div className="h-[calc(100vh-100px)] w-1/4 flex flex-col bg-zinc-100 dark:bg-zinc-800 rounded-2xl shadow-lg ">
       <h1 className="text-lg font-bold text-center py-4 bg-zinc-300 dark:bg-zinc-900 rounded-t-xl">Live Chat</h1>
       <div className="flex-1 overflow-y-auto p-2 dark:bg-zinc-800 bg-zinc-100 px-4">
         {messages.map((msg) => (

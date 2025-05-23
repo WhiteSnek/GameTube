@@ -19,8 +19,7 @@ model User {
   email      String        @unique
   password   String
   dob        String?
-  avatar     String?
-  coverImage String?
+  avatar     String
   createdAt  DateTime      @default(now())
   updatedAt  DateTime      @updatedAt
   isVerified Boolean       @default(false)

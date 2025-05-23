@@ -1,0 +1,108 @@
+.loader {
+    position: relative;
+    height: 40px;
+    width: 6px;
+    color: #FFF;
+    animation: paddles 0.75s ease-out infinite;
+  }
+  .loader:before {
+    content: "";
+    position: absolute;
+    margin: 0 auto;
+    left: 0;
+    right: 0;
+    top: 15px;
+    width: 12px;
+    height: 12px;
+    background-color: #de3500;
+    border-radius: 50%;
+    animation: ballbounce 0.6s ease-out infinite;
+  }
+  
+  @keyframes paddles {
+    0% { box-shadow: -25px -10px, 25px 10px }
+    50% { box-shadow: -25px 8px, 25px -10px }
+    100% { box-shadow: -25px -10px, 25px 10px }
+  }
+  
+  @keyframes ballbounce {
+    0% { transform: translateX(-20px) scale(1, 1.2) }
+    25% { transform: scale(1.2, 1) }
+    50% { transform: translateX(15px) scale(1, 1.2) }
+    75% { transform: scale(1.2, 1) }
+    100% { transform: translateX(-20px) }
+  }
+  
+  /* ===================== Notice Styles ===================== */
+  
+  .noticeWrapper {
+    padding: 2rem;
+    border-radius: 12px;
+    text-align: center;
+    max-width: 500px;
+    margin: 2rem auto;
+    animation: fadeIn 0.6s ease-in-out;
+    box-shadow: 0 0 20px rgba(0, 255, 100, 0.1);
+  }
+  
+  /* Dark Theme */
+  @media (prefers-color-scheme: dark) {
+    .noticeWrapper {
+      background-color: #111;
+      border: 1px solid #333;
+      color: #fff;
+    }
+  
+    .heading {
+      color: #00ff99;
+    }
+  
+    .text {
+      color: #ccc;
+    }
+  }
+  
+  /* Light Theme */
+  @media (prefers-color-scheme: light) {
+    .noticeWrapper {
+      background-color: #f9f9f9;
+      border: 1px solid #ccc;
+      color: #111;
+    }
+  
+    .heading {
+      color: #007f5f;
+    }
+  
+    .text {
+      color: #555;
+    }
+  }
+  
+  .icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+  }
+  
+  .heading {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+  }
+  
+  .text {
+    font-size: 1rem;
+    line-height: 1.4;
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  

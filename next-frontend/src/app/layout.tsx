@@ -42,7 +42,7 @@ export default function RootLayout({
                 <div className="pt-20 flex">
                   <Sidebar />
                   <main className="ml-64 w-full">
-                    <ParticlesBackground />
+                    {/* <ParticlesBackground /> */}
                     {children}
                   </main>
                 </div>

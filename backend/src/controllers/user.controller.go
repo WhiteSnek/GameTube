@@ -41,7 +41,7 @@ func GetHistory(client *db.PrismaClient, c *gin.Context){
 		return
 	}
 
-	history, err := client.History.FindMany(db.History.UserID.Equals(id)).With(db.History.Video.Fetch().With(db.Videos.Guild.Fetch(), db.Videos.Owner.Fetch())).Exec(context.Background());
+	history, err := client.History.FindMany(db.History.UserID.Equals(id)).With(db.History.Video.Fetch().With(db.Videos.Guild.Fetch(), db.Videos.Owner.Fetch())).OrderBy(db.History.ViewedAt.Order(db.SortOrderDesc)).Exec(context.Background());
 	var response []dtos.MultiVideos
 	if err != nil {
 		c.JSON(http.StatusNoContent, gin.H{"message": "User has no history", "data": response})

@@ -8,6 +8,13 @@ import {
   DialogHeader,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,7 +22,7 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { useUser } from "@/context/user_provider";
 import { useGuild } from "@/context/guild_provider";
-
+import games from "@/data/games.json";
 const CreateGuild: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [form, setForm] = useState({
@@ -157,9 +164,10 @@ const CreateGuild: React.FC = () => {
                   placeholder="Describe your guild"
                 />
               </div>
-              <h1 className="text-zinc-700 text-sm dark:text-zinc-300">Upload Images</h1>
+              <h1 className="text-zinc-700 text-sm dark:text-zinc-300">
+                Upload Images
+              </h1>
               <div className="grid grid-cols-2 justify-center items-center gap-4">
-                
                 {/* Avatar Upload */}
                 <div
                   className="flex flex-col text-center items-center justify-center border-2 border-dashed border-gray-400 rounded-lg p-6 cursor-pointer hover:border-gray-600"
@@ -242,17 +250,50 @@ const CreateGuild: React.FC = () => {
                   />
                 </div>
               </div>
-              {/* Is Private Switch */}
-              <div className="flex items-center justify-between">
-                <Label className="text-zinc-700 dark:text-zinc-300">
-                  Private Guild?
-                </Label>
-                <Switch
-                  checked={form.isPrivate}
-                  onCheckedChange={(value) =>
-                    setForm({ ...form, isPrivate: value })
-                  }
-                />
+              <div className="grid grid-cols-2 gap-4 items-center">
+                {/* Private Guild */}
+                <div className="flex items-center justify-between">
+                  <Label className="text-zinc-700 dark:text-zinc-300">
+                    Private Guild?
+                  </Label>
+                  <Switch
+                    checked={form.isPrivate}
+                    onCheckedChange={(value) =>
+                      setForm({ ...form, isPrivate: value })
+                    }
+                  />
+                </div>
+
+                {/* Game Select */}
+                <div className="flex flex-col gap-1">
+                  <Label className="text-zinc-700 dark:text-zinc-300">
+                    Select Game
+                  </Label>
+                  <Select
+                    onValueChange={(selectedGame) => {
+                      // Remove any previous game tags (from your games list)
+                      const filteredTags = form.tags.filter(
+                        (tag) => !games.includes(tag)
+                      );
+                      // Add only the newly selected game
+                      setForm({
+                        ...form,
+                        tags: [...filteredTags, selectedGame],
+                      });
+                    }}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Choose a game..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {games.map((game) => (
+                        <SelectItem key={game} value={game}>
+                          {game}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
             <div className="space-y-4">
