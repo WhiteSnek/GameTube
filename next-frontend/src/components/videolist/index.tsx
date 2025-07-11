@@ -9,7 +9,7 @@ import Image from "next/image";
 import { MoreVertical, Clock, BookmarkMinus, Ghost, Heart } from "lucide-react"; 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu"; 
 
-const VideoList: React.FC<{ videos: VideoType[]; listname: string; deleteFromList: (videoId: string | undefined) => void }> = ({ videos, listname, deleteFromList }) => {
+const VideoList: React.FC<{ videos: VideoType[]; listname?: string; deleteFromList?: (videoId: string | undefined) => void }> = ({ videos, listname, deleteFromList }) => {
 
   if (!videos || videos.length === 0) {
     const iconMap: Record<string, JSX.Element> = {
