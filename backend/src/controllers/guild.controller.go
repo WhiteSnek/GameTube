@@ -10,8 +10,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/WhiteSnek/Gametube/prisma/db"
-	"github.com/WhiteSnek/Gametube/src/dtos"
+	"github.com/WhiteSnek/GameTube/prisma/db"
+	"github.com/WhiteSnek/GameTube/src/dtos"
 	"github.com/gin-gonic/gin"
 )
 
@@ -327,7 +327,7 @@ func GetJoinedGuilds(client *db.PrismaClient, c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "guilds fetched successfully", "data": joinedGuilds})
 }
 
-func GetGuildMembers(client *db.PrismaClient, c *gin.Context){
+func GetGuildMembers(client *db.PrismaClient, c *gin.Context) {
 	guildId := c.Param("guildId")
 	if guildId == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Guild id is required!"})
@@ -340,13 +340,13 @@ func GetGuildMembers(client *db.PrismaClient, c *gin.Context){
 	}
 
 	var response []dtos.GuildMembersResponse
-	for _, member := range guildMembers{
+	for _, member := range guildMembers {
 		avatar := member.User().Avatar
 		res := dtos.GuildMembersResponse{
-			UserID: member.UserID,
-			UserName: member.User().Fullname,
+			UserID:     member.UserID,
+			UserName:   member.User().Fullname,
 			UserAvatar: avatar,
-			Role: string(member.Role),
+			Role:       string(member.Role),
 		}
 		response = append(response, res)
 	}
@@ -354,7 +354,7 @@ func GetGuildMembers(client *db.PrismaClient, c *gin.Context){
 	c.JSON(http.StatusOK, gin.H{"message": "Guild members not found!", "data": response})
 }
 
-func PromoteMember(client *db.PrismaClient, c *gin.Context){
+func PromoteMember(client *db.PrismaClient, c *gin.Context) {
 	guildId := c.Param("guildId")
 	memberId := c.Param("memberId")
 	if memberId == "" {
@@ -375,7 +375,7 @@ func PromoteMember(client *db.PrismaClient, c *gin.Context){
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error parsing user id"})
 		return
 	}
-	
+
 	userRole, err := client.GuildMember.FindFirst(db.GuildMember.GuildID.Equals(guildId), db.GuildMember.UserID.Equals(userIdStr)).Exec(context.Background())
 
 	if err != nil {
@@ -398,7 +398,7 @@ func PromoteMember(client *db.PrismaClient, c *gin.Context){
 		c.JSON(http.StatusNotAcceptable, gin.H{"error": "Can't promote further"})
 		return
 	}
-	var newRole db.Role;
+	var newRole db.Role
 	if role == db.RoleMember {
 		newRole = db.RoleElder
 	} else if role == db.RoleElder {
@@ -414,7 +414,7 @@ func PromoteMember(client *db.PrismaClient, c *gin.Context){
 	c.JSON(http.StatusOK, gin.H{"message": "User promoted successfully!"})
 }
 
-func DemoteMember(client *db.PrismaClient, c *gin.Context){
+func DemoteMember(client *db.PrismaClient, c *gin.Context) {
 	guildId := c.Param("guildId")
 	memberId := c.Param("memberId")
 	if memberId == "" {
@@ -435,7 +435,7 @@ func DemoteMember(client *db.PrismaClient, c *gin.Context){
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error parsing user id"})
 		return
 	}
-	
+
 	userRole, err := client.GuildMember.FindFirst(db.GuildMember.GuildID.Equals(guildId), db.GuildMember.UserID.Equals(userIdStr)).Exec(context.Background())
 
 	if err != nil {
@@ -458,7 +458,7 @@ func DemoteMember(client *db.PrismaClient, c *gin.Context){
 		c.JSON(http.StatusNotAcceptable, gin.H{"error": "Can't promote further"})
 		return
 	}
-	var newRole db.Role;
+	var newRole db.Role
 	if role == db.RoleElder {
 		newRole = db.RoleMember
 	} else if role == db.RoleCoLeader {
@@ -474,7 +474,7 @@ func DemoteMember(client *db.PrismaClient, c *gin.Context){
 	c.JSON(http.StatusOK, gin.H{"message": "User demoted successfully!"})
 }
 
-func KickUser(client *db.PrismaClient, c *gin.Context){
+func KickUser(client *db.PrismaClient, c *gin.Context) {
 	guildId := c.Param("guildId")
 	memberId := c.Param("memberId")
 	if memberId == "" {
@@ -495,7 +495,7 @@ func KickUser(client *db.PrismaClient, c *gin.Context){
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error parsing user id"})
 		return
 	}
-	
+
 	userRole, err := client.GuildMember.FindFirst(db.GuildMember.GuildID.Equals(guildId), db.GuildMember.UserID.Equals(userIdStr)).Exec(context.Background())
 
 	if err != nil {
@@ -540,7 +540,7 @@ func GetAllGuilds(client *db.PrismaClient, c *gin.Context) {
 	limitStr := c.DefaultQuery("limit", "20")
 	skipStr := c.DefaultQuery("skip", "0")
 	search := c.Query("search")
-	filter := c.Query("filter") 
+	filter := c.Query("filter")
 	tagFilter := c.QueryArray("tags")
 
 	limit, err := strconv.Atoi(limitStr)
@@ -560,7 +560,7 @@ func GetAllGuilds(client *db.PrismaClient, c *gin.Context) {
 		args   []interface{}
 		argIdx = 1
 	)
-	
+
 	if search != "" {
 		query = `
 			SELECT DISTINCT g.id, g.name, g.description, g.avatar, similarity(g.name, $1) AS sim_score
@@ -570,7 +570,7 @@ func GetAllGuilds(client *db.PrismaClient, c *gin.Context) {
 		`
 		args = append(args, search)
 		argIdx++
-	
+
 		query += ` ORDER BY sim_score DESC`
 	} else {
 		query = `
@@ -580,7 +580,6 @@ func GetAllGuilds(client *db.PrismaClient, c *gin.Context) {
 			WHERE g."isPrivate" = false
 		`
 	}
-	
 
 	if len(tagFilter) > 0 {
 		tagPlaceholders := []string{}
@@ -641,5 +640,3 @@ func GetAllGuilds(client *db.PrismaClient, c *gin.Context) {
 		"data":    response,
 	})
 }
-
-

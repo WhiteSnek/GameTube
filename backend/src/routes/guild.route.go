@@ -1,13 +1,13 @@
 package routes
 
 import (
-	"github.com/WhiteSnek/Gametube/prisma/db"
-	"github.com/WhiteSnek/Gametube/src/controllers"
-	"github.com/WhiteSnek/Gametube/src/middlewares"
+	"github.com/WhiteSnek/GameTube/prisma/db"
+	"github.com/WhiteSnek/GameTube/src/controllers"
+	"github.com/WhiteSnek/GameTube/src/middlewares"
 	"github.com/gin-gonic/gin"
 )
 
-func GuildRoutes(r *gin.Engine, client *db.PrismaClient){
+func GuildRoutes(r *gin.Engine, client *db.PrismaClient) {
 
 	guildGroup := r.Group("/guild")
 
@@ -26,7 +26,7 @@ func GuildRoutes(r *gin.Engine, client *db.PrismaClient){
 	guildGroup.GET("/leave/:guildId", middlewares.VerifyToken(), func(ctx *gin.Context) {
 		controllers.LeaveGuild(client, ctx)
 	})
-	
+
 	guildGroup.GET("/all", middlewares.VerifyToken(), func(ctx *gin.Context) {
 		controllers.GetAllGuilds(client, ctx)
 	})
@@ -39,7 +39,7 @@ func GuildRoutes(r *gin.Engine, client *db.PrismaClient){
 		controllers.JoinGuild(client, ctx)
 	})
 
-	guildGroup.PATCH("/leave/:guildId",middlewares.VerifyToken(), func(ctx *gin.Context) {
+	guildGroup.PATCH("/leave/:guildId", middlewares.VerifyToken(), func(ctx *gin.Context) {
 		controllers.LeaveGuild(client, ctx)
 	})
 

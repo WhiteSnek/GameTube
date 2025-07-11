@@ -4,15 +4,15 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/WhiteSnek/Gametube/prisma/db"
-	"github.com/WhiteSnek/Gametube/src/dtos"
+	"github.com/WhiteSnek/GameTube/prisma/db"
+	"github.com/WhiteSnek/GameTube/src/dtos"
 	"github.com/gin-gonic/gin"
 )
 
-func GetUser(client *db.PrismaClient, c *gin.Context){
+func GetUser(client *db.PrismaClient, c *gin.Context) {
 	userId, exists := c.Get("userId")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error":"Invalid user id"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid user id"})
 	}
 
 	id, ok := userId.(string)
@@ -29,10 +29,10 @@ func GetUser(client *db.PrismaClient, c *gin.Context){
 	c.JSON(http.StatusOK, gin.H{"message": "User found!", "data": user})
 }
 
-func GetHistory(client *db.PrismaClient, c *gin.Context){
+func GetHistory(client *db.PrismaClient, c *gin.Context) {
 	userId, exists := c.Get("userId")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error":"Invalid user id"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid user id"})
 	}
 
 	id, ok := userId.(string)
@@ -41,7 +41,7 @@ func GetHistory(client *db.PrismaClient, c *gin.Context){
 		return
 	}
 
-	history, err := client.History.FindMany(db.History.UserID.Equals(id)).With(db.History.Video.Fetch().With(db.Videos.Guild.Fetch(), db.Videos.Owner.Fetch())).OrderBy(db.History.ViewedAt.Order(db.SortOrderDesc)).Exec(context.Background());
+	history, err := client.History.FindMany(db.History.UserID.Equals(id)).With(db.History.Video.Fetch().With(db.Videos.Guild.Fetch(), db.Videos.Owner.Fetch())).OrderBy(db.History.ViewedAt.Order(db.SortOrderDesc)).Exec(context.Background())
 	var response []dtos.MultiVideos
 	if err != nil {
 		c.JSON(http.StatusNoContent, gin.H{"message": "User has no history", "data": response})
@@ -55,7 +55,7 @@ func GetHistory(client *db.PrismaClient, c *gin.Context){
 		viewedDate := hist.ViewedAt.Format("02-01-2006")
 
 		entry := dtos.MultiVideos{
-			EntityId: hist.ID,
+			EntityId:  hist.ID,
 			Id:        video.ID,
 			Title:     video.Title,
 			Thumbnail: video.Thumbnail,
@@ -81,7 +81,7 @@ func GetHistory(client *db.PrismaClient, c *gin.Context){
 	})
 }
 
-func GetWatchLater(client *db.PrismaClient, c *gin.Context){
+func GetWatchLater(client *db.PrismaClient, c *gin.Context) {
 	userId, exists := c.Get("userId")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized request"})
@@ -95,9 +95,9 @@ func GetWatchLater(client *db.PrismaClient, c *gin.Context){
 
 	ctx := context.Background()
 
-	watchlater, err := client.WatchLater.FindMany(db.WatchLater.UserID.Equals(userIdStr)).With(db.WatchLater.Video.Fetch().With(db.Videos.Guild.Fetch(),db.Videos.Owner.Fetch())).Exec(ctx)
+	watchlater, err := client.WatchLater.FindMany(db.WatchLater.UserID.Equals(userIdStr)).With(db.WatchLater.Video.Fetch().With(db.Videos.Guild.Fetch(), db.Videos.Owner.Fetch())).Exec(ctx)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Entry not found!"});
+		c.JSON(http.StatusNotFound, gin.H{"error": "Entry not found!"})
 		return
 	}
 	var response []dtos.MultiVideos
@@ -113,7 +113,7 @@ func GetWatchLater(client *db.PrismaClient, c *gin.Context){
 			Thumbnail: video.Thumbnail,
 			VideoUrl:  video.VideoURL,
 			Duration:  int64(video.Duration),
-			Views:       video.Views,
+			Views:     video.Views,
 			CreatedAt: video.CreatedAt.String(),
 		}
 
@@ -127,13 +127,13 @@ func GetWatchLater(client *db.PrismaClient, c *gin.Context){
 
 		response = append(response, res)
 	}
-	c.JSON(http.StatusOK, gin.H{"message": "Video removed from watch later successfully!","data":response})
+	c.JSON(http.StatusOK, gin.H{"message": "Video removed from watch later successfully!", "data": response})
 }
 
-func ClearHistory(client *db.PrismaClient, c *gin.Context){
+func ClearHistory(client *db.PrismaClient, c *gin.Context) {
 	userId, exists := c.Get("userId")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error":"Invalid user id"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid user id"})
 	}
 
 	id, ok := userId.(string)
@@ -141,7 +141,7 @@ func ClearHistory(client *db.PrismaClient, c *gin.Context){
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid userId format"})
 		return
 	}
-	_,err := client.History.FindMany(db.History.UserID.Equals(id)).Delete().Exec(context.Background())
+	_, err := client.History.FindMany(db.History.UserID.Equals(id)).Delete().Exec(context.Background())
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error clearing history!"})

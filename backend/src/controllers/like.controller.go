@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/WhiteSnek/Gametube/prisma/db"
+	"github.com/WhiteSnek/GameTube/prisma/db"
 	"github.com/gin-gonic/gin"
 )
 
@@ -108,7 +108,6 @@ func AddLike(client *db.PrismaClient, c *gin.Context) {
 
 	c.JSON(http.StatusCreated, gin.H{"message": "Like added successfully"})
 }
-
 
 func RemoveLike(client *db.PrismaClient, c *gin.Context) {
 	userId, exists := c.Get("userId")

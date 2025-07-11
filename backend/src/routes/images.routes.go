@@ -1,12 +1,12 @@
 package routes
 
 import (
-	"github.com/WhiteSnek/Gametube/prisma/db"
-	"github.com/WhiteSnek/Gametube/src/controllers"
+	"github.com/WhiteSnek/GameTube/prisma/db"
+	"github.com/WhiteSnek/GameTube/src/controllers"
 	"github.com/gin-gonic/gin"
 )
 
-func ImageRoutes(r *gin.Engine, client *db.PrismaClient){
+func ImageRoutes(r *gin.Engine, client *db.PrismaClient) {
 
 	imageGroup := r.Group("/image")
 
@@ -36,7 +36,7 @@ func ImageRoutes(r *gin.Engine, client *db.PrismaClient){
 	imageGroup.POST("/video/images", func(ctx *gin.Context) {
 		controllers.GetVideoFiles(client, ctx)
 	})
-	
+
 	imageGroup.POST("/users", func(ctx *gin.Context) {
 		controllers.GetUserAvatars(client, ctx)
 	})

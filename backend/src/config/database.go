@@ -3,7 +3,7 @@ package config
 import (
 	"log"
 
-	"github.com/WhiteSnek/Gametube/prisma/db"
+	"github.com/WhiteSnek/GameTube/prisma/db"
 )
 
 func ConnectDB()(*db.PrismaClient, error) {

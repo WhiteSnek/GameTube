@@ -10,8 +10,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/WhiteSnek/Gametube/prisma/db"
-	"github.com/WhiteSnek/Gametube/src/config"
+	"github.com/WhiteSnek/GameTube/prisma/db"
+	"github.com/WhiteSnek/GameTube/src/config"
 	"github.com/gin-gonic/gin"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -37,7 +37,7 @@ func GetUploadUrl(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate presigned URLs"})
 		return
-	} 
+	}
 	c.JSON(http.StatusOK, gin.H{
 		"avatarUrl": presignedReq.URL,
 	})
@@ -99,7 +99,6 @@ func GetGuildUploadUrl(c *gin.Context) {
 	})
 }
 
-
 func GetUserImages(client *db.PrismaClient, c *gin.Context) {
 	userId := c.Param("userId")
 	if userId == "" {
@@ -114,7 +113,7 @@ func GetUserImages(client *db.PrismaClient, c *gin.Context) {
 	}
 
 	avatarKey := user.Avatar
-	cloudfrontURL := os.Getenv("CLOUDFRONT_URL") 
+	cloudfrontURL := os.Getenv("CLOUDFRONT_URL")
 	var avatarUrl string
 
 	if strings.Contains(avatarKey, "googleusercontent") {
@@ -130,7 +129,6 @@ func GetUserImages(client *db.PrismaClient, c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, response)
 }
-
 
 func GetGuildImages(client *db.PrismaClient, c *gin.Context) {
 	guildId := c.Param("guildId")
@@ -153,7 +151,7 @@ func GetGuildImages(client *db.PrismaClient, c *gin.Context) {
 		return
 	}
 
-	cloudfrontURL := os.Getenv("CLOUDFRONT_URL") 
+	cloudfrontURL := os.Getenv("CLOUDFRONT_URL")
 
 	var avatarUrl, coverUrl string
 
@@ -170,7 +168,6 @@ func GetGuildImages(client *db.PrismaClient, c *gin.Context) {
 		"coverUrl":  coverUrl,
 	})
 }
-
 
 func GetGuildAvatars(client *db.PrismaClient, c *gin.Context) {
 	var request struct {
@@ -341,7 +338,6 @@ func GetVideoFiles(client *db.PrismaClient, c *gin.Context) {
 	})
 }
 
-
 func GetUserAvatars(client *db.PrismaClient, c *gin.Context) {
 	var request struct {
 		AvatarKeys []string `json:"avatarKeys"`
@@ -356,7 +352,7 @@ func GetUserAvatars(client *db.PrismaClient, c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "avatarKeys are required"})
 		return
 	}
-	cloudfrontURL := os.Getenv("CLOUDFRONT_URL") 
+	cloudfrontURL := os.Getenv("CLOUDFRONT_URL")
 
 	var avatarUrls []string
 
@@ -376,8 +372,7 @@ func GetUserAvatars(client *db.PrismaClient, c *gin.Context) {
 	})
 }
 
-
-func CheckVideoAvailability(c *gin.Context){
+func CheckVideoAvailability(c *gin.Context) {
 	key := c.Query("key")
 	bucketName := os.Getenv("AWS_TRANSCODED_VIDEO_BUCKET")
 	params := &s3.HeadObjectInput{

@@ -1,13 +1,13 @@
 package routes
 
 import (
-	"github.com/WhiteSnek/Gametube/prisma/db"
-	"github.com/WhiteSnek/Gametube/src/controllers"
-	"github.com/WhiteSnek/Gametube/src/middlewares"
+	"github.com/WhiteSnek/GameTube/prisma/db"
+	"github.com/WhiteSnek/GameTube/src/controllers"
+	"github.com/WhiteSnek/GameTube/src/middlewares"
 	"github.com/gin-gonic/gin"
 )
 
-func VideoRoutes(r *gin.Engine, client *db.PrismaClient){
+func VideoRoutes(r *gin.Engine, client *db.PrismaClient) {
 
 	videoGroup := r.Group("/video")
 

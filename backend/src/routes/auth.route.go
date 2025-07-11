@@ -1,12 +1,12 @@
 package routes
 
 import (
-	"github.com/WhiteSnek/Gametube/prisma/db"
-	"github.com/WhiteSnek/Gametube/src/controllers"
+	"github.com/WhiteSnek/GameTube/prisma/db"
+	"github.com/WhiteSnek/GameTube/src/controllers"
 	"github.com/gin-gonic/gin"
 )
 
-func AuthRoutes(r *gin.Engine, client *db.PrismaClient){
+func AuthRoutes(r *gin.Engine, client *db.PrismaClient) {
 
 	authGroup := r.Group("/auth")
 

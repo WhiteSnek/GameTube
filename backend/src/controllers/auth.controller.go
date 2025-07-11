@@ -5,14 +5,13 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/WhiteSnek/Gametube/prisma/db"
-	"github.com/WhiteSnek/Gametube/src/dtos"
-	"github.com/WhiteSnek/Gametube/src/utils"
+	"github.com/WhiteSnek/GameTube/prisma/db"
+	"github.com/WhiteSnek/GameTube/src/dtos"
+	"github.com/WhiteSnek/GameTube/src/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/markbates/goth/gothic"
 	"golang.org/x/crypto/bcrypt"
 )
-
 
 func GoogleAuth(c *gin.Context) {
 	q := c.Request.URL.Query()
@@ -34,11 +33,11 @@ func SignupWithGoogle(client *db.PrismaClient, c *gin.Context) {
 	}
 	// Check if the user already exists
 	checkUser, err := client.User.FindFirst(db.User.Email.Equals(user.Email)).Exec(context.Background())
-	
+
 	// If user doesn't exist, create a new one
 	if err != nil {
 		if err.Error() == "ErrNotFound" {
-			var fullname string;
+			var fullname string
 			if user.Name == "" {
 				fullname = utils.GenerateRandomName()
 			} else {
@@ -50,7 +49,7 @@ func SignupWithGoogle(client *db.PrismaClient, c *gin.Context) {
 				db.User.Password.Set(user.UserID),
 				db.User.Avatar.Set(user.AvatarURL),
 			).Exec(context.Background())
-	
+
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Error registering user"})
 				return
@@ -58,7 +57,7 @@ func SignupWithGoogle(client *db.PrismaClient, c *gin.Context) {
 			checkUser = newUser
 		} else {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error checking user entry"})
-				return
+			return
 		}
 	}
 
@@ -76,15 +75,14 @@ func SignupWithGoogle(client *db.PrismaClient, c *gin.Context) {
 
 }
 
-
-func SignUp(client *db.PrismaClient,c *gin.Context) {
+func SignUp(client *db.PrismaClient, c *gin.Context) {
 	var input dtos.SignUpDTO
-	
+
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Please provide all the required fields"})
 		return
 	}
-	
+
 	checkExistingEntry, err := client.User.FindFirst(db.User.Email.Equals(input.Email)).Exec(context.Background())
 
 	if err == nil && checkExistingEntry != nil {
@@ -103,7 +101,6 @@ func SignUp(client *db.PrismaClient,c *gin.Context) {
 		db.User.Password.Set(string(hashedPassword)),
 		db.User.Avatar.Set(input.Avatar),
 		db.User.Dob.Set(*input.Dob),
-		
 	).Exec(context.Background())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error registering user"})
@@ -114,22 +111,20 @@ func SignUp(client *db.PrismaClient,c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error generating tokens!"})
 	}
 
+	c.SetCookie("access_token", tokens.AccessToken, 48*60*60, "/", "localhost", false, true)
+	c.SetCookie("refresh_token", tokens.RefreshToken, 48*60*60, "/", "localhost", false, true)
 
-	c.SetCookie("access_token",tokens.AccessToken, 48*60*60, "/", "localhost", false, true)
-	c.SetCookie("refresh_token",tokens.RefreshToken, 48*60*60, "/", "localhost", false, true)
-	
 	response := dtos.UserResponse{
-		ID:    newUser.ID,
-		Email: newUser.Email,
-		Fullame:  newUser.Fullname,
+		ID:        newUser.ID,
+		Email:     newUser.Email,
+		Fullame:   newUser.Fullname,
 		CreatedAt: newUser.CreatedAt.String(),
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "user logged in successfully", "data": response})
 }
 
-
-func LoginUser(client *db.PrismaClient,c *gin.Context) {
+func LoginUser(client *db.PrismaClient, c *gin.Context) {
 	var input dtos.LoginDTO
 
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -145,7 +140,7 @@ func LoginUser(client *db.PrismaClient,c *gin.Context) {
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(checkEntry.Password), []byte(input.Password)); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error":"Password is incorrect"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Password is incorrect"})
 	}
 
 	tokens, err := utils.GenerateTokens(checkEntry.ID)
@@ -153,14 +148,13 @@ func LoginUser(client *db.PrismaClient,c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error generating tokens!"})
 	}
 
-
-	c.SetCookie("access_token",tokens.AccessToken, 48*60*60, "/", "localhost", false, true)
-	c.SetCookie("refresh_token",tokens.RefreshToken, 48*60*60, "/", "localhost", false, true)
+	c.SetCookie("access_token", tokens.AccessToken, 48*60*60, "/", "localhost", false, true)
+	c.SetCookie("refresh_token", tokens.RefreshToken, 48*60*60, "/", "localhost", false, true)
 	log.Println("access_token while login", tokens.AccessToken)
 	response := dtos.UserResponse{
-		ID:    checkEntry.ID,
-		Email: checkEntry.Email,
-		Fullame:  checkEntry.Fullname,
+		ID:        checkEntry.ID,
+		Email:     checkEntry.Email,
+		Fullame:   checkEntry.Fullname,
 		CreatedAt: checkEntry.CreatedAt.String(),
 	}
 

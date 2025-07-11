@@ -1,13 +1,13 @@
 package routes
 
 import (
-	"github.com/WhiteSnek/Gametube/prisma/db"
-	"github.com/WhiteSnek/Gametube/src/controllers"
-	"github.com/WhiteSnek/Gametube/src/middlewares"
+	"github.com/WhiteSnek/GameTube/prisma/db"
+	"github.com/WhiteSnek/GameTube/src/controllers"
+	"github.com/WhiteSnek/GameTube/src/middlewares"
 	"github.com/gin-gonic/gin"
 )
 
-func LikeRoutes(r *gin.Engine, client *db.PrismaClient){
+func LikeRoutes(r *gin.Engine, client *db.PrismaClient) {
 
 	likeGroup := r.Group("/like")
 
@@ -18,7 +18,7 @@ func LikeRoutes(r *gin.Engine, client *db.PrismaClient){
 	likeGroup.DELETE("/:entityType/:entityId", middlewares.VerifyToken(), func(ctx *gin.Context) {
 		controllers.RemoveLike(client, ctx)
 	})
-	
+
 	likeGroup.GET("/:entityType/:entityId", middlewares.VerifyToken(), func(ctx *gin.Context) {
 		controllers.GetLike(client, ctx)
 	})
