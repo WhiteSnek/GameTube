@@ -9,9 +9,9 @@ import (
 	"net/http"
 	"time"
 
-	"backend/src/contextkeys"
-	"backend/src/models"
-	"backend/src/utils"
+	"github.com/WhiteSnek/GameTube/src/contextkeys"
+	"github.com/WhiteSnek/GameTube/src/models"
+	"github.com/WhiteSnek/GameTube/src/utils"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"

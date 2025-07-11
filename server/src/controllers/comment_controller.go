@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"backend/src/models"
+	"github.com/WhiteSnek/GameTube/src/models"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"

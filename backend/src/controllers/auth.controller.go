@@ -5,9 +5,10 @@ import (
 	"log"
 	"net/http"
 
-	"backend/prisma/db"
-	"backend/src/dtos"
-	"backend/src/utils"
+	"github.com/WhiteSnek/GameTube/prisma/db"
+
+	"github.com/WhiteSnek/GameTube/src/dtos"
+	"github.com/WhiteSnek/GameTube/src/utils"
 
 	"github.com/gin-gonic/gin"
 	"github.com/markbates/goth/gothic"

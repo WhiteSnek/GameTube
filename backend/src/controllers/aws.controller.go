@@ -10,8 +10,9 @@ import (
 	"sync"
 	"time"
 
-	"backend/prisma/db"
-	"backend/src/config"
+	"github.com/WhiteSnek/GameTube/prisma/db"
+
+	"github.com/WhiteSnek/GameTube/src/config"
 
 	"github.com/gin-gonic/gin"
 

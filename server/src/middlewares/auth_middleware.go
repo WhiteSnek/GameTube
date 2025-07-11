@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"backend/src/contextkeys"
-	"backend/src/models"
-	"backend/src/utils"
+	"github.com/WhiteSnek/GameTube/src/contextkeys"
+	"github.com/WhiteSnek/GameTube/src/models"
+	"github.com/WhiteSnek/GameTube/src/utils"
 
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"

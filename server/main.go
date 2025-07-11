@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"os"
 
-	// "backend/src/config"
-	"backend/src/db"
-	"backend/src/router"
+	// "github.com/WhiteSnek/GameTube/src/config"
+	"github.com/WhiteSnek/GameTube/src/db"
+	"github.com/WhiteSnek/GameTube/src/router"
 
 	// "github.com/joho/godotenv"
 	"github.com/rs/cors"
