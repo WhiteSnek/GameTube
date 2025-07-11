@@ -6,8 +6,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/WhiteSnek/GameTube/backend/prisma/db"
-	"github.com/WhiteSnek/GameTube/backend/src/dtos"
+	"backend/prisma/db"
+	"backend/src/dtos"
+
 	"github.com/gin-gonic/gin"
 )
 

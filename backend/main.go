@@ -5,8 +5,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/WhiteSnek/GameTube/backend/src/config"
-	"github.com/WhiteSnek/GameTube/backend/src/routes"
+	"backend/src/config"
+	"backend/src/routes"
+
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"

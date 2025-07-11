@@ -7,7 +7,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/WhiteSnek/GameTube/backend/prisma/db"
+	"backend/prisma/db"
+
 	"github.com/gin-gonic/gin"
 )
 

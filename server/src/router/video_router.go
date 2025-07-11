@@ -3,8 +3,9 @@ package router
 import (
 	"database/sql"
 
-	"github.com/WhiteSnek/GameTube/backend/src/controllers"
-	"github.com/WhiteSnek/GameTube/backend/src/middlewares"
+	"backend/src/controllers"
+	"backend/src/middlewares"
+
 	"github.com/gorilla/mux"
 )
 

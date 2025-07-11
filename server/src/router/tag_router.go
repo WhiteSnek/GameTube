@@ -3,7 +3,8 @@ package router
 import (
 	"database/sql"
 
-	"github.com/WhiteSnek/GameTube/backend/src/controllers"
+	"backend/src/controllers"
+
 	"github.com/gorilla/mux"
 )
 

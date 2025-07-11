@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/WhiteSnek/GameTube/backend/src/models"
+	"backend/src/models"
 )
 
 // AddLike handles the addition of a like to the database
