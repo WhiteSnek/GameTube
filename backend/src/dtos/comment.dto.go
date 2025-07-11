@@ -1,6 +1,6 @@
 package dtos
 
-import "github.com/WhiteSnek/GameTube/prisma/db"
+import "github.com/WhiteSnek/GameTube/backend/prisma/db"
 
 type CommentType struct {
 	Id          string  `json:"id" binding:"required"`

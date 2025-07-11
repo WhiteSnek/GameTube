@@ -2,8 +2,9 @@ package router
 
 import (
 	"database/sql"
+
+	"github.com/WhiteSnek/GameTube/backend/src/controllers"
 	"github.com/gorilla/mux"
-	"github.com/WhiteSnek/GameTube/src/controllers"
 )
 
 func TagsRouter(db *sql.DB) *mux.Router {

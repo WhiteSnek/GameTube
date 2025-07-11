@@ -3,15 +3,15 @@ package controllers
 import (
 	"database/sql"
 	"encoding/json"
+
 	// "fmt"
 	"log"
 	"net/http"
 	"time"
 
-	"github.com/WhiteSnek/GameTube/src/config"
-	"github.com/WhiteSnek/GameTube/src/contextkeys"
-	"github.com/WhiteSnek/GameTube/src/models"
-	"github.com/WhiteSnek/GameTube/src/utils"
+	"github.com/WhiteSnek/GameTube/backend/src/contextkeys"
+	"github.com/WhiteSnek/GameTube/backend/src/models"
+	"github.com/WhiteSnek/GameTube/backend/src/utils"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 )
@@ -162,8 +162,8 @@ func LoginUser(db *sql.DB) http.HandlerFunc {
 			Value:    accessToken,
 			Path:     "/",
 			HttpOnly: true,
-			Secure:   true,                          // Set to true if using HTTPS
-			Expires:  time.Now().Add(time.Hour * 24 * 7), 
+			Secure:   true, // Set to true if using HTTPS
+			Expires:  time.Now().Add(time.Hour * 24 * 7),
 		})
 
 		http.SetCookie(w, &http.Cookie{
@@ -180,7 +180,7 @@ func LoginUser(db *sql.DB) http.HandlerFunc {
 			"id":          user.ID,
 			"username":    user.Username,
 			"fullname":    user.FullName,
-			"email": user.Email,
+			"email":       user.Email,
 			"avatar":      user.Avatar,
 			"cover_image": user.CoverImage,
 			"dob":         user.Dob,
@@ -297,7 +297,7 @@ func GetLoggedInUser(db *sql.DB) http.HandlerFunc {
 		// Query the database for the user's full details using the ID from the context
 		query := `SELECT id, username, email, password, fullname, avatar, cover_image, dob, gender, google_id, guild, created_at, updated_at FROM users WHERE id = $1`
 		row := db.QueryRow(query, user.ID)
-		
+
 		// Scan the user details into a user struct
 		var fullUser models.User
 		err := row.Scan(&fullUser.ID, &fullUser.Username, &fullUser.Email, &fullUser.Password, &fullUser.FullName, &fullUser.Avatar, &fullUser.CoverImage, &fullUser.Dob, &fullUser.Gender, &fullUser.GoogleID, &fullUser.Guild, &fullUser.CreatedAt, &fullUser.UpdatedAt)

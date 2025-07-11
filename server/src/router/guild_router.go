@@ -2,9 +2,10 @@ package router
 
 import (
 	"database/sql"
+
+	"github.com/WhiteSnek/GameTube/backend/src/controllers"
+	"github.com/WhiteSnek/GameTube/backend/src/middlewares"
 	"github.com/gorilla/mux"
-	"github.com/WhiteSnek/GameTube/src/controllers"
-	"github.com/WhiteSnek/GameTube/src/middlewares"
 )
 
 func GuildsRouter(db *sql.DB) *mux.Router {
@@ -22,6 +23,6 @@ func GuildsRouter(db *sql.DB) *mux.Router {
 
 	// Define protected routes related to guilds
 	protected.HandleFunc("/create-guild/{id:[a-fA-F0-9-]+}", controllers.CreateGuild(db)).Methods("POST")
-	
+
 	return r
 }

@@ -3,15 +3,16 @@ package controllers
 import (
 	"database/sql"
 	"encoding/json"
-	"github.com/WhiteSnek/GameTube/src/models"
-	"github.com/WhiteSnek/GameTube/src/utils"
-	"github.com/google/uuid"
-	"github.com/gorilla/mux"
-	"github.com/lib/pq"
 	"log"
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/WhiteSnek/GameTube/backend/src/models"
+	"github.com/WhiteSnek/GameTube/backend/src/utils"
+	"github.com/google/uuid"
+	"github.com/gorilla/mux"
+	"github.com/lib/pq"
 )
 
 type VideoWithOwnerAndGuild struct {
@@ -21,10 +22,10 @@ type VideoWithOwnerAndGuild struct {
 	Thumbnail   string    `json:"thumbnail"`
 	Urls        struct {
 		Original string `json:"original"`
-		Video360 string `json:"video360"`  // Use JSON tags to match the desired output
+		Video360 string `json:"video360"` // Use JSON tags to match the desired output
 		Video480 string `json:"video480"`
 		Video720 string `json:"video720"`
-	} `json:"urls"`  // Add the outer `urls` key
+	} `json:"urls"` // Add the outer `urls` key
 	Owner struct {
 		Id       uuid.UUID `json:"id"`
 		Username string    `json:"username"`
@@ -38,34 +39,32 @@ type VideoWithOwnerAndGuild struct {
 	Views     int       `json:"views"`
 	Likes     int       `json:"likes"`
 	Duration  string    `json:"duration"`
-	Tags      []string  `json:"tags"`  // Ensure tags are part of the JSON response
+	Tags      []string  `json:"tags"` // Ensure tags are part of the JSON response
 	CreatedAt time.Time `json:"created_at"`
 }
-
 
 type AllVideos struct {
 	Id          uuid.UUID `json:"id"`
 	Title       string    `json:"title"`
 	Url         string    `json:"video"`
-	Description string 	  `json:"description"`
+	Description string    `json:"description"`
 	Thumbnail   string    `json:"thumbnail"`
 	Owner       struct {
-		Username string    `json:"username"`
-		Avatar   string    `json:"avatar"`
+		Username string `json:"username"`
+		Avatar   string `json:"avatar"`
 	} `json:"owner"`
 	Guild struct {
-		Name   string    `json:"name"`
-		Avatar string    `json:"avatar"`
+		Name   string `json:"name"`
+		Avatar string `json:"avatar"`
 	} `json:"guild"`
 	Views     int       `json:"views"`
 	Duration  string    `json:"duration"`
 	CreatedAt time.Time `json:"created_at"`
 }
 
-
 type HistoryVideo struct {
-    ViewedAt    time.Time    `json:"viewed_at"`
-    VideoDetails AllVideos `json:"video_details"`
+	ViewedAt     time.Time `json:"viewed_at"`
+	VideoDetails AllVideos `json:"video_details"`
 }
 
 func UploadVideo(db *sql.DB) http.HandlerFunc {
@@ -192,7 +191,6 @@ func UploadVideo(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-
 func GetVideoDetails(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Get the video ID from the URL parameters
@@ -279,7 +277,6 @@ func GetVideoDetails(db *sql.DB) http.HandlerFunc {
 		json.NewEncoder(w).Encode(video)
 	}
 }
-
 
 func GetUserVideos(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -538,14 +535,13 @@ func IncreaseViews(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-
-func AddToHistory(db* sql.DB) http.HandlerFunc {
+func AddToHistory(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		type History struct {
 			VideoId string `json:"videoId"`
-			UserId string `json:"userId"`
+			UserId  string `json:"userId"`
 		}
-		var history History;
+		var history History
 		err := json.NewDecoder(r.Body).Decode(&history)
 		if err != nil {
 			http.Error(w, "Invalid Input", http.StatusBadRequest)
@@ -565,14 +561,14 @@ func AddToHistory(db* sql.DB) http.HandlerFunc {
 }
 
 func GetHistory(db *sql.DB) http.HandlerFunc {
-    return func(w http.ResponseWriter, r *http.Request) {
-        userId, err := uuid.Parse(mux.Vars(r)["id"])
-        if err != nil {
-            http.Error(w, "Invalid user ID: "+err.Error(), http.StatusBadRequest)
-            return
-        }
+	return func(w http.ResponseWriter, r *http.Request) {
+		userId, err := uuid.Parse(mux.Vars(r)["id"])
+		if err != nil {
+			http.Error(w, "Invalid user ID: "+err.Error(), http.StatusBadRequest)
+			return
+		}
 
-        query := `
+		query := `
             SELECT 
                 h.created_at,
                 v.id, 
@@ -599,62 +595,62 @@ func GetHistory(db *sql.DB) http.HandlerFunc {
             WHERE 
                 h.userId = $1
         `
-        rows, err := db.Query(query, userId)
-        if err != nil {
-            http.Error(w, "Failed to retrieve videos: "+err.Error(), http.StatusInternalServerError)
-            return
-        }
-        defer rows.Close()
+		rows, err := db.Query(query, userId)
+		if err != nil {
+			http.Error(w, "Failed to retrieve videos: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer rows.Close()
 
-        var historyVideos []HistoryVideo
+		var historyVideos []HistoryVideo
 
-        // Loop through the rows and scan into the video model
-        for rows.Next() {
-            var video HistoryVideo
-            err := rows.Scan(
-                &video.ViewedAt,                 // h.created_at
-                &video.VideoDetails.Id,          // v.id
-                &video.VideoDetails.Title,       // v.title
-                &video.VideoDetails.Url,         // vr.original
-                &video.VideoDetails.Thumbnail,   // v.thumbnail
-                &video.VideoDetails.Views,       // v.views
-                &video.VideoDetails.Duration,    // v.duration
-                &video.VideoDetails.CreatedAt,   // v.created_at
-                &video.VideoDetails.Owner.Username,  // u.username
-                &video.VideoDetails.Owner.Avatar,    // u.avatar
-                &video.VideoDetails.Guild.Name,      // g.guild_name
-                &video.VideoDetails.Guild.Avatar,    // g.avatar
-            )
-            if err != nil {
-                http.Error(w, "Failed to scan video details: "+err.Error(), http.StatusInternalServerError)
-                return
-            }
-            historyVideos = append(historyVideos, video)
-        }
+		// Loop through the rows and scan into the video model
+		for rows.Next() {
+			var video HistoryVideo
+			err := rows.Scan(
+				&video.ViewedAt,                    // h.created_at
+				&video.VideoDetails.Id,             // v.id
+				&video.VideoDetails.Title,          // v.title
+				&video.VideoDetails.Url,            // vr.original
+				&video.VideoDetails.Thumbnail,      // v.thumbnail
+				&video.VideoDetails.Views,          // v.views
+				&video.VideoDetails.Duration,       // v.duration
+				&video.VideoDetails.CreatedAt,      // v.created_at
+				&video.VideoDetails.Owner.Username, // u.username
+				&video.VideoDetails.Owner.Avatar,   // u.avatar
+				&video.VideoDetails.Guild.Name,     // g.guild_name
+				&video.VideoDetails.Guild.Avatar,   // g.avatar
+			)
+			if err != nil {
+				http.Error(w, "Failed to scan video details: "+err.Error(), http.StatusInternalServerError)
+				return
+			}
+			historyVideos = append(historyVideos, video)
+		}
 
-        // Check for errors from iterating over rows
-        if err = rows.Err(); err != nil {
-            http.Error(w, "Failed to retrieve videos: "+err.Error(), http.StatusInternalServerError)
-            return
-        }
+		// Check for errors from iterating over rows
+		if err = rows.Err(); err != nil {
+			http.Error(w, "Failed to retrieve videos: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
 
-        // Set the content type and encode the videos list as JSON
-        w.Header().Set("Content-Type", "application/json")
-        json.NewEncoder(w).Encode(historyVideos)
-    }
+		// Set the content type and encode the videos list as JSON
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(historyVideos)
+	}
 }
 
 func GetLikedVideos(db *sql.DB) http.HandlerFunc {
-    return func(w http.ResponseWriter, r *http.Request) {
-        // Parse user ID from URL
-        userId, err := uuid.Parse(mux.Vars(r)["id"])
-        if err != nil {
-            http.Error(w, "Invalid user ID: "+err.Error(), http.StatusBadRequest)
-            return
-        }
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Parse user ID from URL
+		userId, err := uuid.Parse(mux.Vars(r)["id"])
+		if err != nil {
+			http.Error(w, "Invalid user ID: "+err.Error(), http.StatusBadRequest)
+			return
+		}
 
-        // SQL query to get liked videos
-        query := `
+		// SQL query to get liked videos
+		query := `
             SELECT
                 v.id, 
                 v.title, 
@@ -681,40 +677,40 @@ func GetLikedVideos(db *sql.DB) http.HandlerFunc {
             WHERE 
                 l.userId = $1 AND l.entityType = $2`
 
-        // Execute query
-        rows, err := db.Query(query, userId, "video")
-        if err != nil {
-            http.Error(w, "Failed to get liked videos: "+err.Error(), http.StatusInternalServerError)
-            return
-        }
-        defer rows.Close()
+		// Execute query
+		rows, err := db.Query(query, userId, "video")
+		if err != nil {
+			http.Error(w, "Failed to get liked videos: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer rows.Close()
 
-        var videos []AllVideos
+		var videos []AllVideos
 
-        // Loop through result set
-        for rows.Next() {
-            var video AllVideos
-            // Scan the row data into the video struct
-            err := rows.Scan(&video.Id, &video.Title, &video.Url, &video.Description, 
-                &video.Thumbnail, &video.Views, &video.Duration, &video.CreatedAt, 
-                &video.Owner.Username, &video.Owner.Avatar, 
-                &video.Guild.Name, &video.Guild.Avatar)
-            if err != nil {
-                http.Error(w, "Failed to scan video details: "+err.Error(), http.StatusInternalServerError)
-                return
-            }
-            videos = append(videos, video)
-        }
+		// Loop through result set
+		for rows.Next() {
+			var video AllVideos
+			// Scan the row data into the video struct
+			err := rows.Scan(&video.Id, &video.Title, &video.Url, &video.Description,
+				&video.Thumbnail, &video.Views, &video.Duration, &video.CreatedAt,
+				&video.Owner.Username, &video.Owner.Avatar,
+				&video.Guild.Name, &video.Guild.Avatar)
+			if err != nil {
+				http.Error(w, "Failed to scan video details: "+err.Error(), http.StatusInternalServerError)
+				return
+			}
+			videos = append(videos, video)
+		}
 
-        // Check for any row iteration errors
-        if err = rows.Err(); err != nil {
-            http.Error(w, "Error iterating rows: "+err.Error(), http.StatusInternalServerError)
-            return
-        }
+		// Check for any row iteration errors
+		if err = rows.Err(); err != nil {
+			http.Error(w, "Error iterating rows: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
 
-        // Respond with JSON-encoded video data
-        w.Header().Set("Content-Type", "application/json")
-        w.WriteHeader(http.StatusOK)
-        json.NewEncoder(w).Encode(videos)
-    }
+		// Respond with JSON-encoded video data
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(videos)
+	}
 }

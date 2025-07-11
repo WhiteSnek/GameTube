@@ -1,4 +1,4 @@
-module github.com/WhiteSnek/GameTube
+module github.com/WhiteSnek/GameTube/backend
 
 go 1.23
 

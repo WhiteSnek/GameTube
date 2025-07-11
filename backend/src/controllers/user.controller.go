@@ -4,8 +4,8 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/WhiteSnek/GameTube/prisma/db"
-	"github.com/WhiteSnek/GameTube/src/dtos"
+	"github.com/WhiteSnek/GameTube/backend/prisma/db"
+	"github.com/WhiteSnek/GameTube/backend/src/dtos"
 	"github.com/gin-gonic/gin"
 )
 

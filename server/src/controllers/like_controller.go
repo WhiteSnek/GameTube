@@ -4,7 +4,8 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
-	"github.com/WhiteSnek/GameTube/src/models"
+
+	"github.com/WhiteSnek/GameTube/backend/src/models"
 )
 
 // AddLike handles the addition of a like to the database
@@ -80,8 +81,3 @@ func IsLiked(db *sql.DB) http.HandlerFunc {
 		json.NewEncoder(w).Encode(response)
 	}
 }
-
-
-
-
-

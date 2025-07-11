@@ -1,8 +1,8 @@
 package routes
 
 import (
-	"github.com/WhiteSnek/GameTube/prisma/db"
-	"github.com/WhiteSnek/GameTube/src/controllers"
+	"github.com/WhiteSnek/GameTube/backend/prisma/db"
+	"github.com/WhiteSnek/GameTube/backend/src/controllers"
 	"github.com/gin-gonic/gin"
 )
 

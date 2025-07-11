@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/WhiteSnek/GameTube/src/contextkeys"
-	"github.com/WhiteSnek/GameTube/src/models"
-	"github.com/WhiteSnek/GameTube/src/utils"
-	"github.com/golang-jwt/jwt/v4" 
+	"github.com/WhiteSnek/GameTube/backend/src/contextkeys"
+	"github.com/WhiteSnek/GameTube/backend/src/models"
+	"github.com/WhiteSnek/GameTube/backend/src/utils"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 )
 

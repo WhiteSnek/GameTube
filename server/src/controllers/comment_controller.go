@@ -5,18 +5,17 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/WhiteSnek/GameTube/src/models"
+	"github.com/WhiteSnek/GameTube/backend/src/models"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 )
-
 
 func AddComment(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var comment models.Comments
 		err := json.NewDecoder(r.Body).Decode(&comment)
 		if err != nil {
-			http.Error(w, "Invalid input" +err.Error(), http.StatusBadRequest)
+			http.Error(w, "Invalid input"+err.Error(), http.StatusBadRequest)
 			return
 		}
 
@@ -25,7 +24,7 @@ func AddComment(db *sql.DB) http.HandlerFunc {
 
 		err = db.QueryRow(query, id, comment.Content, comment.VideoId, comment.Owner).Scan(&id)
 		if err != nil {
-			http.Error(w, "Failed to add comment" +err.Error() , http.StatusInternalServerError)
+			http.Error(w, "Failed to add comment"+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -35,7 +34,6 @@ func AddComment(db *sql.DB) http.HandlerFunc {
 		json.NewEncoder(w).Encode(response)
 	}
 }
-
 
 func GetVideoComments(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -60,12 +58,12 @@ func GetVideoComments(db *sql.DB) http.HandlerFunc {
 
 		// Define a response struct with JSON tags
 		type CommentResponse struct {
-			ID       uuid.UUID `json:"id"`
-			Content  string    `json:"content"`
-			Username string    `json:"username"`
-			Avatar   string    `json:"avatar"`
-			Likes 	int 	`json:"likes"`
-			CreatedAt string `json:"created_at"`
+			ID        uuid.UUID `json:"id"`
+			Content   string    `json:"content"`
+			Username  string    `json:"username"`
+			Avatar    string    `json:"avatar"`
+			Likes     int       `json:"likes"`
+			CreatedAt string    `json:"created_at"`
 		}
 
 		var comments []CommentResponse

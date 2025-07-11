@@ -5,9 +5,9 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/WhiteSnek/GameTube/prisma/db"
-	"github.com/WhiteSnek/GameTube/src/dtos"
-	"github.com/WhiteSnek/GameTube/src/utils"
+	"github.com/WhiteSnek/GameTube/backend/prisma/db"
+	"github.com/WhiteSnek/GameTube/backend/src/dtos"
+	"github.com/WhiteSnek/GameTube/backend/src/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/markbates/goth/gothic"
 	"golang.org/x/crypto/bcrypt"

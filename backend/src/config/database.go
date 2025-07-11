@@ -3,10 +3,10 @@ package config
 import (
 	"log"
 
-	"github.com/WhiteSnek/GameTube/prisma/db"
+	"github.com/WhiteSnek/GameTube/backend/prisma/db"
 )
 
-func ConnectDB()(*db.PrismaClient, error) {
+func ConnectDB() (*db.PrismaClient, error) {
 	dbClient := db.NewClient()
 	if err := dbClient.Prisma.Connect(); err != nil {
 		return nil, err

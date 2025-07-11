@@ -2,9 +2,10 @@ package router
 
 import (
 	"database/sql"
+
+	"github.com/WhiteSnek/GameTube/backend/src/controllers"
+	"github.com/WhiteSnek/GameTube/backend/src/middlewares"
 	"github.com/gorilla/mux"
-	"github.com/WhiteSnek/GameTube/src/controllers"
-	"github.com/WhiteSnek/GameTube/src/middlewares"
 )
 
 func RepliesRouter(db *sql.DB) *mux.Router {
@@ -14,7 +15,7 @@ func RepliesRouter(db *sql.DB) *mux.Router {
 
 	protected := r.PathPrefix("/replies/protected").Subrouter()
 	authMiddleware := middlewares.AuthMiddleware(db)
-	protected.Use(authMiddleware) 
+	protected.Use(authMiddleware)
 
 	protected.HandleFunc("/addReply", controllers.AddReply(db)).Methods("POST")
 

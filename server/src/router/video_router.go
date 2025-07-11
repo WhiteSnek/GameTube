@@ -2,9 +2,10 @@ package router
 
 import (
 	"database/sql"
+
+	"github.com/WhiteSnek/GameTube/backend/src/controllers"
+	"github.com/WhiteSnek/GameTube/backend/src/middlewares"
 	"github.com/gorilla/mux"
-	"github.com/WhiteSnek/GameTube/src/controllers"
-	"github.com/WhiteSnek/GameTube/src/middlewares"
 )
 
 func VideosRouter(db *sql.DB) *mux.Router {
@@ -15,7 +16,6 @@ func VideosRouter(db *sql.DB) *mux.Router {
 	r.HandleFunc("/videos/{id:[a-fA-F0-9-]+}", controllers.GetVideoDetails(db)).Methods("GET")
 	r.HandleFunc("/videos/views/{id:[a-fA-F0-9-]+}", controllers.IncreaseViews(db)).Methods("GET")
 	r.HandleFunc("/videos", controllers.GetAllVideos(db)).Methods("GET")
-
 
 	// Create a subrouter for protected routes
 	protected := r.PathPrefix("/videos/protected").Subrouter()
