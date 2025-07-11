@@ -5,17 +5,17 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/WhiteSnek/GameTube/src/config"
+	// "github.com/WhiteSnek/GameTube/src/config"
 	"github.com/WhiteSnek/GameTube/src/db"
 	"github.com/WhiteSnek/GameTube/src/router"
-	"github.com/joho/godotenv"
+	// "github.com/joho/godotenv"
 	"github.com/rs/cors"
 )
 
 func main() {
-        if err := godotenv.Load(); err != nil {
-            log.Printf("No .env file found or error loading it: %v", err)
-        }
+        // if err := godotenv.Load(); err != nil {
+        //     log.Printf("No .env file found or error loading it: %v", err)
+        // }
     // Connect to the database
     dbConn, err := db.ConnectDB()
     if err != nil {
@@ -23,7 +23,7 @@ func main() {
     }
     defer dbConn.Close()
 
-    config.InitializeRedis()
+    // config.InitializeRedis()
 
     // Create a new router
     r := router.NewRouter(dbConn)
