@@ -268,7 +268,7 @@ func GetUserByID(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		userJSON, err := json.Marshal(user)
+		_, err = json.Marshal(user)
 		if err != nil {
 			http.Error(w, "Failed to serialize user data: "+err.Error(), http.StatusInternalServerError)
 			return
