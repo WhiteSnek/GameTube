@@ -1,0 +1,87 @@
+func AddReply(client *db.PrismaClient, c *gin.Context) {
+	userId, exists := c.Get("userId")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized request"})
+		return
+	}
+	userIdStr, ok := userId.(string)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse user id"})
+		return
+	}
+	commentId := c.Param("commentId")
+	if commentId == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "commentId is required"})
+		return
+	}
+	comment, err := client.Comments.FindFirst(db.Comments.ID.Equals(commentId)).With(db.Comments.Video.Fetch().Select(db.Videos.GuildID.Field())).Exec(context.Background())
+	if err != nil && !errors.Is(err, db.ErrNotFound) {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	reply, err := client.Replies.FindFirst(db.Replies.ID.Equals(commentId)).With(db.Replies.Comment.Fetch().With(db.Comments.Video.Fetch().Select(db.Videos.GuildID.Field()))).Exec(context.Background())
+	if err != nil && !errors.Is(err, db.ErrNotFound) {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	if comment == nil && reply == nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Comment not found!"})
+		return
+	}
+	var guildId string;
+	if comment != nil {
+		guildId = comment.Video().GuildID
+	} else {
+		commentReply, _ := reply.Comment()
+		guildId = commentReply.Video().GuildID
+	}
+	guildMember, err := client.GuildMember.FindFirst(
+		db.GuildMember.UserID.Equals(userIdStr),
+		db.GuildMember.GuildID.Equals(guildId),
+	).Select(db.GuildMember.Role.Field()).Exec(context.Background())
+	if err != nil {
+		c.JSON(http.StatusForbidden, gin.H{"error": "You should be a member to comment on this video"})
+		return
+	}
+	var input struct {
+		Content string `json:"content"`
+	}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Content is missing"})
+		return
+	}
+	userRole := guildMember.Role
+	fmt.Println("userRole:", userRole)
+	fmt.Println("userIdStr:", userIdStr)
+	createdReply, err := client.Replies.CreateOne(
+		db.Replies.Role.Set(userRole),
+		db.Replies.Content.Set(input.Content),
+		db.Replies.Owner.Link(db.User.ID.Equals(userIdStr)),
+		db.Replies.Comment.Link(db.Comments.ID.Equals(commentId)),
+		db.Replies.Reply.Link(db.Replies.ID.Equals(commentId)),
+	).Exec(context.Background())
+	reply, err = client.Replies.FindFirst(
+		db.Replies.ID.Equals(createdReply.ID),
+	).With(
+		db.Replies.Owner.Fetch().Select(db.User.Fullname.Field(), db.User.ID.Field(), db.User.Avatar.Field()),
+		db.Replies.Reply.Fetch(),
+		db.Replies.Replies.Fetch(),
+	).Exec(context.Background())
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	avatar, _ := reply.Owner().Avatar()
+	response := dtos.CommentType{
+		Id:          createdReply.ID,
+		Content:     reply.Content,
+		OwnerName:   reply.Owner().Fullname,
+		OwnerAvatar: avatar,
+		Role:        reply.Role,
+		Likes:       reply.Likes,
+		Replies:     len(reply.Replies()),
+	}
+	c.JSON(http.StatusCreated, gin.H{"message": "Reply added successfully!", "data": response})
+}

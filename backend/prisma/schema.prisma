@@ -1,0 +1,178 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "go run github.com/steebchen/prisma-client-go"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         String        @id @default(cuid())
+  fullname   String
+  email      String        @unique
+  password   String
+  dob        String?
+  avatar     String
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  isVerified Boolean       @default(false)
+  guilds     GuildMember[]
+  videos     Videos[]
+  ownedGuild Guild?        @relation("Owner")
+  comments Comments[]
+  replies Replies[] 
+  likes Likes[]
+}
+
+model Guild {
+  id          String        @id @default(cuid())
+  ownerId     String        @unique
+  name        String
+  description String?
+  avatar      String?
+  coverImage  String?
+  isPrivate   Boolean       @default(false)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  owner       User          @relation("Owner", fields: [ownerId], references: [id])
+  members     GuildMember[]
+  videos      Videos[]
+  tags        Tags[]
+}
+
+model GuildMember {
+  id       String   @id @default(cuid())
+  userId   String
+  guildId  String
+  role     ROLE     @default(MEMBER)
+  joinedAt DateTime @default(now())
+  status   STATUS   @default(APPROVED)
+  user     User     @relation(fields: [userId], references: [id])
+  guild    Guild    @relation(fields: [guildId], references: [id])
+
+  @@unique([userId, guildId])
+}
+
+enum ROLE {
+  MEMBER
+  LEADER
+  CO_LEADER
+  ELDER
+}
+
+enum STATUS {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model Videos {
+  id          String         @id @default(cuid())
+  title       String
+  description String
+  thumbnail   String
+  videoUrl    String
+  duration    Int
+  ownerId     String
+  guildId     String
+  createdAt   DateTime       @default(now())
+  owner       User           @relation(fields: [ownerId], references: [id])
+  guild       Guild          @relation(fields: [guildId], references: [id])
+  tags        TagsOnVideos[]
+  isPrivate   Boolean        @default(false)
+  likes Likes[]
+  views Int @default(0)
+  history history[]
+  watchLater WatchLater[]
+}
+
+model Tags {
+  id      String         @id @default(cuid())
+  name    String
+  guildId String
+  guild   Guild          @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  videos  TagsOnVideos[]
+
+  @@unique([name, guildId])
+}
+
+model TagsOnVideos {
+  id      String @id @default(cuid())
+  videoId String
+  tagId   String
+
+  video Videos @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  tag   Tags   @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([videoId, tagId])
+}
+model Comments {
+  id        String   @id @default(cuid())
+  ownerId   String
+  role      ROLE 
+  videoId   String
+  content   String
+  likes Likes[]
+  owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+model Replies {
+  id        String   @id @default(cuid())
+  ownerId   String
+  role      ROLE
+  commentId String?
+  replyId   String?
+  content   String
+  likes Likes[]
+  createdAt DateTime @default(now())
+  videoId  String
+  owner     User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+}
+
+
+model Likes {
+  id         String   @id @default(cuid())
+  entityType ENTITY
+  ownerId    String
+
+  videoId    String? 
+  commentId  String?
+  replyId    String?
+
+  owner   User     @relation(fields: [ownerId], references: [id], onDelete: Cascade) 
+
+  video   Videos?   @relation(fields: [videoId], references: [id])
+  comment Comments? @relation(fields: [commentId], references: [id])
+  reply   Replies?  @relation(fields: [replyId], references: [id])
+}
+
+
+enum ENTITY {
+  VIDEO
+  COMMENT
+  REPLY
+}
+
+model history {
+  id String @id @default(cuid())
+  userId String
+  videoId String
+  video Videos @relation(fields: [videoId], references: [id])
+  viewedAt DateTime @default(now())
+}
+
+model WatchLater {
+  id String @id @default(cuid())
+  userId String
+  videoId String
+  video Videos @relation(fields: [videoId], references: [id])
+  createdAt DateTime @default(now())
+}

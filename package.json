@@ -1,0 +1,27 @@
+{
+  "name": "customdishremaster",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepare": "husky install"
+  },
+  "lint-staged": {
+    "*.env*": [
+      "echo '❌ ERROR: .env files should not be committed!'",
+      "exit 1"
+    ],
+    "node_modules/*": [
+      "echo '❌ ERROR: node_modules should not be committed!'",
+      "exit 1"
+    ]
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "husky": "^8.0.0",
+    "lint-staged": "^15.4.3"
+  }
+}
