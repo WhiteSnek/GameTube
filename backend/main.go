@@ -10,17 +10,11 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
 )
 
 func main() {
 	// To print logs
 	log.SetOutput(os.Stdout)
-
-	// load env file and print error
-	if err := godotenv.Load(); err != nil {
-		log.Printf("Error loading env file")
-	}
 
 	// set gin to debug mode to print logs
 	gin.SetMode(gin.DebugMode)
@@ -39,8 +33,10 @@ func main() {
 	r := gin.Default()
 	r.Use(gin.Logger())
 
+	frontendURL := os.Getenv("FRONTEND_URL")
+
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:3000"},
+		AllowOrigins:     []string{frontendURL, "http://localhost:5173"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
 		AllowHeaders:     []string{"Content-Type", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length", "Location"},
