@@ -63,7 +63,7 @@ func main() {
 	}
 	log.Println("Server running on port", port)
 
-	if err := r.Run(port); err != nil {
+	if err := r.Run(":" + port); err != nil {
 		log.Printf("Failed to start the server: %v", err)
 	}
 }
