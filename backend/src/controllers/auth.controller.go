@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/WhiteSnek/GameTube/prisma/db"
-
+	"os"
 	"github.com/WhiteSnek/GameTube/src/dtos"
 	"github.com/WhiteSnek/GameTube/src/utils"
 
@@ -72,8 +72,8 @@ func SignupWithGoogle(client *db.PrismaClient, c *gin.Context) {
 
 	c.SetCookie("access_token", tokens.AccessToken, 48*60*60, "/", "localhost", false, true)
 	c.SetCookie("refresh_token", tokens.RefreshToken, 48*60*60, "/", "localhost", false, true)
-
-	c.Redirect(http.StatusSeeOther, "http://localhost:3000/")
+	frontendURL := os.Getenv("FRONTEND_URL")
+	c.Redirect(http.StatusSeeOther, frontendURL)
 
 }
 
