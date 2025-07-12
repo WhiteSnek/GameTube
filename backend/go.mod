@@ -2,6 +2,8 @@ module github.com/WhiteSnek/GameTube
 
 go 1.23
 
+replace github.com/WhiteSnek/GameTube/prisma/db => ./prisma/db
+
 toolchain go1.23.7
 
 require (
