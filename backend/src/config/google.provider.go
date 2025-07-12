@@ -12,9 +12,10 @@ import (
 func InitializeGoogle() {
 	googleClientId := os.Getenv("GOOGLE_CLIENT_ID")
 	googleClientSecret := os.Getenv("GOOGLE_CLIENT_SECRET")
+	backendURL := os.Getenv("BACKEND_URL")
 	store := sessions.NewCookieStore([]byte(os.Getenv("GOOGLE_HASH_KEY")))
 	gothic.Store = store
-	googleProvider := google.New(googleClientId, googleClientSecret, "http://localhost:8000/auth/google/callback")
+	googleProvider := google.New(googleClientId, googleClientSecret, backendURL + "/auth/google/callback")
 	goth.UseProviders(googleProvider)
 	
 }
