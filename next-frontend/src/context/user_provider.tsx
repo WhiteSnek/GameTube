@@ -75,7 +75,7 @@ const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
 
   const getSignedUrls = async (avatar: string) => {
     const response = await axios.get(
-      `http://localhost:8000/image/upload-url?avatar=${avatar}`
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/image/upload-url?avatar=${avatar}`
     );
     const { avatarUrl } = response.data;
     return { avatarUrl };

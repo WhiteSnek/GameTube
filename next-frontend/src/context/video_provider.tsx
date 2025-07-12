@@ -111,7 +111,7 @@ const VideoProvider: React.FC<VideoProviderProps> = ({ children }) => {
   }> => {
     const username = email.split("@")[0];
     const response = await axios.get(
-      `http://localhost:8000/image/video/upload-url?email=${username}&guild=${guild}`
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/image/video/upload-url?email=${username}&guild=${guild}`
     );
     const { videoUrl, videoKey, thumbnailUrl, thumbnailKey } = response.data;
     return { videoUrl, videoKey, thumbnailUrl, thumbnailKey };

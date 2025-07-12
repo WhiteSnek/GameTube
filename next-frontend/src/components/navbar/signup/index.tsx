@@ -39,7 +39,7 @@ const Signup: React.FC<SignupProps> = ({ setLoginOpen }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const handleGoogleLogin = () => {
-    window.location.href = "http://localhost:8000/auth/google/signup";
+    window.location.href = `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/google/signup`;
   };
 
   const handleDiscordLogin = () => {

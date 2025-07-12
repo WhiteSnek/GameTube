@@ -20,6 +20,8 @@ interface LoginProps {
   setOpen: React.Dispatch<React.SetStateAction<boolean>>
 }
 
+
+
 const Login:React.FC<LoginProps> = ({setOpen}) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -31,7 +33,7 @@ const Login:React.FC<LoginProps> = ({setOpen}) => {
   };
 
   const handleGoogleLogin = async () => {
-      window.location.href = "http://localhost:8000/auth/google/signup";
+      window.location.href = `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/google/signup`;
   };
 
   const handleDiscordLogin = () => {
