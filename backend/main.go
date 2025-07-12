@@ -22,7 +22,7 @@ func main() {
 	// Connect to database
 	db, err := config.ConnectDB()
 	if err != nil {
-		log.Println(err)
+		log.Fatalf("Failed to connect to DB: %v", err)
 	}
 
 	defer db.Prisma.Disconnect()
@@ -57,7 +57,10 @@ func main() {
 		ctx.JSON(200, gin.H{"message": "Everything is working fine! :D"})
 	})
 
-	port := ":8000"
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8000"
+	}
 	log.Println("Server running on port", port)
 
 	if err := r.Run(port); err != nil {
