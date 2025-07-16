@@ -70,8 +70,25 @@ func SignupWithGoogle(client *db.PrismaClient, c *gin.Context) {
 		return
 	}
 
-	c.SetCookie("access_token", tokens.AccessToken, 48*60*60, "/", "localhost", false, true)
-	c.SetCookie("refresh_token", tokens.RefreshToken, 48*60*60, "/", "localhost", false, true)
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     "access_token",
+		Value:    tokens.AccessToken,
+		Path:     "/",
+		MaxAge:   48 * 60 * 60,
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteNoneMode,
+	})
+
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    tokens.RefreshToken,
+		Path:     "/",
+		MaxAge:   48 * 60 * 60,
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteNoneMode,
+	})
 	frontendURL := os.Getenv("FRONTEND_URL")
 	c.Redirect(http.StatusSeeOther, frontendURL)
 
