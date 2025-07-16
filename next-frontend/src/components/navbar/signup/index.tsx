@@ -16,7 +16,6 @@ import { Eye, EyeOff } from "lucide-react";
 import { UploadCloud, ImagePlus } from "lucide-react";
 import { SignupImage } from "@/assets";
 import { FcGoogle } from "react-icons/fc";
-import { FaDiscord } from "react-icons/fa";
 import { useUser } from "@/context/user_provider";
 
 interface SignupProps {
@@ -42,10 +41,6 @@ const Signup: React.FC<SignupProps> = ({ setLoginOpen }) => {
     window.location.href = `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/google/signup`;
   };
 
-  const handleDiscordLogin = () => {
-    console.log("Signing in with Discord");
-    // Add Discord login logic here
-  };
   const handleFileChange = (
     e: React.ChangeEvent<HTMLInputElement>,
     field: "avatar" | "coverImage"
@@ -138,12 +133,6 @@ const Signup: React.FC<SignupProps> = ({ setLoginOpen }) => {
                 className="w-full flex cursor-pointer items-center justify-center gap-2 bg-white border border-gray-300 text-black hover:bg-gray-100"
               >
                 <FcGoogle size={20} /> Sign up with Google
-              </Button>
-              <Button
-                onClick={handleDiscordLogin}
-                className="w-full flex cursor-pointer items-center justify-center gap-2 bg-indigo-600 text-white hover:bg-indigo-800"
-              >
-                <FaDiscord size={20} /> Sign up with Discord
               </Button>
             </div>
             <hr className="border-t border-zinc-500 my-4" />

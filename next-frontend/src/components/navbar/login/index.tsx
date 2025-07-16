@@ -13,7 +13,6 @@ import { Eye, EyeOff, LogIn } from "lucide-react";
 import Signup from "../signup";
 import { LoginImage } from "@/assets";
 import { FcGoogle } from "react-icons/fc";
-import { FaDiscord } from "react-icons/fa";
 import { useUser } from "@/context/user_provider";
 
 interface LoginProps {
@@ -36,10 +35,6 @@ const Login:React.FC<LoginProps> = ({setOpen}) => {
       window.location.href = `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/google/signup`;
   };
 
-  const handleDiscordLogin = () => {
-    console.log("Signing in with Discord");
-    // Add Discord login logic here
-  };
 
   return (
     <DialogContent className="p-6 sm:max-w-3xl sm:min-h-[600px] bg-zinc-200 dark:bg-zinc-900">
@@ -110,12 +105,6 @@ const Login:React.FC<LoginProps> = ({setOpen}) => {
                 className="w-full flex cursor-pointer items-center justify-center gap-2 bg-white border border-gray-300 text-black hover:bg-gray-100"
               >
                 <FcGoogle size={20} /> Sign in with Google
-              </Button>
-              <Button
-                onClick={handleDiscordLogin}
-                className="w-full flex cursor-pointer items-center justify-center gap-2 bg-indigo-600 text-white hover:bg-indigo-800"
-              >
-                <FaDiscord size={20} /> Sign in with Discord
               </Button>
             </div>
 
