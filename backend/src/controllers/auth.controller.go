@@ -6,9 +6,9 @@ import (
 	"net/http"
 
 	"github.com/WhiteSnek/GameTube/prisma/db"
-	"os"
 	"github.com/WhiteSnek/GameTube/src/dtos"
 	"github.com/WhiteSnek/GameTube/src/utils"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/markbates/goth/gothic"
@@ -113,8 +113,25 @@ func SignUp(client *db.PrismaClient, c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error generating tokens!"})
 	}
 
-	c.SetCookie("access_token", tokens.AccessToken, 48*60*60, "/", "localhost", false, true)
-	c.SetCookie("refresh_token", tokens.RefreshToken, 48*60*60, "/", "localhost", false, true)
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     "access_token",
+		Value:    tokens.AccessToken,
+		Path:     "/",
+		MaxAge:   48 * 60 * 60,
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteNoneMode,
+	})
+
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    tokens.RefreshToken,
+		Path:     "/",
+		MaxAge:   48 * 60 * 60,
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteNoneMode,
+	})
 
 	response := dtos.UserResponse{
 		ID:        newUser.ID,
@@ -149,9 +166,25 @@ func LoginUser(client *db.PrismaClient, c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error generating tokens!"})
 	}
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     "access_token",
+		Value:    tokens.AccessToken,
+		Path:     "/",
+		MaxAge:   48 * 60 * 60,
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteNoneMode,
+	})
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    tokens.RefreshToken,
+		Path:     "/",
+		MaxAge:   48 * 60 * 60,
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteNoneMode,
+	})
 
-	c.SetCookie("access_token", tokens.AccessToken, 48*60*60, "/", "localhost", false, true)
-	c.SetCookie("refresh_token", tokens.RefreshToken, 48*60*60, "/", "localhost", false, true)
 	log.Println("access_token while login", tokens.AccessToken)
 	response := dtos.UserResponse{
 		ID:        checkEntry.ID,
@@ -164,8 +197,24 @@ func LoginUser(client *db.PrismaClient, c *gin.Context) {
 }
 
 func Logout(c *gin.Context) {
-	c.SetCookie("access_token", "", -1, "/", "localhost", false, true)
-	c.SetCookie("refresh_token", "", -1, "/", "localhost", false, true)
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     "access_token",
+		Value:    "",
+		Path:     "/",
+		MaxAge:   -1,
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteNoneMode,
+	})
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    "",
+		Path:     "/",
+		MaxAge:   -1,
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteNoneMode,
+	})
 
 	c.JSON(http.StatusOK, gin.H{"message": "Logged out successfully"})
 }
