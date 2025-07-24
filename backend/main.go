@@ -57,6 +57,10 @@ func main() {
 		ctx.JSON(200, gin.H{"message": "Everything is working fine! :D"})
 	})
 
+	r.GET("/health", func(ctx *gin.Context) {
+		ctx.JSON(200, gin.H{"message": "Everything is working fine! :D"})
+	})
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8000"
