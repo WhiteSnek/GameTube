@@ -34,6 +34,7 @@ jobs:
       - name: Build project
         env:
           NEXT_PUBLIC_API_BASE_URL: ${{ secrets.NEXT_PUBLIC_API_BASE_URL }}
+          NEXT_CLOUDFRONT_URL: ${{ secrets.NEXT_CLOUDFRONT_URL }}
         run: npm run build
 
       - name: Configure AWS credentials
