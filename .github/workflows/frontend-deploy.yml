@@ -6,7 +6,7 @@ on:
       - main
     paths:
       - "next-frontend/**"
-      - ".github/workflows/deploy-next-frontend.yml"
+      - ".github/workflows/frontend-deploy.yml"
 
 jobs:
   deploy:
