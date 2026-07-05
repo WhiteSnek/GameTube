@@ -1,12 +1,17 @@
 package main
 
 import (
+	"context"
 	"log"
 	"os"
 	"time"
 
 	"github.com/WhiteSnek/GameTube/src/config"
 	"github.com/WhiteSnek/GameTube/src/routes"
+
+	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-lambda-go/lambda"
+	ginadapter "github.com/awslabs/aws-lambda-go-api-proxy/gin"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/sessions"
@@ -15,72 +20,114 @@ import (
 	"github.com/joho/godotenv"
 )
 
-func main() {
-	if err := godotenv.Load(); err != nil {
-		log.Println("No .env file found, using system environment variables")
+var (
+	ginLambda *ginadapter.GinLambda
+	router    *gin.Engine
+)
+
+func init() {
+	env := os.Getenv("APP_ENV")
+
+	// Load .env only in development
+	if env != "production" {
+		if err := godotenv.Load(); err != nil {
+			log.Println("No .env file found")
+		}
+		gin.SetMode(gin.DebugMode)
+	} else {
+		gin.SetMode(gin.ReleaseMode)
 	}
 
-	// To print logs
 	log.SetOutput(os.Stdout)
 
-	// set gin to debug mode to print logs
-	gin.SetMode(gin.DebugMode)
-
-	// Connect to database
+	// Database
 	db, err := config.ConnectDB()
 	if err != nil {
 		log.Fatalf("Failed to connect to DB: %v", err)
 	}
 
-	defer db.Prisma.Disconnect()
-
-	// Initialize s3 client
+	// AWS clients
 	config.InitializeS3Client()
 	config.InitializeIDP()
 
-	r := gin.Default()
-	r.Use(gin.Logger())
+	router = gin.New()
+	router.Use(gin.Logger())
+	router.Use(gin.Recovery())
 
+	// Session
 	sessionSecret := os.Getenv("SESSION_SECRET")
 	if sessionSecret == "" {
 		log.Fatal("SESSION_SECRET is required")
 	}
+
 	store := cookie.NewStore([]byte(sessionSecret))
-	r.Use(sessions.Sessions("gametube_session", store))
+	router.Use(sessions.Sessions("gametube_session", store))
 
 	frontendURL := os.Getenv("FRONTEND_URL")
+	if env != "production" {
+		router.Use(cors.New(cors.Config{
+			AllowOrigins: []string{
+				frontendURL,
+				"http://localhost:3000",
+				"http://localhost:4000",
+				"http://localhost:5173",
+			},
+			AllowMethods: []string{
+				"GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS",
+			},
+			AllowHeaders: []string{
+				"Origin", "Content-Type", "Accept", "Authorization",
+			},
+			ExposeHeaders: []string{
+				"Content-Length", "Location",
+			},
+			AllowCredentials: true,
+			MaxAge:           12 * time.Hour,
+		}))
+	}
 
-	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{frontendURL,"http://localhost:3000", "http://localhost:4000", "http://localhost:5173"},
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
-		ExposeHeaders:    []string{"Content-Length", "Location"},
-		AllowCredentials: true,
-		MaxAge:           12 * time.Hour,
-	}))
+	// Routes
+	routes.AuthRoutes(router, db)
+	routes.ImageRoutes(router, db)
+	routes.GuildRoutes(router, db)
+	routes.UserRoutes(router, db)
+	routes.VideoRoutes(router, db)
+	routes.CommentRoutes(router, db)
+	routes.LikeRoutes(router, db)
 
-	routes.AuthRoutes(r, db)
-	routes.ImageRoutes(r, db)
-	routes.GuildRoutes(r, db)
-	routes.UserRoutes(r, db)
-	routes.VideoRoutes(r, db)
-	routes.CommentRoutes(r, db)
-	routes.LikeRoutes(r, db)
-	r.HEAD("/health", func(ctx *gin.Context) {
-		ctx.JSON(200, gin.H{"message": "Everything is working fine! :D"})
+	router.GET("/health", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"message": "Everything is working fine! :D",
+		})
 	})
 
-	r.GET("/health", func(ctx *gin.Context) {
-		ctx.JSON(200, gin.H{"message": "Everything is working fine! :D"})
+	router.HEAD("/health", func(c *gin.Context) {
+		c.Status(200)
 	})
+
+	if env == "production" {
+		ginLambda = ginadapter.New(router)
+	}
+}
+
+func Handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	return ginLambda.ProxyWithContext(ctx, req)
+}
+
+func main() {
+	if os.Getenv("APP_ENV") == "production" {
+		lambda.Start(Handler)
+		return
+	}
 
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8000"
 	}
-	log.Println("Server running on port", port)
 
-	if err := r.Run(":" + port); err != nil {
-		log.Printf("Failed to start the server: %v", err)
+	log.Printf("Server running on port %s", port)
+
+	if err := router.Run(":" + port); err != nil {
+		log.Fatalf("Failed to start server: %v", err)
 	}
 }
