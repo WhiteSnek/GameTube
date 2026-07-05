@@ -1,26 +1,25 @@
 "use client";
+
+import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+
 import Comments from "@/components/comments";
 import RecommendedVideoList from "@/components/recommended";
 import VideoSection from "@/components/video";
 import CommentProvider from "@/context/comment_provider";
 import { useVideo } from "@/context/video_provider";
 import { VideoDetailstype, VideoImages } from "@/types/video.types";
-import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
 
 export default function Video() {
   const { getVideoById, getVideoFiles } = useVideo();
-  const params = useParams();
-  const videoId = Array.isArray(params.videoId)
-    ? params.videoId[0]
-    : params.videoId; // Ensure it's a string
+
+  const searchParams = useSearchParams();
+  const videoId = searchParams.get("id");
 
   const [video, setVideo] = useState<VideoDetailstype | null>(null);
 
-  if (!videoId) return null;
-
   useEffect(() => {
-    
+    if (!videoId) return;
 
     const fetchVideo = async () => {
       try {
@@ -28,7 +27,7 @@ export default function Video() {
         if (!response) return;
 
         const videoFiles: VideoImages[] | null = await getVideoFiles([videoId]);
-        if (!videoFiles || videoFiles.length === 0) return;
+        if (!videoFiles?.length) return;
 
         setVideo({
           ...response,
@@ -42,19 +41,25 @@ export default function Video() {
     };
 
     fetchVideo();
-    
-  }, [videoId]);
+  }, [videoId, getVideoById, getVideoFiles]);
 
-  console.log("Current Video:", video);
-  if (!video) return null;
+  if (!videoId) {
+    return <div>Invalid video.</div>;
+  }
+
+  if (!video) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <div className="relative grid grid-cols-12 p-4 gap-2">
       <div className="col-span-8">
         <VideoSection video={video} />
         <CommentProvider>
-          <Comments videoId={video.id} /> 
+          <Comments videoId={video.id} />
         </CommentProvider>
       </div>
+
       <div className="col-span-4">
         <h1 className="text-2xl font-bold">Recommended Videos</h1>
         <hr className="border-t border-red-700 my-4" />

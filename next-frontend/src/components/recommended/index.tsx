@@ -49,7 +49,7 @@ const RecommendedVideoList: React.FC< {videoId: string}> = ({videoId}) => {
       {videos.map((video, index) => (
         <Link
           key={index}
-          href={`/video/${video.id}`}
+          href={`/video?videoId=${video.id}`}
           className="group flex gap-4 p-4 rounded-xl bg-white/60 dark:bg-zinc-900/50 hover:shadow-lg transition-all hover:scale-[1.01] duration-200 dark:hover:bg-zinc-800 border border-gray-200 dark:border-zinc-700 relative"
         >
           <div className="relative w-52 h-28 flex-shrink-0 rounded-lg overflow-hidden">

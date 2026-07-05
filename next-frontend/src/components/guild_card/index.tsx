@@ -22,7 +22,7 @@ const GuildCard: React.FC<GuildCardProps> = ({ guilds }) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: idx * 0.05 }}
           >
-            <Link href={`/guilds/${guild.id}`} className="block h-full">
+            <Link href={`/guilds?guildId=${guild.id}`} className="block h-full">
               <Card className="group relative overflow-hidden rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:shadow-2xl hover:-translate-y-1 transition-transform duration-300 p-0 h-[370px] flex flex-col">
                 
                 {guild.avatar && (

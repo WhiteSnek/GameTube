@@ -31,7 +31,7 @@ export const VideoHoverEffect = ({
       {items.length > 0 &&
         items.map((item, idx) => (
           <Link
-            href={`/video/${item.id}`}
+            href={`/video?videoId=${item.id}`}
             key={idx}
             className="relative group block p-2 h-full w-full"
             onMouseEnter={() => setHoveredIndex(idx)}

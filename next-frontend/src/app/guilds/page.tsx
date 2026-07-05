@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Radio, Upload } from "lucide-react";
 
 import CreateGuild from "@/components/create_guild";
@@ -17,8 +17,8 @@ export default function Guild() {
   const [videos, setVideos] = useState<VideoType[]>([]);
   const { Guild, getGuild } = useGuild();
   const { getVideos } = useVideo();
-  const params = useParams();
-  const guildId = Array.isArray(params.guildId) ? params.guildId[0] : params.guildId;
+  const searchParams = useSearchParams();
+  const guildId = searchParams.get("guildId");
   // Fetch guild details
   useEffect(() => {
     if (!guildId) return;

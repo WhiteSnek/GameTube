@@ -13,7 +13,7 @@ const SubscriptionList: React.FC<SubscriptionListProps> = ({ guilds }) => {
       <div className='flex items-center gap-4 flex-nowrap whitespace-nowrap'>
         {guilds?.map((guild) => (
           <div key={guild.id} className='flex flex-col items-center justify-center min-w-[70px] sm:min-w-[100px]' title={guild.name}>
-            <Link href={`/guilds/${guild.id}`}>
+            <Link href={`/guilds?guildId=${guild.id}`}>
               <img 
                 src={guild.avatar} 
                 alt={guild.name} 

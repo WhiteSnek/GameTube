@@ -15,7 +15,7 @@ const GuildList:React.FC<GuildListProps> = ({guilds}) => {
       {guilds.map((guild, index) => (
         <Link
           key={index}
-          href={`/guilds/${guild.id}`}
+          href={`/guilds?guildId=${guild.id}`}
           className="flex items-center justify-between gap-6 p-6 rounded-lg hover:bg-gray-300/80 dark:hover:bg-zinc-800/80 transition"
         >
           {/* Guild Avatar */}
