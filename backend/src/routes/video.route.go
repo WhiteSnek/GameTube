@@ -13,7 +13,7 @@ func VideoRoutes(r *gin.Engine, client *db.PrismaClient) {
 
 	videoGroup := r.Group("/video")
 
-	videoGroup.POST("/upload", middlewares.VerifyToken(), func(ctx *gin.Context) {
+	videoGroup.POST("/upload", middlewares.VerifyToken(client), func(ctx *gin.Context) {
 		controllers.UploadVideo(client, ctx)
 	})
 
@@ -25,11 +25,11 @@ func VideoRoutes(r *gin.Engine, client *db.PrismaClient) {
 		controllers.GetVideos(client, ctx)
 	})
 
-	videoGroup.GET("/guild/:guildId", middlewares.VerifyToken(), func(ctx *gin.Context) {
+	videoGroup.GET("/guild/:guildId", middlewares.VerifyToken(client), func(ctx *gin.Context) {
 		controllers.GetGuildVideos(client, ctx)
 	})
 
-	videoGroup.GET("/guild/joined", middlewares.VerifyToken(), func(ctx *gin.Context) {
+	videoGroup.GET("/guild/joined", middlewares.VerifyToken(client), func(ctx *gin.Context) {
 		controllers.GetJoinedGuildsVideos(client, ctx)
 	})
 
@@ -37,27 +37,27 @@ func VideoRoutes(r *gin.Engine, client *db.PrismaClient) {
 		controllers.SearchVideo(client, ctx)
 	})
 
-	videoGroup.GET("/liked", middlewares.VerifyToken(), func(ctx *gin.Context) {
+	videoGroup.GET("/liked", middlewares.VerifyToken(client), func(ctx *gin.Context) {
 		controllers.GetLikedVideos(client, ctx)
 	})
 
-	videoGroup.PATCH("/view/:videoId", middlewares.VerifyToken(), func(ctx *gin.Context) {
+	videoGroup.PATCH("/view/:videoId", middlewares.VerifyToken(client), func(ctx *gin.Context) {
 		controllers.AddView(client, ctx)
 	})
 
-	videoGroup.POST("/watchlater/:videoId", middlewares.VerifyToken(), func(ctx *gin.Context) {
+	videoGroup.POST("/watchlater/:videoId", middlewares.VerifyToken(client), func(ctx *gin.Context) {
 		controllers.AddToWatchLater(client, ctx)
 	})
 
-	videoGroup.DELETE("/watchlater/:videoId", middlewares.VerifyToken(), func(ctx *gin.Context) {
+	videoGroup.DELETE("/watchlater/:videoId", middlewares.VerifyToken(client), func(ctx *gin.Context) {
 		controllers.RemoveFromWatchLater(client, ctx)
 	})
 
-	videoGroup.GET("/watchlater/:videoId", middlewares.VerifyToken(), func(ctx *gin.Context) {
+	videoGroup.GET("/watchlater/:videoId", middlewares.VerifyToken(client), func(ctx *gin.Context) {
 		controllers.CheckVideoInWatchLater(client, ctx)
 	})
 
-	videoGroup.PATCH("/history/:entryId", middlewares.VerifyToken(), func(ctx *gin.Context) {
+	videoGroup.PATCH("/history/:entryId", middlewares.VerifyToken(client), func(ctx *gin.Context) {
 		controllers.RemoveFromHistory(client, ctx)
 	})
 }

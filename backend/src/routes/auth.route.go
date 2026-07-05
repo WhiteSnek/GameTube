@@ -2,33 +2,24 @@ package routes
 
 import (
 	"github.com/WhiteSnek/GameTube/prisma/db"
-
 	"github.com/WhiteSnek/GameTube/src/controllers"
 
 	"github.com/gin-gonic/gin"
 )
 
 func AuthRoutes(r *gin.Engine, client *db.PrismaClient) {
-
 	authGroup := r.Group("/auth")
 
-	authGroup.POST("/signup", func(ctx *gin.Context) {
-		controllers.SignUp(client, ctx)
+	authGroup.GET("/login", controllers.Login)
+	authGroup.GET("/callback", func(ctx *gin.Context) {
+		controllers.Callback(client, ctx)
 	})
+	authGroup.GET("/client", controllers.ClientCredentials)
+	authGroup.GET("/user", func(ctx *gin.Context) {
+		controllers.GetAuthUser(client, ctx)
+	})
+	authGroup.POST("/logout", controllers.Logout)
 
-	authGroup.POST("/signin", func(ctx *gin.Context) {
-		controllers.LoginUser(client, ctx)
-	})
-
-	authGroup.POST("/logout", func(ctx *gin.Context) {
-		controllers.Logout(ctx)
-	})
-
-	authGroup.GET("/google/signup", func(ctx *gin.Context) {
-		controllers.GoogleAuth(ctx)
-	})
-
-	authGroup.GET("/google/callback", func(ctx *gin.Context) {
-		controllers.SignupWithGoogle(client, ctx)
-	})
+	// Legacy route used by the frontend login/signup buttons
+	authGroup.GET("/google/signup", controllers.Login)
 }

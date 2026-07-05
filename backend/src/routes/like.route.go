@@ -13,15 +13,15 @@ func LikeRoutes(r *gin.Engine, client *db.PrismaClient) {
 
 	likeGroup := r.Group("/like")
 
-	likeGroup.PATCH("/:entityType/:entityId", middlewares.VerifyToken(), func(ctx *gin.Context) {
+	likeGroup.PATCH("/:entityType/:entityId", middlewares.VerifyToken(client), func(ctx *gin.Context) {
 		controllers.AddLike(client, ctx)
 	})
 
-	likeGroup.DELETE("/:entityType/:entityId", middlewares.VerifyToken(), func(ctx *gin.Context) {
+	likeGroup.DELETE("/:entityType/:entityId", middlewares.VerifyToken(client), func(ctx *gin.Context) {
 		controllers.RemoveLike(client, ctx)
 	})
 
-	likeGroup.GET("/:entityType/:entityId", middlewares.VerifyToken(), func(ctx *gin.Context) {
+	likeGroup.GET("/:entityType/:entityId", middlewares.VerifyToken(client), func(ctx *gin.Context) {
 		controllers.GetLike(client, ctx)
 	})
 }

@@ -3,16 +3,17 @@
 import { Sun, Moon, LogIn, Search, LogOut } from "lucide-react";
 import { DefaultAvatar } from "@/assets";
 import { useTheme } from "@/context/theme_provider";
-import { Dialog, DialogTrigger } from "@/components/ui/dialog";
-import Login from "./login";
 import { useUser } from "@/context/user_provider";
 import { useEffect, useState } from "react";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
 import { useRouter } from "next/navigation";
+import { Button } from "../ui/button";
 const Navbar: React.FC = () => {
   const { theme, setTheme } = useTheme();
   const { User, images, getUserImages, logout } = useUser();
-  const [open, setOpen] = useState<boolean>(false);
+    const handleLogin =async() => {
+      window.location.href = `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/login`;
+    };
   const [query, setQuery] = useState<string>("")
   const router = useRouter();
   useEffect(() => {
@@ -76,12 +77,9 @@ const Navbar: React.FC = () => {
             </DropdownMenuContent>
           </DropdownMenu>
         ) : (
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger className="px-5 cursor-pointer py-2 bg-red-500 text-white font-medium rounded-full hover:bg-red-600 transition-all flex items-center gap-2 shadow-md">
-              <LogIn size={20} /> Login
-            </DialogTrigger>
-            <Login setOpen={setOpen} />
-          </Dialog>
+          <Button className="flex justify-center items-center bg-red-500 cursor-pointer rounded-2xl hover:bg-red-600" onClick={handleLogin}>
+            <LogIn size={20} /> Login
+          </Button>
         )}
       </div>
     </nav>

@@ -9,10 +9,17 @@ import (
 	"github.com/WhiteSnek/GameTube/src/routes"
 
 	"github.com/gin-contrib/cors"
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 )
 
 func main() {
+	if err := godotenv.Load(); err != nil {
+		log.Println("No .env file found, using system environment variables")
+	}
+
 	// To print logs
 	log.SetOutput(os.Stdout)
 
@@ -29,22 +36,28 @@ func main() {
 
 	// Initialize s3 client
 	config.InitializeS3Client()
+	config.InitializeIDP()
 
 	r := gin.Default()
 	r.Use(gin.Logger())
 
+	sessionSecret := os.Getenv("SESSION_SECRET")
+	if sessionSecret == "" {
+		log.Fatal("SESSION_SECRET is required")
+	}
+	store := cookie.NewStore([]byte(sessionSecret))
+	r.Use(sessions.Sessions("gametube_session", store))
+
 	frontendURL := os.Getenv("FRONTEND_URL")
 
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{frontendURL, "http://localhost:3000", "http://localhost:5173"},
+		AllowOrigins:     []string{frontendURL,"http://localhost:3000", "http://localhost:4000", "http://localhost:5173"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length", "Location"},
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
 	}))
-
-	config.InitializeGoogle()
 
 	routes.AuthRoutes(r, db)
 	routes.ImageRoutes(r, db)

@@ -16,15 +16,15 @@ func CommentRoutes(r *gin.Engine, client *db.PrismaClient) {
 	commentGroup.GET("/:videoId", func(ctx *gin.Context) {
 		controllers.GetVideoComments(client, ctx)
 	})
-	commentGroup.POST("/:videoId", middlewares.VerifyToken(), func(ctx *gin.Context) {
+	commentGroup.POST("/:videoId", middlewares.VerifyToken(client), func(ctx *gin.Context) {
 		controllers.AddComment(client, ctx)
 	})
 
-	commentGroup.DELETE("/:commentId", middlewares.VerifyToken(), func(ctx *gin.Context) {
+	commentGroup.DELETE("/:commentId", middlewares.VerifyToken(client), func(ctx *gin.Context) {
 		controllers.DeleteComment(client, ctx)
 	})
 
-	commentGroup.POST("/reply/:commentId", middlewares.VerifyToken(), func(ctx *gin.Context) {
+	commentGroup.POST("/reply/:commentId", middlewares.VerifyToken(client), func(ctx *gin.Context) {
 		controllers.AddReply(client, ctx)
 	})
 
