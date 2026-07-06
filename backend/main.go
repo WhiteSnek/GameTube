@@ -110,9 +110,15 @@ func init() {
 	}
 }
 
-func Handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	log.Printf("Path=%q Resource=%q HTTPMethod=%q", req.Path, req.Resource, req.HTTPMethod)
-	return ginLambda.ProxyWithContext(ctx, req)
+func Handler(ctx context.Context, req events.APIGatewayV2HTTPRequest) (events.APIGatewayV2HTTPResponse, error) {
+	log.Printf(
+		"Method=%q RawPath=%q RouteKey=%q",
+		req.RequestContext.HTTP.Method,
+		req.RawPath,
+		req.RouteKey,
+	)
+
+	return ginLambda.ProxyWithContextV2(ctx, req)
 }
 
 func main() {
