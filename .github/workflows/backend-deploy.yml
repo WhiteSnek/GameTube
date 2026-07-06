@@ -50,18 +50,6 @@ jobs:
         run: |
           go run github.com/steebchen/prisma-client-go migrate deploy
 
-      - name: Locate Prisma Query Engine
-        run: |
-          ENGINE=$(find "$HOME" -type f -name "query-engine*" | head -n 1)
-
-          if [ -z "$ENGINE" ]; then
-            echo "No Prisma query engine found!"
-            exit 1
-          fi
-
-          echo "Found engine: $ENGINE"
-          echo "ENGINE_PATH=$ENGINE" >> $GITHUB_ENV
-
       - name: Build Lambda binary
         env:
           CGO_ENABLED: 0
@@ -83,7 +71,8 @@ jobs:
 
           mkdir -p package/prisma/binaries
 
-          cp "$ENGINE_PATH" package/prisma/binaries/query-engine
+          cp prisma/db/binaries/query-engine-linux-arm64-openssl-3.0.x \
+            package/prisma/binaries/query-engine
 
           chmod +x package/prisma/binaries/query-engine
 
@@ -113,17 +102,6 @@ jobs:
             --function-name ${{ secrets.LAMBDA_FUNCTION_NAME }} \
             --s3-bucket ${{ secrets.DEPLOYMENT_BUCKET }} \
             --s3-key lambda.zip
-            
-      - name: Wait for code deployment
-        run: |
-          aws lambda wait function-updated \
-            --function-name ${{ secrets.LAMBDA_FUNCTION_NAME }}
-
-      - name: Configure Prisma Engine Path
-        run: |
-          aws lambda update-function-configuration \
-            --function-name ${{ secrets.LAMBDA_FUNCTION_NAME }} \
-            --environment "Variables={PRISMA_QUERY_ENGINE_BINARY=/var/task/prisma/binaries/query-engine}"
 
       - name: Wait for deployment
         run: |
