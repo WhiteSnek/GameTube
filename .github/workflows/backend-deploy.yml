@@ -29,32 +29,46 @@ jobs:
       - name: Download Go dependencies
         run: go mod download
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
       - name: Install Prisma CLI
         run: npm install -g prisma
 
       - name: Generate Prisma Client
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: |
-          go run github.com/steebchen/prisma-client-go generate
+        run: go run github.com/steebchen/prisma-client-go generate
 
       - name: Apply Prisma Migrations
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: |
-          prisma migrate deploy
+        run: prisma migrate deploy
 
       - name: Build Lambda binary
         env:
           CGO_ENABLED: 0
           GOOS: linux
-          GOARCH: arm64 # Change to amd64 if your Lambda uses x86_64
+          GOARCH: arm64
         run: |
           go build -ldflags="-s -w" -o bootstrap .
 
+      - name: Prepare deployment package
+        run: |
+          mkdir package
+          cp bootstrap package/
+
+          # Include Prisma schema and migrations
+          mkdir -p package/prisma
+          cp prisma/schema.prisma package/prisma/
+          cp -r prisma/migrations package/prisma/
+
       - name: Create deployment package
         run: |
-          zip lambda.zip bootstrap
+          cd package
+          zip -r ../lambda.zip .
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
