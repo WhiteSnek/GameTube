@@ -69,7 +69,7 @@ jobs:
           cp -r prisma/migrations package/prisma/
           cp -r prisma/db package/prisma/db/
 
-          mkdir -p package/prisma/binaries
+          mkdir -p package/prisma/db/binaries
 
           cp prisma/db/binaries/query-engine-linux-arm64-openssl-3.0.x \
             package/prisma/db/binaries/query-engine
