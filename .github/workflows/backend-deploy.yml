@@ -72,9 +72,9 @@ jobs:
           mkdir -p package/prisma/binaries
 
           cp prisma/db/binaries/query-engine-linux-arm64-openssl-3.0.x \
-            package/prisma/binaries/query-engine
+            package/prisma/db/binaries/query-engine
 
-          chmod +x package/prisma/binaries/query-engine
+          chmod +x package/prisma/db/binaries/query-engine
 
       - name: Verify package
         run: |
