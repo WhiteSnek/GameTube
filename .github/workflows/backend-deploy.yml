@@ -114,12 +114,6 @@ jobs:
             --s3-bucket ${{ secrets.DEPLOYMENT_BUCKET }} \
             --s3-key lambda.zip
 
-      - name: Configure Prisma Engine Path
-        run: |
-          aws lambda update-function-configuration \
-            --function-name ${{ secrets.LAMBDA_FUNCTION_NAME }} \
-            --environment "Variables={PRISMA_QUERY_ENGINE_BINARY=/var/task/prisma/binaries/query-engine}"
-
       - name: Wait for deployment
         run: |
           aws lambda wait function-updated \
