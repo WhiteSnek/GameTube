@@ -64,6 +64,7 @@ jobs:
           mkdir -p package/prisma
           cp prisma/schema.prisma package/prisma/
           cp -r prisma/migrations package/prisma/
+          cp -r db package/prisma/db/
 
       - name: Create deployment package
         run: |

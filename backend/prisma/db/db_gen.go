@@ -81,6 +81,7 @@ const schema = `// This is your Prisma schema file,
 
 generator client {
   provider = "go run github.com/steebchen/prisma-client-go"
+  output   = "./db"
 }
 
 datasource db {
