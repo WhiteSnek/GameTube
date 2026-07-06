@@ -35,7 +35,7 @@ jobs:
           node-version: 22
 
       - name: Install Prisma CLI
-        run: npm install -g prisma
+        run: npm install -g prisma@6.3.1
 
       - name: Generate Prisma Client
         env:
