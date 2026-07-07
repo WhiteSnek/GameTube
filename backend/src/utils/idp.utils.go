@@ -224,7 +224,8 @@ func SetAccessTokenCookie(w http.ResponseWriter, token string) {
 		MaxAge:   48 * 60 * 60,
 		HttpOnly: true,
 		Secure:   false,
-		SameSite: http.SameSiteLaxMode,
+		SameSite: http.SameSiteNoneMode,
+		Domain: ".whitesnek.xyz",
 	})
 }
 
@@ -236,7 +237,8 @@ func ClearAccessTokenCookie(w http.ResponseWriter) {
 		MaxAge:   -1,
 		HttpOnly: true,
 		Secure:   false,
-		SameSite: http.SameSiteLaxMode,
+		SameSite: http.SameSiteNoneMode,
+		Domain: ".whitesnek.xyz",
 	})
 }
 
