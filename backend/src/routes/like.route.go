@@ -8,7 +8,7 @@ import (
 
 func LikeRoutes(r *gin.Engine) {
 
-	likeGroup := r.Group("/like")
+	likeGroup := r.Group("/v1/like")
 
 	likeGroup.PATCH("/:entityType/:entityId", middlewares.VerifyToken(), func(ctx *gin.Context) {
 		controllers.AddLike(ctx)

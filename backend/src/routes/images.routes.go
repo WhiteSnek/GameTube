@@ -7,7 +7,7 @@ import (
 
 func ImageRoutes(r *gin.Engine) {
 
-	imageGroup := r.Group("/image")
+	imageGroup := r.Group("/v1/image")
 
 	imageGroup.GET("/upload-url", func(ctx *gin.Context) {
 		controllers.GetUploadUrl(ctx)

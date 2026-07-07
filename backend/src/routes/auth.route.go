@@ -7,7 +7,7 @@ import (
 )
 
 func AuthRoutes(r *gin.Engine) {
-	authGroup := r.Group("/auth")
+	authGroup := r.Group("/v1/auth")
 
 	authGroup.GET("/login", controllers.Login)
 	authGroup.GET("/callback", controllers.Callback)

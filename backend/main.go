@@ -63,13 +63,6 @@ func init() {
 	store := cookie.NewStore([]byte(sessionSecret))
 	router.Use(sessions.Sessions("gametube_session", store))
 
-	router.Use(func(c *gin.Context) {
-		if strings.HasPrefix(c.Request.URL.Path, "/v1") {
-			c.Request.URL.Path = strings.TrimPrefix(c.Request.URL.Path, "/v1")
-		}
-		c.Next()
-	})
-
 	frontendURL := os.Getenv("FRONTEND_URL")
 	if env != "production" {
 		router.Use(cors.New(cors.Config{
@@ -102,13 +95,13 @@ func init() {
 	routes.CommentRoutes(router)
 	routes.LikeRoutes(router)
 
-	router.GET("/health", func(c *gin.Context) {
+	router.GET("/v1/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"message": "Everything is working fine! :D",
 		})
 	})
 
-	router.HEAD("/health", func(c *gin.Context) {
+	router.HEAD("/v1/health", func(c *gin.Context) {
 		c.Status(200)
 	})
 

@@ -8,7 +8,7 @@ import (
 
 func CommentRoutes(r *gin.Engine) {
 
-	commentGroup := r.Group("/comment")
+	commentGroup := r.Group("/v1/comment")
 
 	commentGroup.GET("/:videoId", func(ctx *gin.Context) {
 		controllers.GetVideoComments(ctx)

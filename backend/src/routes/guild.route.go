@@ -8,7 +8,7 @@ import (
 
 func GuildRoutes(r *gin.Engine) {
 
-	guildGroup := r.Group("/guild")
+	guildGroup := r.Group("/v1/guild")
 
 	guildGroup.POST("/create", middlewares.VerifyToken(), func(ctx *gin.Context) {
 		controllers.CreateGuild(ctx)
