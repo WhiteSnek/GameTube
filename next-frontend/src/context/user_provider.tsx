@@ -62,7 +62,7 @@ const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   useEffect(() => {
     const getCurrentUser = async () => {
       try {
-        const response = await api.get("/user/", { withCredentials: true });
+        const response = await api.get("/auth/user", { withCredentials: true });
         if (response.data) {
           setUser(response.data.data);
         }
