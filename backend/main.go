@@ -11,6 +11,7 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	"strings"
 	ginadapter "github.com/awslabs/aws-lambda-go-api-proxy/gin"
 
 	"github.com/gin-contrib/cors"
@@ -42,8 +43,8 @@ func init() {
 
 	// Database
 	if err := config.ConnectDB(); err != nil {
-	log.Fatal(err)
-}
+		log.Fatal(err)
+	}
 
 	// AWS clients
 	config.InitializeS3Client()
@@ -61,6 +62,13 @@ func init() {
 
 	store := cookie.NewStore([]byte(sessionSecret))
 	router.Use(sessions.Sessions("gametube_session", store))
+
+	router.Use(func(c *gin.Context) {
+		if strings.HasPrefix(c.Request.URL.Path, "/v1") {
+			c.Request.URL.Path = strings.TrimPrefix(c.Request.URL.Path, "/v1")
+		}
+		c.Next()
+	})
 
 	frontendURL := os.Getenv("FRONTEND_URL")
 	if env != "production" {
