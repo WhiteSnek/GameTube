@@ -20,11 +20,7 @@ func InitializeIDP() {
 	ClientID = os.Getenv("CLIENT_ID")
 	ClientSecret = os.Getenv("CLIENT_SECRET")
 
-	backendURL := os.Getenv("BACKEND_URL")
-	if backendURL == "" {
-		backendURL = "http://localhost:8000"
-	}
-	RedirectURI = backendURL + "/auth/callback"
+	RedirectURI = os.Getenv("REDIRECT_URI")
 
 	jwksURL := IDPURL + "/oauth/.well-known/jwks.json"
 	jwks, err := keyfunc.Get(jwksURL, keyfunc.Options{})
