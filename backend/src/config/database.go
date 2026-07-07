@@ -2,6 +2,7 @@ package config
 
 import (
 	"os"
+	"fmt"
 	"github.com/WhiteSnek/GameTube/src/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -17,9 +18,24 @@ func ConnectDB() error {
 		return err
 	}
 	DB = db
+	models := []interface{}{
+		&models.User{},
+		&models.Guild{},
+		&models.GuildMember{},
+		&models.Video{},
+		&models.Tag{},
+		&models.TagOnVideo{},
+		&models.Comment{},
+		&models.Reply{},
+		&models.Like{},
+		&models.History{},
+		&models.WatchLater{},
+	}
 
-	if err := DB.AutoMigrate(&models.Reply{}); err != nil {
-    return err
-}
+	for _, model := range models {
+		if err := DB.AutoMigrate(model); err != nil {
+			return fmt.Errorf("failed migrating %T: %w", model, err)
+		}
+	}
 	return nil
 }
