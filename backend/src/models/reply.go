@@ -18,4 +18,6 @@ type Reply struct {
 	VideoID string
 
 	Owner User `gorm:"foreignKey:OwnerID"`
+
+	Likes []Like `gorm:"foreignKey:ReplyID"`
 }
