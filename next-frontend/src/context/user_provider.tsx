@@ -65,7 +65,7 @@ const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         const response = await api.get("/auth/user", { withCredentials: true });
         console.log("Current user:", response.data);
         if (response.data) {
-          setUser(response.data.data.user);
+          setUser(response.data.user);
         }
       } catch (error) {
         console.error("Token expired or invalid:", error);
