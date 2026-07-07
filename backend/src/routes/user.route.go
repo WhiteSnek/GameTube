@@ -1,28 +1,25 @@
 package routes
 
 import (
-	"github.com/WhiteSnek/GameTube/prisma/db"
-
 	"github.com/WhiteSnek/GameTube/src/controllers"
 	"github.com/WhiteSnek/GameTube/src/middlewares"
-
 	"github.com/gin-gonic/gin"
 )
 
-func UserRoutes(r *gin.Engine, client *db.PrismaClient) {
+func UserRoutes(r *gin.Engine) {
 
 	userGroup := r.Group("/user")
 
-	userGroup.GET("/", middlewares.VerifyToken(client), func(ctx *gin.Context) {
-		controllers.GetUser(client, ctx)
+	userGroup.GET("/", middlewares.VerifyToken(), func(ctx *gin.Context) {
+		controllers.GetUser(ctx)
 	})
-	userGroup.GET("/history", middlewares.VerifyToken(client), func(ctx *gin.Context) {
-		controllers.GetHistory(client, ctx)
+	userGroup.GET("/history", middlewares.VerifyToken(), func(ctx *gin.Context) {
+		controllers.GetHistory(ctx)
 	})
-	userGroup.GET("/watchlater", middlewares.VerifyToken(client), func(ctx *gin.Context) {
-		controllers.GetWatchLater(client, ctx)
+	userGroup.GET("/watchlater", middlewares.VerifyToken(), func(ctx *gin.Context) {
+		controllers.GetWatchLater(ctx)
 	})
-	userGroup.DELETE("/history", middlewares.VerifyToken(client), func(ctx *gin.Context) {
-		controllers.ClearHistory(client, ctx)
+	userGroup.DELETE("/history", middlewares.VerifyToken(), func(ctx *gin.Context) {
+		controllers.ClearHistory(ctx)
 	})
 }

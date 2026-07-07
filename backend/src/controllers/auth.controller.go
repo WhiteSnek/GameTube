@@ -8,8 +8,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-
-	"github.com/WhiteSnek/GameTube/prisma/db"
 	"github.com/WhiteSnek/GameTube/src/config"
 	"github.com/WhiteSnek/GameTube/src/utils"
 
@@ -43,7 +41,7 @@ func Login(c *gin.Context) {
 	c.Redirect(http.StatusFound, authURL)
 }
 
-func Callback(client *db.PrismaClient, c *gin.Context) {
+func Callback(c *gin.Context) {
 	code := c.Query("code")
 	state := c.Query("state")
 	grantType := utils.GrantTypeFromQuery(c.Query("grant_type"))
@@ -89,7 +87,7 @@ func Callback(client *db.PrismaClient, c *gin.Context) {
 		log.Println("Userinfo fetch failed:", err)
 	}
 
-	user, err := utils.FindOrCreateUser(client, claims, userInfo)
+	user, err := utils.FindOrCreateUser(claims, userInfo)
 	if err != nil {
 		log.Println("User sync failed:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to sync user"})
@@ -144,7 +142,7 @@ func ClientCredentials(c *gin.Context) {
 	})
 }
 
-func GetAuthUser(client *db.PrismaClient, c *gin.Context) {
+func GetAuthUser(c *gin.Context) {
 	tokenString, err := c.Cookie("access_token")
 	if err != nil || tokenString == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
@@ -157,7 +155,7 @@ func GetAuthUser(client *db.PrismaClient, c *gin.Context) {
 		return
 	}
 
-	user, err := utils.ResolveLocalUser(client, claims)
+	user, err := utils.ResolveLocalUser(claims)
 	if err != nil || user == nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
 		return

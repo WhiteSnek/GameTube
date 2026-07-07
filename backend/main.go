@@ -41,10 +41,9 @@ func init() {
 	log.SetOutput(os.Stdout)
 
 	// Database
-	db, err := config.ConnectDB()
-	if err != nil {
-		log.Fatalf("Failed to connect to DB: %v", err)
-	}
+	if err := config.ConnectDB(); err != nil {
+	log.Fatal(err)
+}
 
 	// AWS clients
 	config.InitializeS3Client()
@@ -87,13 +86,13 @@ func init() {
 	}
 
 	// Routes
-	routes.AuthRoutes(router, db)
-	routes.ImageRoutes(router, db)
-	routes.GuildRoutes(router, db)
-	routes.UserRoutes(router, db)
-	routes.VideoRoutes(router, db)
-	routes.CommentRoutes(router, db)
-	routes.LikeRoutes(router, db)
+	routes.AuthRoutes(router)
+	routes.ImageRoutes(router)
+	routes.GuildRoutes(router)
+	routes.UserRoutes(router)
+	routes.VideoRoutes(router)
+	routes.CommentRoutes(router)
+	routes.LikeRoutes(router)
 
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{

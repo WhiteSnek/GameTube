@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -9,10 +8,10 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-
-	"github.com/WhiteSnek/GameTube/prisma/db"
 	"github.com/WhiteSnek/GameTube/src/config"
+	"github.com/WhiteSnek/GameTube/src/models"
 	"github.com/golang-jwt/jwt/v4"
+	"gorm.io/gorm"
 )
 
 type TokenResponse struct {
@@ -122,7 +121,7 @@ func FetchUserInfo(accessToken string) (map[string]interface{}, error) {
 	return raw, nil
 }
 
-func FindOrCreateUser(client *db.PrismaClient, claims jwt.MapClaims, userInfo map[string]interface{}) (*db.UserModel, error) {
+func FindOrCreateUser(claims jwt.MapClaims, userInfo map[string]interface{}) (*models.User, error) {
 	email := stringClaim(claims, "email")
 	if email == "" {
 		email = stringFromMap(userInfo, "email")
@@ -136,21 +135,28 @@ func FindOrCreateUser(client *db.PrismaClient, claims jwt.MapClaims, userInfo ma
 		return nil, errors.New("sub not found in token")
 	}
 
-	existing, err := client.User.FindFirst(db.User.Email.Equals(email)).Exec(context.Background())
-	if err == nil && existing != nil {
-		return existing, nil
+	var existing models.User
+	err := config.DB.Where("email = ?", email).First(&existing).Error
+	if err == nil {
+		return &existing, nil
 	}
 
-	first_name := stringFromMap(userInfo, "first_name")
-	if first_name == "" {
-		first_name = stringClaim(claims, "first_name")
+	if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, err
 	}
-	last_name := stringFromMap(userInfo, "last_name")
-	if last_name == "" {
-		last_name = stringClaim(claims, "last_name")
+
+	firstName := stringFromMap(userInfo, "first_name")
+	if firstName == "" {
+		firstName = stringClaim(claims, "first_name")
 	}
-	fullname := first_name + " " + last_name
-	if fullname == " " {
+
+	lastName := stringFromMap(userInfo, "last_name")
+	if lastName == "" {
+		lastName = stringClaim(claims, "last_name")
+	}
+
+	fullname := strings.TrimSpace(firstName + " " + lastName)
+	if fullname == "" {
 		fullname = GenerateRandomName()
 	}
 
@@ -159,20 +165,27 @@ func FindOrCreateUser(client *db.PrismaClient, claims jwt.MapClaims, userInfo ma
 		avatar = stringClaim(claims, "picture")
 	}
 
-	return client.User.CreateOne(
-		db.User.Fullname.Set(fullname),
-		db.User.Email.Set(email),
-		db.User.Password.Set(sub),
-		db.User.Avatar.Set(avatar),
-	).Exec(context.Background())
+	user := models.User{
+		Fullname: fullname,
+		Email:    email,
+		Password: sub,
+		Avatar:   avatar,
+	}
+
+	if err := config.DB.Create(&user).Error; err != nil {
+		return nil, err
+	}
+
+	return &user, nil
 }
 
-func ResolveLocalUser(client *db.PrismaClient, claims jwt.MapClaims) (*db.UserModel, error) {
+func ResolveLocalUser(claims jwt.MapClaims) (*models.User, error) {
 	email := stringClaim(claims, "email")
 	if email != "" {
-		user, err := client.User.FindFirst(db.User.Email.Equals(email)).Exec(context.Background())
-		if err == nil && user != nil {
-			return user, nil
+		var user models.User
+		err := config.DB.Where("email = ?", email).First(&user).Error
+		if err == nil {
+			return &user, nil
 		}
 	}
 
@@ -181,7 +194,12 @@ func ResolveLocalUser(client *db.PrismaClient, claims jwt.MapClaims) (*db.UserMo
 		return nil, errors.New("sub not found in token")
 	}
 
-	return client.User.FindFirst(db.User.Password.Equals(sub)).Exec(context.Background())
+	var user models.User
+	err := config.DB.Where("password = ?", sub).First(&user).Error
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
 }
 
 func stringClaim(claims jwt.MapClaims, key string) string {

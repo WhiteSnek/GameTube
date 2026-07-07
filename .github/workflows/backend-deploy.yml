@@ -26,88 +26,21 @@ jobs:
         with:
           go-version: "1.24"
 
-      - name: Download Go dependencies
+      - name: Download dependencies
         run: go mod download
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-
-      - name: Install Prisma CLI
-        run: npm install -g prisma@6.3.1
-
-      - name: Generate Prisma Client
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          PRISMA_CLI_BINARY_TARGETS: linux-arm64-openssl-3.0.x
-        run: |
-          go run github.com/steebchen/prisma-client-go generate
-
-      - name: Inspect generated Prisma engines
-        run: |
-          echo "===== Generated Engines ====="
-          find prisma -name "query-engine*" | while read f; do
-            echo "----- $f -----"
-            file "$f"
-            ls -lh "$f"
-          done
-
-      - name: Apply Prisma Migrations
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: |
-          go run github.com/steebchen/prisma-client-go migrate deploy
 
       - name: Build Lambda binary
         env:
-          CGO_ENABLED: 0
           GOOS: linux
           GOARCH: arm64
+          CGO_ENABLED: 0
         run: |
           go build -ldflags="-s -w" -o bootstrap .
 
-      - name: Verify bootstrap
-        run: |
-          echo "===== Bootstrap ====="
-          file bootstrap
-          ls -lh bootstrap
-
       - name: Prepare deployment package
         run: |
-          mkdir -p package
-
+          mkdir package
           cp bootstrap package/
-
-          mkdir -p package/prisma
-          cp prisma/schema.prisma package/prisma/
-          cp -r prisma/migrations package/prisma/
-          cp -r prisma/db package/prisma/db/
-
-          mkdir -p package/prisma/db/binaries
-
-          cp prisma/db/binaries/query-engine-linux-arm64-openssl-3.0.x \
-            package/prisma/db/binaries/query-engine
-
-          chmod +x package/prisma/db/binaries/query-engine
-
-      - name: Verify deployment package
-        run: |
-          echo "===== Package Contents ====="
-          find package -type f
-
-          echo
-          echo "===== Bootstrap ====="
-          file package/bootstrap
-
-          echo
-          echo "===== Packaged Prisma Engine ====="
-          file package/prisma/db/binaries/query-engine
-          ls -lh package/prisma/db/binaries/query-engine
-
-          echo
-          echo "===== All Query Engines ====="
-          find package -name "query-engine*" -exec file {} \;
 
       - name: Create deployment package
         run: |
@@ -136,9 +69,3 @@ jobs:
         run: |
           aws lambda wait function-updated \
             --function-name ${{ secrets.LAMBDA_FUNCTION_NAME }}
-
-      - name: Verify Lambda configuration
-        run: |
-          aws lambda get-function-configuration \
-            --function-name ${{ secrets.LAMBDA_FUNCTION_NAME }} \
-            --query '{Architecture:Architectures,Runtime:Runtime,Handler:Handler}'

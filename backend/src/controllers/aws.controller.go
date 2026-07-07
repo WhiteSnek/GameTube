@@ -10,10 +10,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/WhiteSnek/GameTube/prisma/db"
-
 	"github.com/WhiteSnek/GameTube/src/config"
-
+	"github.com/WhiteSnek/GameTube/src/models"
 	"github.com/gin-gonic/gin"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -101,14 +99,15 @@ func GetGuildUploadUrl(c *gin.Context) {
 	})
 }
 
-func GetUserImages(client *db.PrismaClient, c *gin.Context) {
+func GetUserImages(c *gin.Context) {
 	userId := c.Param("userId")
 	if userId == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "User Id is required"})
 		return
 	}
 
-	user, err := client.User.FindUnique(db.User.ID.Equals(userId)).Exec(context.Background())
+	var user models.User
+	err := config.DB.Where("id = ?", userId).First(&user).Error
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "User not found!"})
 		return
@@ -132,23 +131,25 @@ func GetUserImages(client *db.PrismaClient, c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-func GetGuildImages(client *db.PrismaClient, c *gin.Context) {
+func GetGuildImages(c *gin.Context) {
 	guildId := c.Param("guildId")
 	if guildId == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Guild Id is required"})
 		return
 	}
 
-	guild, err := client.Guild.FindUnique(db.Guild.ID.Equals(guildId)).Exec(context.Background())
+	var guild models.Guild
+
+	err := config.DB.Where("id = ?", guildId).First(&guild).Error
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Guild not found!"})
 		return
 	}
 
-	avatarKey, ok1 := guild.Avatar()
-	coverKey, ok2 := guild.CoverImage()
+	avatarKey := *guild.Avatar
+	coverKey := *guild.CoverImage
 
-	if !ok1 || !ok2 {
+	if avatarKey == "" || coverKey == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Guild does not have an avatar or cover image"})
 		return
 	}
@@ -171,7 +172,7 @@ func GetGuildImages(client *db.PrismaClient, c *gin.Context) {
 	})
 }
 
-func GetGuildAvatars(client *db.PrismaClient, c *gin.Context) {
+func GetGuildAvatars(c *gin.Context) {
 	var request struct {
 		GuildIDs []string `json:"guildIds"`
 	}
@@ -189,17 +190,14 @@ func GetGuildAvatars(client *db.PrismaClient, c *gin.Context) {
 	var avatarUrls []string
 	cloudfrontURL := os.Getenv("CLOUDFRONT_URL")
 	for _, guildId := range request.GuildIDs {
-		guild, err := client.Guild.FindUnique(db.Guild.ID.Equals(guildId)).Exec(context.Background())
-		if err != nil || guild == nil {
+		var guild models.Guild
+		err := config.DB.Where("id = ?", guildId).First(&guild).Error
+		if err != nil {
 			avatarUrls = append(avatarUrls, "")
 			continue
 		}
 
-		avatarKey, ok := guild.Avatar()
-		if !ok {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Guild does not have an avatar"})
-			return
-		}
+		avatarKey:= *guild.Avatar
 		if avatarKey == "" {
 			avatarUrls = append(avatarUrls, "")
 			continue
@@ -282,7 +280,7 @@ type VideoImages struct {
 	Avatar    string `json:"avatar"`
 }
 
-func GetVideoFiles(client *db.PrismaClient, c *gin.Context) {
+func GetVideoFiles(c *gin.Context) {
 	var request struct {
 		VideoIds []string `json:"videoIds"`
 	}
@@ -304,8 +302,9 @@ func GetVideoFiles(client *db.PrismaClient, c *gin.Context) {
 	var errors []string
 
 	for _, videoId := range request.VideoIds {
-		video, err := client.Videos.FindUnique(db.Videos.ID.Equals(videoId)).With(db.Videos.Guild.Fetch()).Exec(context.Background())
-		if err != nil || video == nil {
+		var video models.Video
+		err := config.DB.Where("id = ?", videoId).Preload("Guild").First(&video).Error
+		if err != nil {
 			continue
 		}
 		var videoImage VideoImages
@@ -314,8 +313,8 @@ func GetVideoFiles(client *db.PrismaClient, c *gin.Context) {
 			videoImage.Thumbnail = fmt.Sprintf("%s/%s", strings.TrimRight(cloudfrontURL, "/"), video.Thumbnail)
 		}
 
-		guild := video.Guild()
-		if avatarKey, ok := guild.Avatar(); ok {
+		guild := video.Guild
+		if avatarKey := *guild.Avatar; avatarKey != "" {
 			if strings.Contains(avatarKey, "googleusercontent") {
 				videoImage.Avatar = avatarKey
 			} else {
@@ -340,7 +339,7 @@ func GetVideoFiles(client *db.PrismaClient, c *gin.Context) {
 	})
 }
 
-func GetUserAvatars(client *db.PrismaClient, c *gin.Context) {
+func GetUserAvatars(c *gin.Context) {
 	var request struct {
 		AvatarKeys []string `json:"avatarKeys"`
 	}

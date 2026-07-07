@@ -2,14 +2,11 @@ package middlewares
 
 import (
 	"net/http"
-
-	"github.com/WhiteSnek/GameTube/prisma/db"
 	"github.com/WhiteSnek/GameTube/src/utils"
-
 	"github.com/gin-gonic/gin"
 )
 
-func VerifyToken(client *db.PrismaClient) gin.HandlerFunc {
+func VerifyToken() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tokenString, err := c.Cookie("access_token")
 		if err != nil || tokenString == "" {
@@ -25,7 +22,7 @@ func VerifyToken(client *db.PrismaClient) gin.HandlerFunc {
 			return
 		}
 
-		user, err := utils.ResolveLocalUser(client, claims)
+		user, err := utils.ResolveLocalUser(claims)
 		if err != nil || user == nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
 			c.Abort()

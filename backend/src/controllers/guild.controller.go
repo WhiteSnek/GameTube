@@ -1,23 +1,21 @@
 package controllers
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/WhiteSnek/GameTube/src/config"
+	"github.com/WhiteSnek/GameTube/src/dtos"
+	"github.com/WhiteSnek/GameTube/src/models"
+	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 	"log"
 	"net/http"
 	"strconv"
 	"strings"
-
-	"github.com/WhiteSnek/GameTube/prisma/db"
-
-	"github.com/WhiteSnek/GameTube/src/dtos"
-
-	"github.com/gin-gonic/gin"
 )
 
-func CreateGuild(client *db.PrismaClient, c *gin.Context) {
+func CreateGuild(c *gin.Context) {
 	// Get user ID from context
 	userId, exists := c.Get("userId")
 	if !exists {
@@ -32,12 +30,13 @@ func CreateGuild(client *db.PrismaClient, c *gin.Context) {
 	}
 
 	// Check if user already owns a guild
-	checkEntry, err := client.Guild.FindFirst(db.Guild.OwnerID.Equals(userIdStr)).Exec(context.Background())
-	if err != nil && !errors.Is(err, db.ErrNotFound) {
+	var checkEntry models.Guild
+	err := config.DB.Where("owner_id = ?", userIdStr).First(&checkEntry).Error
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	if checkEntry != nil {
+	if checkEntry.ID != "" {
 		c.JSON(http.StatusConflict, gin.H{"error": "User already has a guild"})
 		return
 	}
@@ -50,50 +49,57 @@ func CreateGuild(client *db.PrismaClient, c *gin.Context) {
 	}
 	jsonData, _ := json.MarshalIndent(input, "", "  ")
 	log.Println(string(jsonData))
-	ctx := context.Background()
 
 	// Create guild in database
-	guild, err := client.Guild.CreateOne(
-		db.Guild.Name.Set(input.Name),
-		db.Guild.Owner.Link(db.User.ID.Equals(userIdStr)),
-		db.Guild.Description.SetOptional(input.Description),
-		db.Guild.Avatar.SetOptional(input.Avatar),
-		db.Guild.CoverImage.SetOptional(input.CoverImage),
-		db.Guild.IsPrivate.Set(input.IsPrivate),
-	).Exec(ctx)
+	guild := models.Guild{
+		Name:        input.Name,
+		Description: input.Description,
+		Avatar:      input.Avatar,
+		CoverImage:  input.CoverImage,
+		IsPrivate:   input.IsPrivate,
+		OwnerID:     userIdStr,
+	}
 
-	if err != nil {
+	if err := config.DB.Create(&guild).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create guild"})
 		return
 	}
 
 	// Add user as a leader in GuildMember
-	_, err = client.GuildMember.CreateOne(
-		db.GuildMember.User.Link(db.User.ID.Equals(userIdStr)),
-		db.GuildMember.Guild.Link(db.Guild.ID.Equals(guild.ID)),
-		db.GuildMember.Role.Set(db.RoleLeader),
-		db.GuildMember.Status.Set(db.StatusApproved),
-	).Exec(ctx)
+	guildMember := models.GuildMember{
+		UserID:  userIdStr,
+		GuildID: guild.ID,
+		Role:    models.LEADER,
+		Status:  models.APPROVED,
+	}
+	if err := config.DB.Create(&guildMember).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to assign leader role"})
+		return
+	}
 
 	for _, tagName := range input.Tags {
-		_, err := client.Tags.CreateOne(
-			db.Tags.Name.Set(tagName),
-			db.Tags.Guild.Link(db.Guild.ID.Equals(guild.ID)),
-		).Exec(ctx)
-		if err != nil {
+		tags := models.Tag{
+			Name:    tagName,
+			GuildID: guild.ID,
+		}
+		if err := config.DB.Create(&tags).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to add tags to the guild"})
 			return
 		}
 	}
 
 	if err != nil {
-		// Rollback by deleting the guild since Prisma-Go lacks transactions
-		_, err = client.Guild.FindUnique(db.Guild.ID.Equals(guild.ID)).Delete().Exec(ctx)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to rollback the guild creation"})
+		// Rollback by deleting the guild
+		if err := config.DB.Delete(&guild).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Failed to rollback the guild creation",
+			})
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to assign leader role"})
+
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to assign leader role",
+		})
 		return
 	}
 
@@ -103,7 +109,7 @@ func CreateGuild(client *db.PrismaClient, c *gin.Context) {
 	})
 }
 
-func GetGuild(client *db.PrismaClient, c *gin.Context) {
+func GetGuild(c *gin.Context) {
 	userId, exists := c.Get("userId")
 
 	if !exists {
@@ -117,25 +123,35 @@ func GetGuild(client *db.PrismaClient, c *gin.Context) {
 		return
 	}
 
-	guild, err := client.Guild.FindFirst(db.Guild.OwnerID.Equals(userIdStr)).With(db.Guild.Tags.Fetch()).Exec(context.Background())
+	var guild models.Guild
+
+	err := config.DB.
+		Preload("Tags").
+		Where("owner_id = ?", userIdStr).
+		First(&guild).Error
 
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Guild not found!"})
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Guild not found!"})
+			return
+		}
+
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
 		return
 	}
 	var response dtos.GuildDetails
 	response.ID = guild.ID
 	response.Name = guild.Name
-	description, _ := guild.Description()
+	description := *guild.Description
 	response.Description = &description
-	avatar, _ := guild.Avatar()
+	avatar:= *guild.Avatar
 	response.Avatar = &avatar
-	coverImage, _ := guild.CoverImage()
+	coverImage:= *guild.CoverImage
 	response.CoverImage = &coverImage
 	response.OwnerID = guild.OwnerID
 	response.Joined = true
 	var tags []string
-	for _, tag := range guild.Tags() {
+	for _, tag := range guild.Tags {
 		tags = append(tags, tag.Name)
 	}
 	response.Tags = tags
@@ -143,7 +159,7 @@ func GetGuild(client *db.PrismaClient, c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Guild fetched successfully", "data": response})
 }
 
-func GetGuildById(client *db.PrismaClient, c *gin.Context) {
+func GetGuildById(c *gin.Context) {
 	guildId := c.Param("guildId")
 	userId, exists := c.Get("userId")
 	if !exists {
@@ -151,8 +167,8 @@ func GetGuildById(client *db.PrismaClient, c *gin.Context) {
 		return
 	}
 	var response dtos.GuildDetails
-	guild, err := client.Guild.FindFirst(db.Guild.ID.Equals(guildId)).With(db.Guild.Tags.Fetch()).Exec(context.Background())
-
+	var guild models.Guild
+	err := config.DB.Preload("Tags").Where("id = ?", guildId).First(&guild).Error
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Guild not found!"})
 		return
@@ -160,15 +176,15 @@ func GetGuildById(client *db.PrismaClient, c *gin.Context) {
 
 	response.ID = guild.ID
 	response.Name = guild.Name
-	description, _ := guild.Description()
+	description:= *guild.Description
 	response.Description = &description
-	avatar, _ := guild.Avatar()
+	avatar:= *guild.Avatar
 	response.Avatar = &avatar
-	coverImage, _ := guild.CoverImage()
+	coverImage:= *guild.CoverImage
 	response.CoverImage = &coverImage
 	response.OwnerID = guild.OwnerID
 	var tags []string
-	for _, tag := range guild.Tags() {
+	for _, tag := range guild.Tags{
 		tags = append(tags, tag.Name)
 	}
 	response.Tags = tags
@@ -178,10 +194,10 @@ func GetGuildById(client *db.PrismaClient, c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error parsing userId"})
 		return
 	}
-	_, err = client.GuildMember.FindFirst(db.GuildMember.UserID.Equals(userIdStr),
-		db.GuildMember.GuildID.Equals(guildId)).Exec(context.Background())
+	var guildMember models.GuildMember
+	err = config.DB.Where("user_id = ? AND guild_id = ?", userIdStr, guildId).First(&guildMember).Error
 	if err != nil {
-		if errors.Is(err, db.ErrNotFound) {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			response.Joined = false
 		} else {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -193,7 +209,7 @@ func GetGuildById(client *db.PrismaClient, c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Guild fetched successfully", "data": response})
 }
 
-func JoinGuild(client *db.PrismaClient, c *gin.Context) {
+func JoinGuild(c *gin.Context) {
 	guildId := c.Param("guildId")
 	userId, exists := c.Get("userId")
 	if !exists {
@@ -205,32 +221,39 @@ func JoinGuild(client *db.PrismaClient, c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error parsing user id"})
 		return
 	}
-
-	_, err := client.Guild.FindFirst(db.Guild.ID.Equals(guildId)).Exec(context.Background())
+	var guild models.Guild
+	err := config.DB.Where("id = ?", guildId).First(&guild).Error
 
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Guild not found!"})
 	}
 
-	checkEntry, err := client.GuildMember.FindFirst(db.GuildMember.UserID.Equals(userIdStr),
-		db.GuildMember.GuildID.Equals(guildId)).Exec(context.Background())
+	var checkEntry models.GuildMember
+	err = config.DB.Where("user_id = ? AND guild_id = ?", userIdStr, guildId).First(&checkEntry).Error
 
-	if err != nil && !errors.Is(err, db.ErrNotFound) {
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	if checkEntry != nil {
+	if checkEntry.ID != "" {
 		c.JSON(http.StatusConflict, gin.H{"error": "You have already joined this guild!"})
 		return
 	}
 
-	_, err = client.GuildMember.CreateOne(
-		db.GuildMember.User.Link(db.User.ID.Equals(userIdStr)),
-		db.GuildMember.Guild.Link(db.Guild.ID.Equals(guildId)),
-		db.GuildMember.Status.Set(db.StatusApproved),
-	).Exec(context.Background())
+	guildMember := models.GuildMember{
+		UserID:  userIdStr,
+		GuildID: guildId,
+		Role:    models.MEMBER,
+		Status: models.PENDING,
+	}
 
+	err = config.DB.Create(&guildMember).Error
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to join guild!"})
+		return
+	}
+	err = config.DB.Model(&guildMember).Update("status", models.APPROVED).Error
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to join guild!"})
 		return
@@ -238,35 +261,52 @@ func JoinGuild(client *db.PrismaClient, c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Guild joined successfully"})
 }
 
-func LeaveGuild(client *db.PrismaClient, c *gin.Context) {
+func LeaveGuild(c *gin.Context) {
 	guildId := c.Param("guildId")
+
 	userId, exists := c.Get("userId")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized request"})
 		return
 	}
+
 	userIdStr, ok := userId.(string)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error parsing user id"})
 		return
 	}
 
-	_, err := client.Guild.FindFirst(db.Guild.ID.Equals(guildId)).Exec(context.Background())
-
+	// Check if guild exists
+	var guild models.Guild
+	err := config.DB.Where("id = ?", guildId).First(&guild).Error
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Guild not found!"})
-	}
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Guild not found!"})
+			return
+		}
 
-	checkEntry, err := client.GuildMember.FindFirst(db.GuildMember.UserID.Equals(userIdStr),
-		db.GuildMember.GuildID.Equals(guildId)).Exec(context.Background())
-
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "You are not a part of the guild"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	_, err = client.GuildMember.FindUnique(db.GuildMember.ID.Equals(checkEntry.ID)).Delete().Exec(context.Background())
+
+	// Check if user is a member
+	var guildMember models.GuildMember
+	err = config.DB.
+		Where("user_id = ? AND guild_id = ?", userIdStr, guildId).
+		First(&guildMember).Error
 
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "You are not a part of the guild"})
+			return
+		}
+
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Delete membership
+	if err := config.DB.Delete(&guildMember).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -274,139 +314,207 @@ func LeaveGuild(client *db.PrismaClient, c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Guild left successfully!"})
 }
 
-func SearchGuild(client *db.PrismaClient, c *gin.Context) {
+func SearchGuild(c *gin.Context) {
 	query := c.Query("q")
 	if query == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Query parameter 'q' is required"})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Query parameter 'q' is required",
+		})
 		return
 	}
-
-	// Raw SQL query using PostgreSQL's similarity() function
-	rawQuery := `
-		SELECT * FROM "Guild"
-		WHERE similarity(name, $1) > 0.3
-		AND "isPrivate" = FALSE
-		ORDER BY similarity(name, $1) DESC
-		LIMIT 10;
-	`
 
 	var results []dtos.GuildType
-	if err := client.Prisma.QueryRaw(rawQuery, query).Exec(context.Background(), &results); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch results"})
+
+	err := config.DB.Raw(`
+		SELECT *
+		FROM "guilds"
+		WHERE similarity(name, ?) > 0.3
+		  AND is_private = FALSE
+		ORDER BY similarity(name, ?) DESC
+		LIMIT 10
+	`, query, query).Scan(&results).Error
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to fetch results",
+		})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"message": "Guilds fetched successfully", "data": results})
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Guilds fetched successfully",
+		"data":    results,
+	})
 }
 
-func GetJoinedGuilds(client *db.PrismaClient, c *gin.Context) {
+func GetJoinedGuilds(c *gin.Context) {
 	userId, exists := c.Get("userId")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized request"})
 		return
 	}
+
 	userIdStr, ok := userId.(string)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error parsing user id"})
 		return
 	}
 
-	guildMembers, err := client.GuildMember.FindMany(db.GuildMember.UserID.Equals(userIdStr)).With(db.GuildMember.Guild.Fetch()).Exec(context.Background())
+	var guildMembers []models.GuildMember
+
+	err := config.DB.
+		Preload("Guild").
+		Where("user_id = ?", userIdStr).
+		Find(&guildMembers).Error
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	var joinedGuilds []dtos.JoinedGuilds
+
+	joinedGuilds := make([]dtos.JoinedGuilds, 0, len(guildMembers))
+
 	for _, member := range guildMembers {
-		var joinedGuild dtos.JoinedGuilds
-		joinedGuild.ID = member.Guild().ID
-		joinedGuild.Name = member.Guild().Name
-		avatar, _ := member.Guild().Avatar()
-		joinedGuild.Avatar = &avatar
-		joinedGuild.Role = string(member.Role)
-		joinedGuilds = append(joinedGuilds, joinedGuild)
+		joinedGuilds = append(joinedGuilds, dtos.JoinedGuilds{
+			ID:     member.Guild.ID,
+			Name:   member.Guild.Name,
+			Avatar: member.Guild.Avatar,
+			Role:   string(member.Role),
+		})
 	}
-	c.JSON(http.StatusOK, gin.H{"message": "guilds fetched successfully", "data": joinedGuilds})
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "guilds fetched successfully",
+		"data":    joinedGuilds,
+	})
 }
 
-func GetGuildMembers(client *db.PrismaClient, c *gin.Context) {
+func GetGuildMembers(c *gin.Context) {
 	guildId := c.Param("guildId")
 	if guildId == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Guild id is required!"})
 		return
 	}
-	guildMembers, err := client.GuildMember.FindMany(db.GuildMember.GuildID.Equals(guildId)).With(db.GuildMember.User.Fetch().Select(db.User.Fullname.Field(), db.User.Avatar.Field())).Exec(context.Background())
+
+	var guildMembers []models.GuildMember
+
+	err := config.DB.
+		Preload("User", func(db *gorm.DB) *gorm.DB {
+			return db.Select("id", "fullname", "avatar")
+		}).
+		Where("guild_id = ?", guildId).
+		Find(&guildMembers).Error
+
 	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if len(guildMembers) == 0 {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Guild has no members"})
 		return
 	}
 
-	var response []dtos.GuildMembersResponse
+	response := make([]dtos.GuildMembersResponse, 0, len(guildMembers))
+
 	for _, member := range guildMembers {
-		avatar := member.User().Avatar
-		res := dtos.GuildMembersResponse{
+		response = append(response, dtos.GuildMembersResponse{
 			UserID:     member.UserID,
-			UserName:   member.User().Fullname,
-			UserAvatar: avatar,
+			UserName:   member.User.Fullname,
+			UserAvatar: member.User.Avatar,
 			Role:       string(member.Role),
-		}
-		response = append(response, res)
+		})
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Guild members not found!", "data": response})
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Guild members fetched successfully",
+		"data":    response,
+	})
 }
 
-func PromoteMember(client *db.PrismaClient, c *gin.Context) {
+func PromoteMember(c *gin.Context) {
 	guildId := c.Param("guildId")
 	memberId := c.Param("memberId")
+
 	if memberId == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "memberId is required"})
 		return
 	}
+
 	if guildId == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "guildId is required"})
 		return
 	}
+
 	userId, exists := c.Get("userId")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized request"})
 		return
 	}
+
 	userIdStr, ok := userId.(string)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error parsing user id"})
 		return
 	}
 
-	userRole, err := client.GuildMember.FindFirst(db.GuildMember.GuildID.Equals(guildId), db.GuildMember.UserID.Equals(userIdStr)).Exec(context.Background())
+	// Get requester's guild role
+	var requester models.GuildMember
+	err := config.DB.
+		Where("guild_id = ? AND user_id = ?", guildId, userIdStr).
+		First(&requester).Error
 
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "You are not a part of guild!"})
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "You are not a part of guild!"})
+			return
+		}
+
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	role := userRole.Role
-	if role != db.RoleLeader && role != db.RoleCoLeader {
+
+	if requester.Role != models.LEADER && requester.Role != models.CO_LEADER {
 		c.JSON(http.StatusForbidden, gin.H{"error": "You do not have the authority to promote"})
 		return
 	}
-	member, err := client.GuildMember.FindFirst(db.GuildMember.GuildID.Equals(guildId), db.GuildMember.UserID.Equals(memberId)).Exec(context.Background())
+
+	// Get member to promote
+	var member models.GuildMember
+	err = config.DB.
+		Where("guild_id = ? AND user_id = ?", guildId, memberId).
+		First(&member).Error
 
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "The user is not a part of guild!"})
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "The user is not a part of guild!"})
+			return
+		}
+
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	role = member.Role
-	if role == db.RoleCoLeader || role == db.RoleLeader {
+
+	if member.Role == models.CO_LEADER || member.Role == models.LEADER {
 		c.JSON(http.StatusNotAcceptable, gin.H{"error": "Can't promote further"})
 		return
 	}
-	var newRole db.Role
-	if role == db.RoleMember {
-		newRole = db.RoleElder
-	} else if role == db.RoleElder {
-		newRole = db.RoleCoLeader
+
+	var newRole models.Role
+
+	switch member.Role {
+	case models.MEMBER:
+		newRole = models.ELDER
+	case models.ELDER:
+		newRole = models.CO_LEADER
+	default:
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid role"})
+		return
 	}
-	_, err = client.GuildMember.FindMany(db.GuildMember.GuildID.Equals(guildId), db.GuildMember.UserID.Equals(memberId)).Update(db.GuildMember.Role.Set(newRole)).Exec(context.Background())
+
+	err = config.DB.
+		Model(&member).
+		Update("role", newRole).Error
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -416,57 +524,89 @@ func PromoteMember(client *db.PrismaClient, c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "User promoted successfully!"})
 }
 
-func DemoteMember(client *db.PrismaClient, c *gin.Context) {
+func DemoteMember(c *gin.Context) {
 	guildId := c.Param("guildId")
 	memberId := c.Param("memberId")
+
 	if memberId == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "memberId is required"})
 		return
 	}
+
 	if guildId == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "guildId is required"})
 		return
 	}
+
 	userId, exists := c.Get("userId")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized request"})
 		return
 	}
+
 	userIdStr, ok := userId.(string)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error parsing user id"})
 		return
 	}
 
-	userRole, err := client.GuildMember.FindFirst(db.GuildMember.GuildID.Equals(guildId), db.GuildMember.UserID.Equals(userIdStr)).Exec(context.Background())
+	// Get requester's guild role
+	var requester models.GuildMember
+	err := config.DB.
+		Where("guild_id = ? AND user_id = ?", guildId, userIdStr).
+		First(&requester).Error
 
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "You are not a part of guild!"})
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "You are not a part of guild!"})
+			return
+		}
+
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	role := userRole.Role
-	if role != db.RoleLeader && role != db.RoleCoLeader {
+
+	if requester.Role != models.LEADER && requester.Role != models.CO_LEADER {
 		c.JSON(http.StatusForbidden, gin.H{"error": "You do not have the authority to demote"})
 		return
 	}
-	member, err := client.GuildMember.FindFirst(db.GuildMember.GuildID.Equals(guildId), db.GuildMember.UserID.Equals(memberId)).Exec(context.Background())
+
+	// Get member to demote
+	var member models.GuildMember
+	err = config.DB.
+		Where("guild_id = ? AND user_id = ?", guildId, memberId).
+		First(&member).Error
 
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "The user is not a part of guild!"})
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "The user is not a part of guild!"})
+			return
+		}
+
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	role = member.Role
-	if role == db.RoleMember || role == db.RoleLeader {
-		c.JSON(http.StatusNotAcceptable, gin.H{"error": "Can't promote further"})
+
+	if member.Role == models.MEMBER || member.Role == models.LEADER {
+		c.JSON(http.StatusNotAcceptable, gin.H{"error": "Can't demote further"})
 		return
 	}
-	var newRole db.Role
-	if role == db.RoleElder {
-		newRole = db.RoleMember
-	} else if role == db.RoleCoLeader {
-		newRole = db.RoleElder
+
+	var newRole models.Role
+
+	switch member.Role {
+	case models.ELDER:
+		newRole = models.MEMBER
+	case models.CO_LEADER:
+		newRole = models.ELDER
+	default:
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid role"})
+		return
 	}
-	_, err = client.GuildMember.FindMany(db.GuildMember.GuildID.Equals(guildId), db.GuildMember.UserID.Equals(memberId)).Update(db.GuildMember.Role.Set(newRole)).Exec(context.Background())
+
+	err = config.DB.
+		Model(&member).
+		Update("role", newRole).Error
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -476,43 +616,72 @@ func DemoteMember(client *db.PrismaClient, c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "User demoted successfully!"})
 }
 
-func KickUser(client *db.PrismaClient, c *gin.Context) {
+func KickUser(c *gin.Context) {
 	guildId := c.Param("guildId")
 	memberId := c.Param("memberId")
+
 	if memberId == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "memberId is required"})
 		return
 	}
+
 	if guildId == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "guildId is required"})
 		return
 	}
+
 	userId, exists := c.Get("userId")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized request"})
 		return
 	}
+
 	userIdStr, ok := userId.(string)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error parsing user id"})
 		return
 	}
 
-	userRole, err := client.GuildMember.FindFirst(db.GuildMember.GuildID.Equals(guildId), db.GuildMember.UserID.Equals(userIdStr)).Exec(context.Background())
+	// Check requester's role
+	var requester models.GuildMember
+	err := config.DB.
+		Where("guild_id = ? AND user_id = ?", guildId, userIdStr).
+		First(&requester).Error
 
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "You are not a part of guild!"})
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "You are not a part of guild!"})
+			return
+		}
+
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	role := userRole.Role
-	if role != db.RoleLeader && role != db.RoleCoLeader {
+
+	if requester.Role != models.LEADER && requester.Role != models.CO_LEADER {
 		c.JSON(http.StatusForbidden, gin.H{"error": "You do not have the authority to kick"})
 		return
 	}
-	_, err = client.GuildMember.FindMany(db.GuildMember.GuildID.Equals(guildId), db.GuildMember.UserID.Equals(memberId)).Delete().Exec(context.Background())
+
+	// Find the member to kick
+	var member models.GuildMember
+	err = config.DB.
+		Where("guild_id = ? AND user_id = ?", guildId, memberId).
+		First(&member).Error
 
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "The user is not a part of guild!"})
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "The user is not a part of guild!"})
+			return
+		}
+
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Delete membership
+	if err := config.DB.Delete(&member).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -526,7 +695,7 @@ type RawGuild struct {
 	Avatar      *string `json:"avatar"`
 }
 
-func GetAllGuilds(client *db.PrismaClient, c *gin.Context) {
+func GetAllGuilds(c *gin.Context) {
 	userId, exists := c.Get("userId")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized request"})
@@ -550,6 +719,7 @@ func GetAllGuilds(client *db.PrismaClient, c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid limit"})
 		return
 	}
+
 	skip, err := strconv.Atoi(skipStr)
 	if err != nil || skip < 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid skip"})
@@ -568,12 +738,13 @@ func GetAllGuilds(client *db.PrismaClient, c *gin.Context) {
 			SELECT DISTINCT g.id, g.name, g.description, g.avatar, similarity(g.name, $1) AS sim_score
 			FROM "Guild" g
 			LEFT JOIN "Tags" t ON g.id = t."guildId"
-			WHERE g."isPrivate" = false AND similarity(g.name, $1) > 0.20
+			WHERE g."isPrivate" = false
+			  AND similarity(g.name, $1) > 0.20
 		`
+
 		args = append(args, search)
 		argIdx++
 
-		query += ` ORDER BY sim_score DESC`
 	} else {
 		query = `
 			SELECT DISTINCT g.id, g.name, g.description, g.avatar
@@ -584,13 +755,19 @@ func GetAllGuilds(client *db.PrismaClient, c *gin.Context) {
 	}
 
 	if len(tagFilter) > 0 {
-		tagPlaceholders := []string{}
+		placeholders := make([]string, 0, len(tagFilter))
+
 		for _, tag := range tagFilter {
-			tagPlaceholders = append(tagPlaceholders, fmt.Sprintf("$%d", argIdx))
+			placeholders = append(placeholders, fmt.Sprintf("$%d", argIdx))
 			args = append(args, tag)
 			argIdx++
 		}
-		query += " AND t.name IN (" + strings.Join(tagPlaceholders, ", ") + ")"
+
+		query += " AND t.name IN (" + strings.Join(placeholders, ",") + ")"
+	}
+
+	if search != "" {
+		query += " ORDER BY sim_score DESC"
 	}
 
 	query += fmt.Sprintf(" LIMIT $%d OFFSET $%d", argIdx, argIdx+1)
@@ -598,24 +775,30 @@ func GetAllGuilds(client *db.PrismaClient, c *gin.Context) {
 
 	// Execute raw SQL
 	var rawGuilds []RawGuild
-	err = client.Prisma.QueryRaw(query, args...).Exec(context.Background(), &rawGuilds)
+
+	err = config.DB.Raw(query, args...).Scan(&rawGuilds).Error
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Build response
-	var response []dtos.ExploreGuildsType
+	response := make([]dtos.ExploreGuildsType, 0, len(rawGuilds))
+
 	for _, guild := range rawGuilds {
-		guildMembers, err := client.GuildMember.FindMany(
-			db.GuildMember.GuildID.Equals(guild.ID),
-		).Select(db.GuildMember.UserID.Field()).Exec(context.Background())
+
+		var guildMembers []models.GuildMember
+
+		err := config.DB.
+			Select("user_id").
+			Where("guild_id = ?", guild.ID).
+			Find(&guildMembers).Error
 
 		if err != nil {
 			continue
 		}
 
 		joined := false
+
 		for _, member := range guildMembers {
 			if member.UserID == userIdStr {
 				joined = true
@@ -623,7 +806,8 @@ func GetAllGuilds(client *db.PrismaClient, c *gin.Context) {
 			}
 		}
 
-		if (filter == "joined" && !joined) || (filter == "not_joined" && joined) {
+		if (filter == "joined" && !joined) ||
+			(filter == "not_joined" && joined) {
 			continue
 		}
 
