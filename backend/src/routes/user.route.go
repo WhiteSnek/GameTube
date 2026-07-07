@@ -8,7 +8,7 @@ import (
 
 func UserRoutes(r *gin.Engine) {
 
-	userGroup := r.Group("/user")
+	userGroup := r.Group("/v1/user")
 
 	userGroup.GET("/", middlewares.VerifyToken(), func(ctx *gin.Context) {
 		controllers.GetUser(ctx)

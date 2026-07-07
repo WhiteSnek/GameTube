@@ -9,7 +9,7 @@ import (
 
 func VideoRoutes(r *gin.Engine) {
 
-	videoGroup := r.Group("/video")
+	videoGroup := r.Group("/v1/video")
 
 	videoGroup.POST("/upload", middlewares.VerifyToken(), func(ctx *gin.Context) {
 		controllers.UploadVideo(ctx)
