@@ -106,11 +106,11 @@ func Callback(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Login successful",
-		"userId":  user.ID,
+		"message":  "Login successful",
+		"userId":   user.ID,
 		"userInfo": userInfo,
-		"user":   user,
-		"data":    claims,
+		"user":     user,
+		"data":     claims,
 	})
 }
 
@@ -151,6 +151,13 @@ func GetAuthUser(c *gin.Context) {
 	tokenString, err := c.Cookie("access_token")
 	if err != nil || tokenString == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	_, err = utils.VerifyIDPToken(tokenString)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid Token"})
+		c.Abort()
 		return
 	}
 
