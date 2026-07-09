@@ -53,8 +53,8 @@ const CreateGuild: React.FC = () => {
 
       // Generate unique keys based on user email
       const emailPrefix = User?.email.split("@")[0];
-      const avatarKey = `guild/avatar/${emailPrefix}`;
-      const coverImageKey = `guild/coverImage/${emailPrefix}`;
+      const avatarKey = `images/guild/avatar/${emailPrefix}`;
+      const coverImageKey = `images/guild/coverImage/${emailPrefix}`;
 
       // Request Presigned URLs from backend
       const { avatarUrl, coverUrl } = await getSignedUrls(
