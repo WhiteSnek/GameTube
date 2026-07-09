@@ -154,6 +154,8 @@ func GetAuthUser(c *gin.Context) {
 		return
 	}
 
+	log.Printf("token: %s", tokenString)
+
 	_, err = utils.VerifyIDPToken(tokenString)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid Token"})

@@ -5,9 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"strings"
+
 	"github.com/WhiteSnek/GameTube/src/config"
 	"github.com/WhiteSnek/GameTube/src/models"
 	"github.com/golang-jwt/jwt/v4"
@@ -25,6 +27,9 @@ type UserInfoResponse struct {
 }
 
 func VerifyIDPToken(tokenString string) (jwt.MapClaims, error) {
+
+	log.Panicf("JWKS: %+v", config.JWKS)
+
 	token, err := jwt.Parse(tokenString, config.JWKS.Keyfunc)
 	if err != nil {
 		return nil, err
