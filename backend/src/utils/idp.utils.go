@@ -205,18 +205,18 @@ func stringFromMap(data map[string]interface{}, key string) string {
 	return ""
 }
 
-// func SetAccessTokenCookie(w http.ResponseWriter, token string) {
-// 	http.SetCookie(w, &http.Cookie{
-// 		Name:     "access_token",
-// 		Value:    token,
-// 		Path:     "/",
-// 		MaxAge:   48 * 60 * 60,
-// 		HttpOnly: true,
-// 		Secure:   true,
-// 		SameSite: http.SameSiteNoneMode,
-// 		Domain: ".whitesnek.xyz",
-// 	})
-// }
+func SetAccessTokenCookie(w http.ResponseWriter, token string) {
+	http.SetCookie(w, &http.Cookie{
+		Name:     "access_token",
+		Value:    token,
+		Path:     "/",
+		MaxAge:   48 * 60 * 60,
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteNoneMode,
+		Domain: ".whitesnek.xyz",
+	})
+}
 
 func ClearAccessTokenCookie(w http.ResponseWriter) {
 	http.SetCookie(w, &http.Cookie{

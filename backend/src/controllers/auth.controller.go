@@ -99,7 +99,7 @@ func Callback(c *gin.Context) {
 
 	log.Printf("Set token to cookie: %s", tokenResp.AccessToken)
 
-	// utils.SetAccessTokenCookie(c.Writer, tokenResp.AccessToken)
+	utils.SetAccessTokenCookie(c.Writer, tokenResp.AccessToken)
 
 	frontendURL := os.Getenv("FRONTEND_URL")
 	if frontendURL != "" {
