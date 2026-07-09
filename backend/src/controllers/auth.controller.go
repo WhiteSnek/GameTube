@@ -149,20 +149,14 @@ func GetAuthUser(c *gin.Context) {
 	}
 
 	user, err := utils.GetUserInfo(tokenString)
-	if err != nil || user == nil {
+	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
 		return
 	}
 
-	userInfo, err := utils.FetchUserInfo(tokenString)
-	if err != nil {
-		log.Println("Userinfo fetch failed:", err)
-	}
-
 	c.JSON(http.StatusOK, gin.H{
-		"userId":   user.ID,
-		"user":     user,
-		"userInfo": userInfo,
+		"userId": user.ID,
+		"user":   user,
 	})
 }
 

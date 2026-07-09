@@ -86,43 +86,6 @@ func ExchangeToken(params url.Values) (*TokenResponse, error) {
 	return &tokenResp, nil
 }
 
-func FetchUserInfo(accessToken string) (map[string]interface{}, error) {
-	req, err := http.NewRequest(http.MethodGet, config.IDPURL+"/oauth/userinfo", nil)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("Authorization", "Bearer "+accessToken)
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	if resp.StatusCode >= 400 {
-		return nil, fmt.Errorf("userinfo request failed (%d): %s", resp.StatusCode, string(body))
-	}
-
-	var userInfo UserInfoResponse
-	if err := json.Unmarshal(body, &userInfo); err != nil {
-		return nil, err
-	}
-
-	if userInfo.Data != nil {
-		return userInfo.Data, nil
-	}
-
-	var raw map[string]interface{}
-	if err := json.Unmarshal(body, &raw); err != nil {
-		return nil, err
-	}
-	return raw, nil
-}
 
 func FindOrCreateUser(claims jwt.MapClaims, userInfo map[string]interface{}) (*models.User, error) {
 	email := stringClaim(claims, "email")
