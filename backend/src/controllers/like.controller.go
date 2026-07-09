@@ -8,6 +8,7 @@ import (
 	"github.com/WhiteSnek/GameTube/src/models"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+	"github.com/google/uuid"
 
 )
 
@@ -69,6 +70,7 @@ func AddLike(c *gin.Context) {
 	}
 
 	like := models.Like{
+		ID:         uuid.NewString(),
 		EntityType: entity,
 		OwnerID:    userIdStr,
 	}

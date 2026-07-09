@@ -6,7 +6,6 @@ type User struct {
 	ID         string    `gorm:"type:varchar(191);primaryKey"`
 	Fullname   string    `gorm:"not null"`
 	Email      string    `gorm:"type:varchar(255);uniqueIndex;not null"`
-	Password   string    `gorm:"not null"`
 	DOB        *string
 	Avatar     string
 	CreatedAt  time.Time

@@ -10,7 +10,6 @@ import (
 	"os"
 	"github.com/WhiteSnek/GameTube/src/config"
 	"github.com/WhiteSnek/GameTube/src/utils"
-
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 )
@@ -149,13 +148,7 @@ func GetAuthUser(c *gin.Context) {
 		return
 	}
 
-	claims, err := utils.VerifyIDPToken(tokenString)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
-		return
-	}
-
-	user, err := utils.ResolveLocalUser(claims)
+	user, err := utils.GetUserInfo(tokenString)
 	if err != nil || user == nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
 		return

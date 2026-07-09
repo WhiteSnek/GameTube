@@ -22,7 +22,7 @@ func VerifyToken() gin.HandlerFunc {
 			return
 		}
 
-		user, err := utils.ResolveLocalUser(claims)
+		user, err := utils.GetUserInfo(tokenString)
 		if err != nil || user == nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
 			c.Abort()

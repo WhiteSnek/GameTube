@@ -8,6 +8,7 @@ import (
 	"github.com/WhiteSnek/GameTube/src/models"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+	"github.com/google/uuid"
 )
 
 func UploadVideo(c *gin.Context) {
@@ -31,6 +32,7 @@ func UploadVideo(c *gin.Context) {
 	}
 
 	video := models.Video{
+		ID:          uuid.NewString(),
 		Title:       input.Title,
 		Description: input.Description,
 		Thumbnail:   input.Thumbnail,
@@ -539,6 +541,7 @@ func AddView(c *gin.Context) {
 	}
 
 	history = models.History{
+		ID:      uuid.NewString(),
 		UserID:  userIdStr,
 		VideoID: videoId,
 	}
@@ -645,6 +648,7 @@ func AddToWatchLater(c *gin.Context) {
 	}
 
 	watchLater = models.WatchLater{
+		ID:      uuid.NewString(),
 		UserID:  userIdStr,
 		VideoID: videoId,
 	}

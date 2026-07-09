@@ -10,8 +10,11 @@ import (
 	"strings"
 	"github.com/WhiteSnek/GameTube/src/config"
 	"github.com/WhiteSnek/GameTube/src/models"
+	"github.com/WhiteSnek/GameTube/src/dtos"
 	"github.com/golang-jwt/jwt/v4"
 	"gorm.io/gorm"
+	"os"
+
 )
 
 type TokenResponse struct {
@@ -168,7 +171,6 @@ func FindOrCreateUser(claims jwt.MapClaims, userInfo map[string]interface{}) (*m
 	user := models.User{
 		Fullname: fullname,
 		Email:    email,
-		Password: sub,
 		Avatar:   avatar,
 	}
 
@@ -179,28 +181,38 @@ func FindOrCreateUser(claims jwt.MapClaims, userInfo map[string]interface{}) (*m
 	return &user, nil
 }
 
-func ResolveLocalUser(claims jwt.MapClaims) (*models.User, error) {
-	email := stringClaim(claims, "email")
-	if email != "" {
-		var user models.User
-		err := config.DB.Where("email = ?", email).First(&user).Error
-		if err == nil {
-			return &user, nil
-		}
+func GetUserInfo(accessToken string) (*dtos.UserResponse, error) {
+	idpURL := os.Getenv("IDP_URL")
+	if idpURL == "" {
+		return nil, fmt.Errorf("IDP_URL environment variable is not set")
 	}
 
-	sub := stringClaim(claims, "sub")
-	if sub == "" {
-		return nil, errors.New("sub not found in token")
-	}
-
-	var user models.User
-	err := config.DB.Where("password = ?", sub).First(&user).Error
+	req, err := http.NewRequest(http.MethodGet, idpURL+"/oauth/userinfo", nil)
 	if err != nil {
 		return nil, err
 	}
-	return &user, nil
+
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("userinfo request failed with status %d", resp.StatusCode)
+	}
+
+	var result dtos.UserResponse
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, err
+	}
+
+	return &result, nil
 }
+
 
 func stringClaim(claims jwt.MapClaims, key string) string {
 	if value, ok := claims[key].(string); ok {

@@ -8,6 +8,7 @@ import (
 	"github.com/WhiteSnek/GameTube/src/dtos"
 	"github.com/WhiteSnek/GameTube/src/models"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"log"
 	"net/http"
@@ -52,6 +53,7 @@ func CreateGuild(c *gin.Context) {
 
 	// Create guild in database
 	guild := models.Guild{
+		ID:          uuid.NewString(),
 		Name:        input.Name,
 		Description: input.Description,
 		Avatar:      input.Avatar,
@@ -242,6 +244,7 @@ func JoinGuild(c *gin.Context) {
 	}
 
 	guildMember := models.GuildMember{
+		ID: uuid.NewString(),
 		UserID:  userIdStr,
 		GuildID: guildId,
 		Role:    models.MEMBER,

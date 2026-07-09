@@ -16,6 +16,6 @@ type LoginDTO struct {
 type UserResponse struct {
 	ID    string `json:"id"`
 	Email string `json:"email"`
-	Fullame  string `json:"fullname"`
+	Fullname  string `json:"fullname"`
 	CreatedAt string `json:"createdAt"`
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/WhiteSnek/GameTube/src/models"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+	"github.com/google/uuid"
 )
 
 func AddComment(c *gin.Context) {
@@ -74,6 +75,7 @@ func AddComment(c *gin.Context) {
 	}
 
 	comment := models.Comment{
+		ID:      uuid.NewString(),
 		OwnerID: userIdStr,
 		VideoID: videoId,
 		Role:    guildMember.Role,
@@ -329,6 +331,7 @@ func AddReply(c *gin.Context) {
 	}
 
 	newReply := models.Reply{
+		ID:      uuid.NewString(),
 		OwnerID: userIdStr,
 		VideoID: videoID,
 		Role:    guildMember.Role,
