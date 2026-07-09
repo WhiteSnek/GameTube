@@ -156,7 +156,7 @@ func GetAuthUser(c *gin.Context) {
 		return
 	}
 
-	log.Printf("token: %s", tokenString)
+	log.Printf("Cookie header: %s", c.Request.Header.Get("Cookie"))
 
 	_, err = utils.VerifyIDPToken(tokenString)
 	if err != nil {
