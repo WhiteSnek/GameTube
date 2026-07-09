@@ -8,7 +8,9 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+
 	"github.com/WhiteSnek/GameTube/src/config"
+	"github.com/WhiteSnek/GameTube/src/dtos"
 	"github.com/WhiteSnek/GameTube/src/utils"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -86,6 +88,8 @@ func Callback(c *gin.Context) {
 		log.Println("Userinfo fetch failed:", err)
 	}
 
+	log.Printf("Userinfo: %+v\n", userInfo)
+
 	user, err := utils.FindOrCreateUser(claims, userInfo)
 	if err != nil {
 		log.Println("User sync failed:", err)
@@ -104,6 +108,8 @@ func Callback(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Login successful",
 		"userId":  user.ID,
+		"userInfo": userInfo,
+		"user":   user,
 		"data":    claims,
 	})
 }
@@ -148,15 +154,35 @@ func GetAuthUser(c *gin.Context) {
 		return
 	}
 
-	user, err := utils.GetUserInfo(tokenString)
+	userInfo, err := utils.FetchUserInfo(tokenString)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "UserInfo not found"})
 		return
 	}
 
+	email, ok := userInfo["email"].(string)
+	if !ok || email == "" {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve user email"})
+		return
+	}
+
+	user, err := utils.ResolveLocalUser(nil, email)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to resolve local user"})
+		return
+	}
+
+	var response dtos.UserResponse
+
+	response.ID = user.ID
+	response.Fullname = user.Fullname
+	response.Email = user.Email
+	response.Avatar = user.Avatar
+	response.CreatedAt = user.CreatedAt.String()
+
 	c.JSON(http.StatusOK, gin.H{
 		"userId": user.ID,
-		"user":   user,
+		"user":   response,
 	})
 }
 

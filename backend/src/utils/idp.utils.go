@@ -10,11 +10,9 @@ import (
 	"strings"
 	"github.com/WhiteSnek/GameTube/src/config"
 	"github.com/WhiteSnek/GameTube/src/models"
-	"github.com/WhiteSnek/GameTube/src/dtos"
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
-	"os"
-
 )
 
 type TokenResponse struct {
@@ -86,6 +84,43 @@ func ExchangeToken(params url.Values) (*TokenResponse, error) {
 	return &tokenResp, nil
 }
 
+func FetchUserInfo(accessToken string) (map[string]interface{}, error) {
+	req, err := http.NewRequest(http.MethodGet, config.IDPURL+"/oauth/userinfo", nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode >= 400 {
+		return nil, fmt.Errorf("userinfo request failed (%d): %s", resp.StatusCode, string(body))
+	}
+
+	var userInfo UserInfoResponse
+	if err := json.Unmarshal(body, &userInfo); err != nil {
+		return nil, err
+	}
+
+	if userInfo.Data != nil {
+		return userInfo.Data, nil
+	}
+
+	var raw map[string]interface{}
+	if err := json.Unmarshal(body, &raw); err != nil {
+		return nil, err
+	}
+	return raw, nil
+}
 
 func FindOrCreateUser(claims jwt.MapClaims, userInfo map[string]interface{}) (*models.User, error) {
 	email := stringClaim(claims, "email")
@@ -132,6 +167,7 @@ func FindOrCreateUser(claims jwt.MapClaims, userInfo map[string]interface{}) (*m
 	}
 
 	user := models.User{
+		ID: uuid.NewString(),
 		Fullname: fullname,
 		Email:    email,
 		Avatar:   avatar,
@@ -144,38 +180,15 @@ func FindOrCreateUser(claims jwt.MapClaims, userInfo map[string]interface{}) (*m
 	return &user, nil
 }
 
-func GetUserInfo(accessToken string) (*dtos.UserResponse, error) {
-	idpURL := os.Getenv("IDP_URL")
-	if idpURL == "" {
-		return nil, fmt.Errorf("IDP_URL environment variable is not set")
-	}
-
-	req, err := http.NewRequest(http.MethodGet, idpURL+"/oauth/userinfo", nil)
+func ResolveLocalUser(claims jwt.MapClaims, email string) (*models.User, error) {
+	var user models.User
+	err := config.DB.Where("email = ?", email).First(&user).Error
 	if err != nil {
 		return nil, err
 	}
 
-	req.Header.Set("Authorization", "Bearer "+accessToken)
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("userinfo request failed with status %d", resp.StatusCode)
-	}
-
-	var result dtos.UserResponse
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return nil, err
-	}
-
-	return &result, nil
+	return &user, nil
 }
-
 
 func stringClaim(claims jwt.MapClaims, key string) string {
 	if value, ok := claims[key].(string); ok {

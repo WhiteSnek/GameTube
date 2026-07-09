@@ -1,9 +1,9 @@
 package middlewares
 
 import (
-	"net/http"
 	"github.com/WhiteSnek/GameTube/src/utils"
 	"github.com/gin-gonic/gin"
+	"net/http"
 )
 
 func VerifyToken() gin.HandlerFunc {
@@ -22,9 +22,23 @@ func VerifyToken() gin.HandlerFunc {
 			return
 		}
 
-		user, err := utils.GetUserInfo(tokenString)
-		if err != nil || user == nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+		userInfo, err := utils.FetchUserInfo(tokenString)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "UserInfo not found"})
+			c.Abort()
+			return
+		}
+
+		email, ok := userInfo["email"].(string)
+		if !ok || email == "" {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve user email"})
+			c.Abort()
+			return
+		}
+
+		user, err := utils.ResolveLocalUser(nil, email)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to resolve local user"})
 			c.Abort()
 			return
 		}
