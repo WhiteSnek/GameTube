@@ -15,6 +15,11 @@ func VideoRoutes(r *gin.Engine) {
 		controllers.UploadVideo(ctx)
 	})
 
+	videoGroup.OPTIONS("/upload", func(ctx *gin.Context) {
+		ctx.Status(200)
+	})
+
+
 	videoGroup.GET("/:videoId", func(ctx *gin.Context) {
 		controllers.GetVideoById(ctx)
 	})
@@ -45,6 +50,10 @@ func VideoRoutes(r *gin.Engine) {
 
 	videoGroup.POST("/watchlater/:videoId", middlewares.VerifyToken(), func(ctx *gin.Context) {
 		controllers.AddToWatchLater(ctx)
+	})
+
+	videoGroup.OPTIONS("/watchlater/:videoId", func(ctx *gin.Context) {
+		ctx.Status(200)
 	})
 
 	videoGroup.DELETE("/watchlater/:videoId", middlewares.VerifyToken(), func(ctx *gin.Context) {

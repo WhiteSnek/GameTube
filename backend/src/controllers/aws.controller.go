@@ -220,8 +220,8 @@ func GetVideoUploadUrl(c *gin.Context) {
 		return
 	}
 	videoId := uuid.New().String()[:8]
-	thumbnailKey := fmt.Sprintf("thumbnail/%s/%s/%s.png", guildName, email, videoId)
-	videoKey := fmt.Sprintf("%s/%s/%s.mp4", guildName, email, videoId)
+	thumbnailKey := fmt.Sprintf("images/thumbnail/%s/%s/%s.png", guildName, email, videoId)
+	videoKey := fmt.Sprintf("videos/%s/%s/%s.mp4", guildName, email, videoId)
 
 	var wg sync.WaitGroup
 	wg.Add(2)

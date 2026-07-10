@@ -16,13 +16,20 @@ func CommentRoutes(r *gin.Engine) {
 	commentGroup.POST("/:videoId", middlewares.VerifyToken(), func(ctx *gin.Context) {
 		controllers.AddComment(ctx)
 	})
+	commentGroup.OPTIONS("/:videoId", func(ctx *gin.Context) {
+		ctx.Status(200)
+	})
 
 	commentGroup.DELETE("/:commentId", middlewares.VerifyToken(), func(ctx *gin.Context) {
 		controllers.DeleteComment(ctx)
 	})
-
+	
 	commentGroup.POST("/reply/:commentId", middlewares.VerifyToken(), func(ctx *gin.Context) {
 		controllers.AddReply(ctx)
+	})
+
+	commentGroup.OPTIONS("/reply/:commentId", func(ctx *gin.Context) {
+		ctx.Status(200)
 	})
 
 	commentGroup.GET("/reply/:commentId", func(ctx *gin.Context) {

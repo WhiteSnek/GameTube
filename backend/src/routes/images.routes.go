@@ -28,6 +28,10 @@ func ImageRoutes(r *gin.Engine) {
 		controllers.GetGuildAvatars(ctx)
 	})
 
+	imageGroup.OPTIONS("/guilds", func(ctx *gin.Context) {
+		ctx.Status(200)
+	})
+
 	imageGroup.GET("/video/upload-url", func(ctx *gin.Context) {
 		controllers.GetVideoUploadUrl(ctx)
 	})
@@ -35,9 +39,17 @@ func ImageRoutes(r *gin.Engine) {
 	imageGroup.POST("/video/images", func(ctx *gin.Context) {
 		controllers.GetVideoFiles(ctx)
 	})
+	
+	imageGroup.OPTIONS("/video/images", func(ctx *gin.Context) {
+		ctx.Status(200)
+	})
 
 	imageGroup.POST("/users", func(ctx *gin.Context) {
 		controllers.GetUserAvatars(ctx)
+	})
+
+	imageGroup.OPTIONS("/users", func(ctx *gin.Context) {
+		ctx.Status(200)
 	})
 
 	imageGroup.GET("/check", func(ctx *gin.Context) {

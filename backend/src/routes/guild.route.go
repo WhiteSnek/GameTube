@@ -14,6 +14,10 @@ func GuildRoutes(r *gin.Engine) {
 		controllers.CreateGuild(ctx)
 	})
 
+	guildGroup.OPTIONS("/create", func(ctx *gin.Context) {
+		ctx.Status(200)
+	})
+
 	guildGroup.GET("/", middlewares.VerifyToken(), func(ctx *gin.Context) {
 		controllers.GetGuild(ctx)
 	})

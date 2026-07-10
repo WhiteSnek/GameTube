@@ -14,6 +14,9 @@ func AuthRoutes(r *gin.Engine) {
 	authGroup.GET("/client", controllers.ClientCredentials)
 	authGroup.GET("/user", controllers.GetAuthUser)
 	authGroup.POST("/logout", controllers.Logout)
+	authGroup.OPTIONS("/logout", func(ctx *gin.Context) {
+		ctx.Status(200)
+	})
 
 	// Legacy route used by the frontend login/signup buttons
 	authGroup.GET("/google/signup", controllers.Login)
