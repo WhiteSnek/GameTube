@@ -5,29 +5,39 @@ import { DefaultAvatar } from "@/assets";
 import { useTheme } from "@/context/theme_provider";
 import { useUser } from "@/context/user_provider";
 import { useEffect, useState } from "react";
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+} from "@/components/ui/dropdown-menu";
 import { useRouter } from "next/navigation";
 import { Button } from "../ui/button";
 const Navbar: React.FC = () => {
   const { theme, setTheme } = useTheme();
   const { User, images, getUserImages, logout } = useUser();
-    const handleLogin =async() => {
-      window.location.href = `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/login`;
-    };
-  const [query, setQuery] = useState<string>("")
+  const handleLogin = async () => {
+    window.location.href = `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/login`;
+  };
+  const [query, setQuery] = useState<string>("");
   const router = useRouter();
-  console.log("avatarUrl =", JSON.stringify(images?.avatarUrl));
   useEffect(() => {
     if (User?.id && !images.avatarUrl) {
       getUserImages(User.id);
     }
   }, [User?.id]);
+  const avatarSrc =
+    images?.avatarUrl && images.avatarUrl !== "https://gametube.whitesnek.xyz/"
+      ? images.avatarUrl
+      : DefaultAvatar;
 
-  const handleSubmit = (e : React.FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
     if (!query.trim()) return;
     router.push(`/search?q=${encodeURIComponent(query)}`);
-  }
+  };
 
   return (
     <nav className="flex fixed w-screen z-50 items-center justify-between px-4 py-2 shadow-md transition-all duration-300 bg-zinc-100 text-black dark:bg-zinc-900 dark:text-white">
@@ -44,7 +54,7 @@ const Navbar: React.FC = () => {
           <input
             type="text"
             value={query}
-            onChange={(e)=>setQuery(e.target.value)}
+            onChange={(e) => setQuery(e.target.value)}
             placeholder="Search for games..."
             className="w-full px-12 py-2 rounded-full text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-red-400 transition-all bg-white text-black border border-zinc-300 dark:bg-zinc-800 dark:text-white"
           />
@@ -56,29 +66,41 @@ const Navbar: React.FC = () => {
           {theme === "dark" ? <Sun size={24} /> : <Moon size={24} />}
         </button>
         {User ? (
-            <DropdownMenu>
+          <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="w-14">
                 <img
-                  src={images?.avatarUrl !== "" ? images.avatarUrl : DefaultAvatar}
+                  src={avatarSrc}
                   alt="User Avatar"
-                  className="w-full aspect-square object-cover rounded-full cursor-pointer "
+                  className="w-full aspect-square object-cover rounded-full cursor-pointer"
                 />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56 mt-2 shadow-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900">
-              <DropdownMenuLabel className="text-lg font-bold">{User.fullname}</DropdownMenuLabel>
-              <DropdownMenuItem className="text-sm text-zinc-500">{User.email}</DropdownMenuItem>
+              <DropdownMenuLabel className="text-lg font-bold">
+                {User.fullname}
+              </DropdownMenuLabel>
+              <DropdownMenuItem className="text-sm text-zinc-500">
+                {User.email}
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-sm">Joined: {new Date(User.createdAt).toLocaleDateString()}</DropdownMenuItem>
+              <DropdownMenuItem className="text-sm">
+                Joined: {new Date(User.createdAt).toLocaleDateString()}
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={logout} className="text-red-500 flex items-center gap-2 cursor-pointer">
+              <DropdownMenuItem
+                onClick={logout}
+                className="text-red-500 flex items-center gap-2 cursor-pointer"
+              >
                 <LogOut size={16} /> Logout
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         ) : (
-          <Button className="flex justify-center items-center bg-red-500 cursor-pointer rounded-2xl hover:bg-red-600" onClick={handleLogin}>
+          <Button
+            className="flex justify-center items-center bg-red-500 cursor-pointer rounded-2xl hover:bg-red-600"
+            onClick={handleLogin}
+          >
             <LogIn size={20} /> Login
           </Button>
         )}
