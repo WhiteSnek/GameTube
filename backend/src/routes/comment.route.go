@@ -10,13 +10,13 @@ func CommentRoutes(r *gin.Engine) {
 
 	commentGroup := r.Group("/v1/comment")
 
-	commentGroup.GET("/:videoId", func(ctx *gin.Context) {
+	commentGroup.GET("/video/:videoId", func(ctx *gin.Context) {
 		controllers.GetVideoComments(ctx)
 	})
-	commentGroup.POST("/:videoId", middlewares.VerifyToken(), func(ctx *gin.Context) {
+	commentGroup.POST("/video/:videoId", middlewares.VerifyToken(), func(ctx *gin.Context) {
 		controllers.AddComment(ctx)
 	})
-	commentGroup.OPTIONS("/:videoId", func(ctx *gin.Context) {
+	commentGroup.OPTIONS("/video/:videoId", func(ctx *gin.Context) {
 		ctx.Status(200)
 	})
 

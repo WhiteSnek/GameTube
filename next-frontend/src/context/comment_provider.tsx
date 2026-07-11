@@ -27,7 +27,7 @@ interface CommentProviderProps {
 const CommentProvider: React.FC<CommentProviderProps> = ({ children }) => {
   const getComments = async (videoId: string): Promise<any> => {
     try {
-      const response = await api.get(`/comment/${videoId}`);
+      const response = await api.get(`/comment/video/${videoId}`);
       if (response) return response.data.data;
     } catch (error) {
       console.log(error);
@@ -36,7 +36,7 @@ const CommentProvider: React.FC<CommentProviderProps> = ({ children }) => {
 
   const addComment = async (videoId: string, content: string): Promise<any> => {
     try {
-      const response = await api.post(`/comment/${videoId}`, { content });
+      const response = await api.post(`/comment/video/${videoId}`, { content });
       if (response) return response.data.data;
     } catch (error) {
       console.log(error);
