@@ -59,7 +59,7 @@ const Navbar: React.FC = () => {
             <DropdownMenuTrigger asChild>
               <button className="w-14">
                 <img
-                  src={images?.avatarUrl || DefaultAvatar}
+                  src={images?.avatarUrl !== "" ? images.avatarUrl : DefaultAvatar}
                   alt="User Avatar"
                   className="w-full aspect-square object-cover rounded-full cursor-pointer "
                 />

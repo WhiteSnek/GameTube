@@ -78,7 +78,7 @@ const Details: React.FC<DetailsProps> = ({ guild }) => {
       {/* Cover Image */}
       <div className="h-48 bg-gray-300 flex items-center justify-center">
         <Image
-          src={images?.coverUrl || DefaultGuildCover}
+          src={images?.coverUrl !== "" ? images.coverUrl : DefaultGuildCover}
           priority
           alt="Cover"
           width={1920}
@@ -92,7 +92,7 @@ const Details: React.FC<DetailsProps> = ({ guild }) => {
       {/* Avatar & Channel Info */}
       <div className="p-6 flex items-center space-x-4">
         <Image
-          src={images?.avatarUrl || DefaultGuildavatar}
+          src={images?.avatarUrl !== "" ? images.avatarUrl : DefaultGuildavatar}
           alt="Avatar"
           width={40}
           height={40}
