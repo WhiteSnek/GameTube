@@ -14,6 +14,10 @@ func LikeRoutes(r *gin.Engine) {
 		controllers.AddLike(ctx)
 	})
 
+	likeGroup.OPTIONS("/:entityType/:entityId", func(ctx *gin.Context){
+		ctx.Status(200)
+	})
+
 	likeGroup.DELETE("/:entityType/:entityId", middlewares.VerifyToken(), func(ctx *gin.Context) {
 		controllers.RemoveLike(ctx)
 	})

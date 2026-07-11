@@ -23,6 +23,10 @@ func CommentRoutes(r *gin.Engine) {
 	commentGroup.DELETE("/:commentId", middlewares.VerifyToken(), func(ctx *gin.Context) {
 		controllers.DeleteComment(ctx)
 	})
+
+	commentGroup.OPTIONS("/:commentId", func(ctx *gin.Context){
+		ctx.Status(200)
+	})
 	
 	commentGroup.POST("/reply/:commentId", middlewares.VerifyToken(), func(ctx *gin.Context) {
 		controllers.AddReply(ctx)

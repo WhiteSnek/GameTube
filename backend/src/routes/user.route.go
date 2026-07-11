@@ -22,4 +22,7 @@ func UserRoutes(r *gin.Engine) {
 	userGroup.DELETE("/history", middlewares.VerifyToken(), func(ctx *gin.Context) {
 		controllers.ClearHistory(ctx)
 	})
+	userGroup.OPTIONS("/history", func(ctx *gin.Context){
+		ctx.Status(200)
+	})
 }

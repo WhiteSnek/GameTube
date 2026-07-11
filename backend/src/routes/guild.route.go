@@ -42,8 +42,16 @@ func GuildRoutes(r *gin.Engine) {
 		controllers.JoinGuild(ctx)
 	})
 
+	guildGroup.OPTIONS("/join/:guildId", func(ctx *gin.Context) {
+		ctx.Status(200)
+	})
+
 	guildGroup.PATCH("/leave/:guildId", middlewares.VerifyToken(), func(ctx *gin.Context) {
 		controllers.LeaveGuild(ctx)
+	})
+
+	guildGroup.OPTIONS("/leave/:guildId", func(ctx *gin.Context) {
+		ctx.Status(200)
 	})
 
 	guildGroup.GET("/joined", middlewares.VerifyToken(), func(ctx *gin.Context) {
@@ -57,10 +65,24 @@ func GuildRoutes(r *gin.Engine) {
 	guildGroup.PATCH("/members/promote/:guildId/:memberId", middlewares.VerifyToken(), func(ctx *gin.Context) {
 		controllers.PromoteMember(ctx)
 	})
+
+	guildGroup.OPTIONS("/members/promote/:guildId/:memberId", func(ctx *gin.Context) {
+		ctx.Status(200)
+	})
+
 	guildGroup.PATCH("/members/demote/:guildId/:memberId", middlewares.VerifyToken(), func(ctx *gin.Context) {
 		controllers.DemoteMember(ctx)
 	})
+
+	guildGroup.OPTIONS("/members/demote/:guildId/:memberId", func(ctx *gin.Context) {
+		ctx.Status(200)
+	})
+
 	guildGroup.PATCH("/members/kick/:guildId/:memberId", middlewares.VerifyToken(), func(ctx *gin.Context) {
 		controllers.KickUser(ctx)
+	})
+
+	guildGroup.OPTIONS("/members/kick/:guildId/:memberId", func(ctx *gin.Context) {
+		ctx.Status(200)
 	})
 }

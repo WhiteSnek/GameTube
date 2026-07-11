@@ -19,7 +19,6 @@ func VideoRoutes(r *gin.Engine) {
 		ctx.Status(200)
 	})
 
-
 	videoGroup.GET("/:videoId", func(ctx *gin.Context) {
 		controllers.GetVideoById(ctx)
 	})
@@ -48,6 +47,10 @@ func VideoRoutes(r *gin.Engine) {
 		controllers.AddView(ctx)
 	})
 
+	videoGroup.OPTIONS("/view/:videoId", func(ctx *gin.Context){
+		ctx.Status(200)
+	})
+
 	videoGroup.POST("/watchlater/:videoId", middlewares.VerifyToken(), func(ctx *gin.Context) {
 		controllers.AddToWatchLater(ctx)
 	})
@@ -66,5 +69,9 @@ func VideoRoutes(r *gin.Engine) {
 
 	videoGroup.PATCH("/history/:entryId", middlewares.VerifyToken(), func(ctx *gin.Context) {
 		controllers.RemoveFromHistory(ctx)
+	})
+
+	videoGroup.OPTIONS("/history/:entityId", func(ctx *gin.Context){
+		ctx.Status(200)
 	})
 }
