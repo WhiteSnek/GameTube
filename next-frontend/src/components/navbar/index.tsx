@@ -16,6 +16,7 @@ const Navbar: React.FC = () => {
     };
   const [query, setQuery] = useState<string>("")
   const router = useRouter();
+  console.log("avatarUrl =", JSON.stringify(images?.avatarUrl));
   useEffect(() => {
     if (User?.id && !images.avatarUrl) {
       getUserImages(User.id);
