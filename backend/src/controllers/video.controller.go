@@ -388,11 +388,11 @@ func SearchVideo(c *gin.Context) {
 			g.avatar AS "guildAvatar",
 			g.name AS "guildName",
 			v."createdAt" AS "uploadDate"
-		FROM "Videos" v
-		JOIN "User" u ON u.id = v."ownerId"
-		JOIN "Guild" g ON g.id = v."guildId"
-		LEFT JOIN "TagsOnVideos" tov ON tov."videoId" = v.id
-		LEFT JOIN "Tags" t ON t.id = tov."tagId"
+		FROM "videos" v
+		JOIN "users" u ON u.id = v."ownerId"
+		JOIN "guilds" g ON g.id = v."guildId"
+		LEFT JOIN "tags_on_videos" tov ON tov."videoId" = v.id
+		LEFT JOIN "tags" t ON t.id = tov."tagId"
 		WHERE (
 			similarity(v.title, ?) > 0.3 OR
 			similarity(g.name, ?) > 0.3 OR
