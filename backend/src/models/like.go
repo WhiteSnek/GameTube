@@ -1,19 +1,19 @@
 package models
 
 type Like struct {
-	ID string `gorm:"type:varchar(191);primaryKey"`
+    ID string `gorm:"type:varchar(191);primaryKey"`
 
-	EntityType Entity
+    EntityType Entity
 
-	OwnerID string
+    OwnerID string
 
-	VideoID   *string
-	CommentID *string
-	ReplyID   *string
+    VideoID   *string
+    CommentID *string
+    ReplyID   *string
 
-	Owner User `gorm:"foreignKey:OwnerID"`
+    Owner User `gorm:"foreignKey:OwnerID"`
 
-	Video   *Video   `gorm:"foreignKey:VideoID"`
-	Comment *Comment `gorm:"foreignKey:CommentID"`
-	Reply   *Reply   `gorm:"foreignKey:ReplyID"`
+    Video   *Video   `gorm:"foreignKey:VideoID;references:ID"`
+    Comment *Comment `gorm:"foreignKey:CommentID;references:ID"`
+    Reply   *Reply   `gorm:"foreignKey:ReplyID;references:ID"`
 }
