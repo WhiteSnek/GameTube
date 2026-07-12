@@ -381,7 +381,7 @@ func SearchVideo(c *gin.Context) {
 			v.id,
 			v.title,
 			v.thumbnail,
-			v."videoUrl",
+			v.video_url,
 			v.duration,
 			v.views,
 			u.fullname AS "ownerName",
@@ -389,16 +389,16 @@ func SearchVideo(c *gin.Context) {
 			g.name AS "guildName",
 			v."createdAt" AS "uploadDate"
 		FROM "videos" v
-		JOIN "users" u ON u.id = v."ownerId"
-		JOIN "guilds" g ON g.id = v."guildId"
-		LEFT JOIN "tags_on_videos" tov ON tov."videoId" = v.id
-		LEFT JOIN "tags" t ON t.id = tov."tagId"
+		JOIN "users" u ON u.id = v."owner_id"
+		JOIN "guilds" g ON g.id = v."guild_id"
+		LEFT JOIN "tags_on_videos" tov ON tov."video_id" = v.id
+		LEFT JOIN "tags" t ON t.id = tov."tag_id"
 		WHERE (
 			similarity(v.title, ?) > 0.3 OR
 			similarity(g.name, ?) > 0.3 OR
 			similarity(t.name, ?) > 0.3
 		)
-		AND v."isPrivate" = FALSE
+		AND v."is_private" = FALSE
 		ORDER BY v.id, similarity(v.title, ?) DESC
 		LIMIT 10;
 	`

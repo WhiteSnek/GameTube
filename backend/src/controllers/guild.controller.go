@@ -742,8 +742,8 @@ func GetAllGuilds(c *gin.Context) {
 		query = `
 			SELECT DISTINCT g.id, g.name, g.description, g.avatar, similarity(g.name, $1) AS sim_score
 			FROM "guilds" g
-			LEFT JOIN "tags" t ON g.id = t."guildId"
-			WHERE g."isPrivate" = false
+			LEFT JOIN "tags" t ON g.id = t."guild_id"
+			WHERE g."is_private" = false
 			  AND similarity(g.name, $1) > 0.20
 		`
 
@@ -754,8 +754,8 @@ func GetAllGuilds(c *gin.Context) {
 		query = `
 			SELECT DISTINCT g.id, g.name, g.description, g.avatar
 			FROM "guilds" g
-			LEFT JOIN "tags" t ON g.id = t."guildId"
-			WHERE g."isPrivate" = false
+			LEFT JOIN "tags" t ON g.id = t."guild_id"
+			WHERE g."is_private" = false
 		`
 	}
 
