@@ -69,6 +69,7 @@ func UploadVideo(c *gin.Context) {
 		}
 
 		tagOnVideo := models.TagOnVideo{
+			ID:      uuid.NewString(),
 			VideoID: video.ID,
 			TagID:   tag.ID,
 		}

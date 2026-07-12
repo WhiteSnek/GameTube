@@ -69,6 +69,7 @@ func CreateGuild(c *gin.Context) {
 
 	// Add user as a leader in GuildMember
 	guildMember := models.GuildMember{
+		ID:          uuid.NewString(),
 		UserID:  userIdStr,
 		GuildID: guild.ID,
 		Role:    models.LEADER,
@@ -81,6 +82,7 @@ func CreateGuild(c *gin.Context) {
 
 	for _, tagName := range input.Tags {
 		tags := models.Tag{
+			ID:      uuid.NewString(),
 			Name:    tagName,
 			GuildID: guild.ID,
 		}
