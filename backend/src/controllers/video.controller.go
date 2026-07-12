@@ -391,7 +391,7 @@ func SearchVideo(c *gin.Context) {
 		FROM "videos" v
 		JOIN "users" u ON u.id = v."owner_id"
 		JOIN "guilds" g ON g.id = v."guild_id"
-		LEFT JOIN "tags_on_videos" tov ON tov."video_id" = v.id
+		LEFT JOIN "tag_on_videos" tov ON tov."video_id" = v.id
 		LEFT JOIN "tags" t ON t.id = tov."tag_id"
 		WHERE (
 			similarity(v.title, ?) > 0.3 OR
