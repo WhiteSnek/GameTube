@@ -73,22 +73,12 @@ const Details: React.FC<DetailsProps> = ({ guild }) => {
     getGuildImages(guild.id);
   }, [guild.id]);
 
-  const guildAvatar = images?.avatarUrl &&
-  images.avatarUrl !== "https://gametube.whitesnek.xyz/"
-    ? images.avatarUrl
-    : DefaultGuildavatar;
-
-  const guildCover = images?.coverUrl &&
-  images.coverUrl !== "https://gametube.whitesnek.xyz/"
-    ? images.coverUrl
-    : DefaultGuildCover;
-
   return (
     <div className="w-full bg-white dark:bg-zinc-800 shadow-lg rounded-2xl overflow-hidden">
       {/* Cover Image */}
       <div className="h-48 bg-gray-300 flex items-center justify-center">
         <Image
-          src={guildCover}
+          src={images.coverUrl || DefaultGuildCover}
           priority
           alt="Cover"
           width={1920}
@@ -102,7 +92,7 @@ const Details: React.FC<DetailsProps> = ({ guild }) => {
       {/* Avatar & Channel Info */}
       <div className="p-6 flex items-center space-x-4">
         <Image
-          src={guildAvatar}
+          src={images.avatarUrl || DefaultGuildavatar}
           alt="Avatar"
           width={40}
           height={40}

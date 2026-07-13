@@ -145,12 +145,12 @@ const UploadVideo: React.FC<UploadVideoProps> = ({
         console.error("Failed to retrieve video duration.");
         return;
       }
-
+      const CLOUDFRONT_URL = process.env.NEXT_CLOUDFRONT_URL
       const data: UploadVideoType = {
         title,
         description,
-        thumbnail: thumbnailKey,
-        videoUrl: videoKey,
+        thumbnail: `${CLOUDFRONT_URL}/${thumbnailKey}`,
+        videoUrl: `${CLOUDFRONT_URL}/${videoKey}`,
         duration: Math.round(duration),
         guildId,
         isPrivate,

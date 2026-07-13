@@ -55,7 +55,7 @@ const CreateGuild: React.FC = () => {
       const emailPrefix = User?.email.split("@")[0];
       const avatarKey = `images/guild/avatar/${emailPrefix}`;
       const coverImageKey = `images/guild/coverImage/${emailPrefix}`;
-
+      const CLOUDFRONT_URL = process.env.NEXT_CLOUDFRONT_URL
       // Request Presigned URLs from backend
       const { avatarUrl, coverUrl } = await getSignedUrls(
         avatarKey,
@@ -70,8 +70,8 @@ const CreateGuild: React.FC = () => {
         name: form.name,
         description: form.description,
         isPrivate: form.isPrivate,
-        avatar: avatarKey,
-        cover_image: coverImageKey,
+        avatar: `${CLOUDFRONT_URL}/${avatarKey}`,
+        cover_image: `${CLOUDFRONT_URL}/${coverImageKey}`,
         tags: form.tags,
       };
 

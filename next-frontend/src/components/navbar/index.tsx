@@ -28,10 +28,6 @@ const Navbar: React.FC = () => {
       getUserImages(User.id);
     }
   }, [User?.id]);
-  const avatarSrc =
-    images?.avatarUrl && images.avatarUrl !== "https://gametube.whitesnek.xyz/"
-      ? images.avatarUrl
-      : DefaultAvatar;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,7 +66,7 @@ const Navbar: React.FC = () => {
             <DropdownMenuTrigger asChild>
               <button className="w-14">
                 <img
-                  src={avatarSrc}
+                  src={images.avatarUrl || DefaultAvatar}
                   alt="User Avatar"
                   className="w-full aspect-square object-cover rounded-full cursor-pointer"
                 />
