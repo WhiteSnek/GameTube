@@ -387,7 +387,7 @@ func SearchVideo(c *gin.Context) {
 			u.fullname AS "ownerName",
 			g.avatar AS "guildAvatar",
 			g.name AS "guildName",
-			v."created_at" AS "uploadDate"
+			v.created_at AS "uploadDate"
 		FROM "videos" v
 		JOIN "users" u ON u.id = v."owner_id"
 		JOIN "guilds" g ON g.id = v."guild_id"
