@@ -42,7 +42,7 @@ func GetHistory(c *gin.Context) {
 	}
 
 	var history []models.History
-	err := config.DB.Preload("Video").Where("user_id = ?", id).Find(&history).Error
+	err := config.DB.Preload("Video").Preload("Video.Owner").Preload("Video.Guild").Where("user_id = ?", id).Find(&history).Error
 	var response []dtos.MultiVideos
 	if err != nil {
 		c.JSON(http.StatusNoContent, gin.H{"message": "User has no history", "data": response})
