@@ -9,6 +9,7 @@ import {
   DropdownMenuContent,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
+import { DefaultAvatar } from "@/assets";
 interface CommentType {
   id: string;
   ownerAvatar: string;
@@ -116,7 +117,7 @@ const Comment = ({
     <div className="border-l-4 border-zinc-500 dark:border-zinc-700 pl-6 my-4">
       <div className="flex items-start gap-4 bg-zinc-100 dark:bg-zinc-800 p-4 rounded-lg">
         <img
-          src={comment.ownerAvatar}
+          src={comment.ownerAvatar || DefaultAvatar}
           alt="Avatar"
           className="w-12 h-12 rounded-full border object-cover"
         />
