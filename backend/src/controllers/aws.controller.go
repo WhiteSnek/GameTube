@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strings"
 	"sync"
 	"time"
 
@@ -113,17 +112,7 @@ func GetUserImages(c *gin.Context) {
 		return
 	}
 
-	avatarKey := user.Avatar
-	cloudfrontURL := os.Getenv("CLOUDFRONT_URL")
-	var avatarUrl string
-
-	if strings.Contains(avatarKey, "googleusercontent") {
-		avatarUrl = avatarKey
-	} else {
-		// Serve via CloudFront
-		avatarUrl = fmt.Sprintf("%s/%s", strings.TrimRight(cloudfrontURL, "/"), avatarKey)
-	}
-
+	avatarUrl := user.Avatar
 	response := gin.H{}
 	if avatarUrl != "" {
 		response["avatarUrl"] = avatarUrl
@@ -146,25 +135,13 @@ func GetGuildImages(c *gin.Context) {
 		return
 	}
 
-	avatarKey := *guild.Avatar
-	coverKey := *guild.CoverImage
+	avatarUrl := *guild.Avatar
+	coverUrl := *guild.CoverImage
 
-	if avatarKey == "" || coverKey == "" {
+	if avatarUrl == "" || coverUrl == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Guild does not have an avatar or cover image"})
 		return
 	}
-
-	cloudfrontURL := os.Getenv("CLOUDFRONT_URL")
-
-	var avatarUrl, coverUrl string
-
-	if strings.Contains(avatarKey, "googleusercontent") {
-		avatarUrl = avatarKey
-	} else {
-		avatarUrl = fmt.Sprintf("%s/%s", strings.TrimRight(cloudfrontURL, "/"), avatarKey)
-	}
-
-	coverUrl = fmt.Sprintf("%s/%s", strings.TrimRight(cloudfrontURL, "/"), coverKey)
 
 	c.JSON(http.StatusOK, gin.H{
 		"avatarUrl": avatarUrl,
@@ -188,7 +165,6 @@ func GetGuildAvatars(c *gin.Context) {
 	}
 
 	var avatarUrls []string
-	cloudfrontURL := os.Getenv("CLOUDFRONT_URL")
 	for _, guildId := range request.GuildIDs {
 		var guild models.Guild
 		err := config.DB.Where("id = ?", guildId).First(&guild).Error
@@ -197,12 +173,11 @@ func GetGuildAvatars(c *gin.Context) {
 			continue
 		}
 
-		avatarKey:= *guild.Avatar
-		if avatarKey == "" {
+		avatarUrl := *guild.Avatar
+		if avatarUrl == "" {
 			avatarUrls = append(avatarUrls, "")
 			continue
 		}
-		avatarUrl := fmt.Sprintf("%s/%s", strings.TrimRight(cloudfrontURL, "/"), avatarKey)
 		avatarUrls = append(avatarUrls, avatarUrl)
 	}
 
@@ -295,9 +270,6 @@ func GetVideoFiles(c *gin.Context) {
 		return
 	}
 
-	cloudfrontURL := os.Getenv("CLOUDFRONT_URL")
-	videoCloudfrontUrl := os.Getenv("VIDEO_CLOUDFRONT_URL")
-
 	var videoImages []VideoImages
 	var errors []string
 
@@ -308,20 +280,14 @@ func GetVideoFiles(c *gin.Context) {
 			continue
 		}
 		var videoImage VideoImages
-		videoImage.Video = fmt.Sprintf("%s/%s/master.m3u8", strings.TrimRight(videoCloudfrontUrl, "/"), video.VideoURL)
+		videoImage.Video = video.VideoURL
 		if video.Thumbnail != "" {
-			videoImage.Thumbnail = fmt.Sprintf("%s/%s", strings.TrimRight(cloudfrontURL, "/"), video.Thumbnail)
+			videoImage.Thumbnail = video.Thumbnail
 		}
 
 		guild := video.Guild
-		if avatarKey := *guild.Avatar; avatarKey != "" {
-			if strings.Contains(avatarKey, "googleusercontent") {
-				videoImage.Avatar = avatarKey
-			} else {
-				videoImage.Avatar = fmt.Sprintf("%s/%s", strings.TrimRight(cloudfrontURL, "/"), avatarKey)
-			}
-		}
-
+		avatarUrl := guild.Avatar;
+		videoImage.Avatar = *avatarUrl
 		videoImages = append(videoImages, videoImage)
 	}
 
@@ -353,17 +319,10 @@ func GetUserAvatars(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "avatarKeys are required"})
 		return
 	}
-	cloudfrontURL := os.Getenv("CLOUDFRONT_URL")
 
 	var avatarUrls []string
 
-	for _, avatarKey := range request.AvatarKeys {
-		if avatarKey == "" || strings.Contains(avatarKey, "googleusercontent") {
-			avatarUrls = append(avatarUrls, avatarKey)
-			continue
-		}
-		// Generate pre-signed URL
-		avatarUrl := fmt.Sprintf("%s/%s", strings.TrimRight(cloudfrontURL, "/"), avatarKey)
+	for _, avatarUrl := range request.AvatarKeys {
 
 		avatarUrls = append(avatarUrls, avatarUrl)
 	}
