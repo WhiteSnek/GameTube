@@ -39,5 +39,5 @@ type MultiVideos struct {
 	OwnerName   string `json:"ownerName" binding:"required"`
 	GuildAvatar string `json:"guildAvatar,omitempty"`
 	GuildName   string `json:"guildName" binding:"required"`
-	CreatedAt   string `json:"uploadDate" binding:"required"`
+	CreatedAt   string `gorm:"column:createdAt" json:"uploadDate" binding:"required"`
 }
