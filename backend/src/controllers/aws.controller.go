@@ -8,7 +8,7 @@ import (
 	"os"
 	"sync"
 	"time"
-
+	"path"
 	"github.com/WhiteSnek/GameTube/src/config"
 	"github.com/WhiteSnek/GameTube/src/models"
 	"github.com/gin-gonic/gin"
@@ -334,6 +334,7 @@ func GetUserAvatars(c *gin.Context) {
 
 func CheckVideoAvailability(c *gin.Context) {
 	key := c.Query("key")
+	key = path.Join(key, "master.m3u8")
 	bucketName := os.Getenv("AWS_TRANSCODED_VIDEO_BUCKET")
 	params := &s3.HeadObjectInput{
 		Bucket: aws.String(bucketName),
