@@ -1,6 +1,12 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { ArrowUp, EllipsisVertical, MessageCircle, Trash } from "lucide-react";
+import {
+  ArrowUp,
+  EllipsisVertical,
+  MessageCircle,
+  Smile,
+  Trash,
+} from "lucide-react";
 import { useComment } from "@/context/comment_provider";
 import { useUser } from "@/context/user_provider";
 import {
@@ -10,6 +16,7 @@ import {
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { DefaultAvatar } from "@/assets";
+import EmojiPicker, { Theme } from "emoji-picker-react";
 interface CommentType {
   id: string;
   ownerAvatar: string;
@@ -37,7 +44,8 @@ const Comment = ({
   const [likes, setLikes] = useState<number>(comment.likes);
   const [liked, setLiked] = useState<boolean>(true);
   const { addLike, removeLike, getLike } = useUser();
-  const entityType = depth > 0 ? "reply" : "comment"
+  const entityType = depth > 0 ? "reply" : "comment";
+  const [emojiOpen, setEmojiOpen] = useState<boolean>(false);
   useEffect(() => {
     const handleIsLiked = async () => {
       const response = await getLike(comment.id, entityType);
@@ -81,7 +89,7 @@ const Comment = ({
       prevReplies.map((reply, idx) => ({
         ...reply,
         ownerAvatar: avatarUrls[idx] ?? reply.ownerAvatar,
-      }))
+      })),
     );
   };
   const addCommentReply = async (e: React.FormEvent) => {
@@ -165,7 +173,8 @@ const Comment = ({
               onClick={handleToggleLike}
               className={`flex items-center gap-1 hover:text-blue-600 ${liked ? "text-red-500" : ""}`}
             >
-              <ArrowUp size={16} />{likes}
+              <ArrowUp size={16} />
+              {likes}
             </button>
             {depth < 4 && (
               <button
@@ -183,13 +192,32 @@ const Comment = ({
               ))}
               {depth < 4 && (
                 <form className="mt-3 flex gap-2" onSubmit={addCommentReply}>
-                  <input
-                    type="text"
-                    placeholder="Reply..."
-                    value={replyText}
-                    onChange={(e) => setReplyText(e.target.value)}
-                    className="flex-1 p-2 border rounded-md dark:bg-zinc-700 dark:text-white"
-                  />
+                  <div className="relative w-full px-2 flex justify-center align-center dark:bg-zinc-700 border rounded-md">
+                    <input
+                      type="text"
+                      placeholder="Reply..."
+                      value={replyText}
+                      onChange={(e) => setReplyText(e.target.value)}
+                      className="flex-1 p-2 w-full dark:text-white focus:outline-none"
+                    />
+                    <button
+                      className="hover:cursor-pointer"
+                      onClick={() => setEmojiOpen((prev) => !prev)}
+                    >
+                      <Smile size={25} />
+                    </button>
+                    {emojiOpen && (
+                      <div className="absolute bottom-12 right-0 z-50">
+                        <EmojiPicker
+                          onEmojiClick={(emojiData) =>
+                            setReplyText((prev) => prev + emojiData.emoji)
+                          }
+                          theme="dark"
+                          emojiStyle="native"
+                        />
+                      </div>
+                    )}
+                  </div>
                   <button
                     type="submit"
                     className="px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
@@ -210,6 +238,7 @@ const Comments = ({ videoId }: { videoId: string }) => {
   const [comments, setComments] = useState<CommentType[]>([]);
   const [newComment, setNewComment] = useState<string>("");
   const { getComments, addComment } = useComment();
+  const [emojiOpen, setEmojiOpen] = useState<boolean>(false);
   const { getMultipleUserAvatars } = useUser();
   useEffect(() => {
     const fetchComments = async () => {
@@ -235,7 +264,7 @@ const Comments = ({ videoId }: { videoId: string }) => {
       prevComments.map((comment, idx) => ({
         ...comment,
         ownerAvatar: avatarUrls[idx] ?? comment.ownerAvatar,
-      }))
+      })),
     );
   };
   const addVideoComment = async (e: React.FormEvent) => {
@@ -268,13 +297,32 @@ const Comments = ({ videoId }: { videoId: string }) => {
         Comments
       </h2>
       <form className="mb-4 flex gap-2" onSubmit={addVideoComment}>
-        <input
-          type="text"
-          placeholder="Add a comment..."
-          value={newComment}
-          onChange={(e) => setNewComment(e.target.value)}
-          className="flex-1 p-2 border rounded-md dark:bg-zinc-700 dark:text-white focus:outline-none"
-        />
+        <div className="relative w-full px-2 flex justify-center align-center dark:bg-zinc-700 border rounded-md">
+          <input
+            type="text"
+            placeholder="Add a comment..."
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+            className="flex-1 p-2 w-full dark:text-white focus:outline-none"
+          />
+          <button
+            className="hover:cursor-pointer"
+            onClick={() => setEmojiOpen((prev) => !prev)}
+          >
+            <Smile size={25} />
+          </button>
+          {emojiOpen && (
+            <div className="absolute bottom-12 right-0 z-50">
+              <EmojiPicker
+                onEmojiClick={(emojiData) =>
+                  setNewComment((prev) => prev + emojiData.emoji)
+                }
+                theme="dark"
+                emojiStyle="native"
+              />
+            </div>
+          )}
+        </div>
         <button
           type="submit"
           className="px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 flex items-center gap-1"
@@ -282,6 +330,7 @@ const Comments = ({ videoId }: { videoId: string }) => {
           <MessageCircle size={25} />
         </button>
       </form>
+
       {!comments || comments.length === 0 ? (
         <p className="text-center text-zinc-500">
           This section feels like a ghost town. Add a comment to bring it to
