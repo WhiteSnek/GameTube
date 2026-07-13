@@ -343,7 +343,7 @@ func CheckVideoAvailability(c *gin.Context) {
 	_, err := config.S3Client.HeadObject(context.TODO(), params)
 	if err != nil {
 
-		c.JSON(http.StatusOK, gin.H{"result": false, "error": err})
+		c.JSON(http.StatusOK, gin.H{"result": false, "error": err.Error()})
 		return
 	}
 
