@@ -8,7 +8,6 @@ import (
 	"os"
 	"sync"
 	"time"
-	"path"
 	"github.com/WhiteSnek/GameTube/src/config"
 	"github.com/WhiteSnek/GameTube/src/models"
 	"github.com/gin-gonic/gin"
@@ -280,7 +279,7 @@ func GetVideoFiles(c *gin.Context) {
 			continue
 		}
 		var videoImage VideoImages
-		videoImage.Video = video.VideoURL
+		videoImage.Video = fmt.Sprintf("%s/master.m3u8", video.VideoURL)
 		if video.Thumbnail != "" {
 			videoImage.Thumbnail = video.Thumbnail
 		}
@@ -334,7 +333,6 @@ func GetUserAvatars(c *gin.Context) {
 
 func CheckVideoAvailability(c *gin.Context) {
 	key := c.Query("key")
-	key = path.Join(key, "master.m3u8")
 	bucketName := os.Getenv("AWS_TRANSCODED_VIDEO_BUCKET")
 	params := &s3.HeadObjectInput{
 		Bucket: aws.String(bucketName),
