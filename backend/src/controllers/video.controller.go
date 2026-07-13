@@ -3,12 +3,14 @@ package controllers
 import (
 	"errors"
 	"net/http"
+	"time"
+
 	"github.com/WhiteSnek/GameTube/src/config"
 	"github.com/WhiteSnek/GameTube/src/dtos"
 	"github.com/WhiteSnek/GameTube/src/models"
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 func UploadVideo(c *gin.Context) {
@@ -398,7 +400,7 @@ func SearchVideo(c *gin.Context) {
 			similarity(g.name, ?) > 0.3 OR
 			similarity(t.name, ?) > 0.3
 		)
-		AND v."is_private" = FALSE
+		AND v.is_private = FALSE
 		ORDER BY v.id, similarity(v.title, ?) DESC
 		LIMIT 10;
 	`
@@ -545,6 +547,7 @@ func AddView(c *gin.Context) {
 		ID:      uuid.NewString(),
 		UserID:  userIdStr,
 		VideoID: videoId,
+		ViewedAt: time.Now(),
 	}
 
 	if err := config.DB.Create(&history).Error; err != nil {
