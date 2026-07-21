@@ -17,7 +17,7 @@ import {
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { DefaultAvatar } from "@/assets";
-import EmojiPicker, { Theme } from "emoji-picker-react";
+import EmojiPicker, { Theme, EmojiStyle } from "emoji-picker-react";
 interface CommentType {
   id: string;
   ownerAvatar: string;
@@ -251,8 +251,8 @@ const Comment = ({
                           onEmojiClick={(emojiData) =>
                             setReplyText((prev) => prev + emojiData.emoji)
                           }
-                          theme="dark"
-                          emojiStyle="native"
+                          theme={Theme.DARK}
+                          emojiStyle={EmojiStyle.NATIVE}
                         />
                       </div>
                     )}
@@ -356,8 +356,8 @@ const Comments = ({ videoId }: { videoId: string }) => {
                 onEmojiClick={(emojiData) =>
                   setNewComment((prev) => prev + emojiData.emoji)
                 }
-                theme="dark"
-                emojiStyle="native"
+                theme={Theme.DARK}
+                emojiStyle={EmojiStyle.NATIVE}
               />
             </div>
           )}
