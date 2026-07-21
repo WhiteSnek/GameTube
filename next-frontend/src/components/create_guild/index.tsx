@@ -8,13 +8,21 @@ import {
   DialogHeader,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { Check, ChevronsUpDown } from "lucide-react";
 import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -34,9 +42,12 @@ const CreateGuild: React.FC = () => {
     tags: [] as string[],
   });
   const [tagInput, setTagInput] = useState("");
+  const [gameOpen, setGameOpen] = useState(false);
+
+  const selectedGame = form.tags.find((tag) => games.includes(tag)) ?? "";
   const handleFileChange = (
     e: React.ChangeEvent<HTMLInputElement>,
-    field: "avatar" | "coverImage"
+    field: "avatar" | "coverImage",
   ) => {
     if (e.target.files && e.target.files[0]) {
       setForm({ ...form, [field]: e.target.files[0] });
@@ -55,11 +66,11 @@ const CreateGuild: React.FC = () => {
       const emailPrefix = User?.email.split("@")[0];
       const avatarKey = `images/guild/avatar/${emailPrefix}`;
       const coverImageKey = `images/guild/coverImage/${emailPrefix}`;
-      const CLOUDFRONT_URL = process.env.NEXT_PUBLIC_CLOUDFRONT_URL
+      const CLOUDFRONT_URL = process.env.NEXT_PUBLIC_CLOUDFRONT_URL;
       // Request Presigned URLs from backend
       const { avatarUrl, coverUrl } = await getSignedUrls(
         avatarKey,
-        coverImageKey
+        coverImageKey,
       );
       if (!avatarUrl || !coverUrl) {
         console.error("Failed to get presigned URLs");
@@ -81,7 +92,7 @@ const CreateGuild: React.FC = () => {
         avatarUrl,
         coverUrl,
         form.avatar,
-        form.coverImage
+        form.coverImage,
       );
       if (!uploadResult.success) {
         console.error("Image upload failed", uploadResult.error);
@@ -182,7 +193,7 @@ const CreateGuild: React.FC = () => {
                         {
                           target: { files: e.dataTransfer.files },
                         } as React.ChangeEvent<HTMLInputElement>,
-                        "avatar"
+                        "avatar",
                       );
                     }
                   }}
@@ -222,7 +233,7 @@ const CreateGuild: React.FC = () => {
                         {
                           target: { files: e.dataTransfer.files },
                         } as React.ChangeEvent<HTMLInputElement>,
-                        "coverImage"
+                        "coverImage",
                       );
                     }
                   }}
@@ -269,30 +280,61 @@ const CreateGuild: React.FC = () => {
                   <Label className="text-zinc-700 dark:text-zinc-300">
                     Select Game
                   </Label>
-                  <Select
-                    onValueChange={(selectedGame) => {
-                      // Remove any previous game tags (from your games list)
-                      const filteredTags = form.tags.filter(
-                        (tag) => !games.includes(tag)
-                      );
-                      // Add only the newly selected game
-                      setForm({
-                        ...form,
-                        tags: [...filteredTags, selectedGame],
-                      });
-                    }}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Choose a game..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {games.map((game) => (
-                        <SelectItem key={game} value={game}>
-                          {game}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+
+                  <Popover open={gameOpen} onOpenChange={setGameOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={gameOpen}
+                        className="w-full justify-between font-normal"
+                      >
+                        {selectedGame || "Choose a game..."}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+
+                    <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
+                      <Command>
+                        <CommandInput placeholder="Search games..." />
+
+                        <CommandList>
+                          <CommandEmpty>No game found.</CommandEmpty>
+
+                          <CommandGroup>
+                            {games.map((game) => (
+                              <CommandItem
+                                key={game}
+                                value={game}
+                                onSelect={(currentValue) => {
+                                  const filteredTags = form.tags.filter(
+                                    (tag) => !games.includes(tag),
+                                  );
+
+                                  setForm({
+                                    ...form,
+                                    tags: [...filteredTags, currentValue],
+                                  });
+
+                                  setGameOpen(false);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    selectedGame === game
+                                      ? "opacity-100"
+                                      : "opacity-0",
+                                  )}
+                                />
+                                {game}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                 </div>
               </div>
             </div>
