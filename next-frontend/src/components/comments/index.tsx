@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { useComment } from "@/context/comment_provider";
 import { useUser } from "@/context/user_provider";
+import { useVideo } from "@/context/video_provider";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -41,6 +42,44 @@ const Comment = ({
   const [showSetting, setShowSetting] = useState<boolean>(false);
   const { getReplies, addReply, deleteComment } = useComment();
   const { getMultipleUserAvatars } = useUser();
+  const { seekTo } = useVideo();
+
+  // regex matches hh:mm:ss or mm:ss
+  // capturing group so split() will include the matched timestamps in the array
+  const TIMESTAMP_REGEX = /(\b\d{1,2}:\d{2}(?::\d{2})?\b)/; // no global flag to avoid lastIndex side-effects
+
+  const timestampToSeconds = (t: string): number => {
+    const parts = t.split(":").map((p) => parseInt(p, 10));
+    if (parts.length === 3) {
+      return parts[0] * 3600 + parts[1] * 60 + parts[2];
+    }
+    if (parts.length === 2) {
+      return parts[0] * 60 + parts[1];
+    }
+    return 0;
+  };
+
+  const renderContentWithTimestamps = (text: string) => {
+    if (!text) return null;
+    const parts = text.split(TIMESTAMP_REGEX);
+    return parts.map((part, idx) => {
+      const isTimestamp = TIMESTAMP_REGEX.test(part);
+      if (isTimestamp) {
+        const seconds = timestampToSeconds(part);
+        return (
+          <button
+            key={idx}
+            onClick={() => seekTo(seconds, true)}
+            className="text-blue-600 dark:text-blue-400 underline px-1"
+            title={`Jump to ${part}`}
+          >
+            {part}
+          </button>
+        );
+      }
+      return <span key={idx}>{part}</span>;
+    });
+  };
   const [likes, setLikes] = useState<number>(comment.likes);
   const [liked, setLiked] = useState<boolean>(true);
   const { addLike, removeLike, getLike } = useUser();
@@ -141,7 +180,7 @@ const Comment = ({
                 </span>
               </div>
               <p className="mt-2 text-zinc-800 dark:text-zinc-300">
-                {comment.content}
+                {renderContentWithTimestamps(comment.content)}
               </p>
             </div>
             <div>

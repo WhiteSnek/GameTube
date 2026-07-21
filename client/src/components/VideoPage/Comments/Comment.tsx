@@ -9,12 +9,39 @@ import ReplyProvider from "../../../providers/ReplyProvider";
 import { useUser } from "../../../providers/UserProvider";
 import { useComment } from "../../../providers/CommentProvider";
 import formatDate from "../../../utils/formatDate";
+import parseTimestampToSeconds from "../../../utils/parseTimestamp";
 
 interface CommentProps {
   comment: CommentTemplate;
 }
 
 const SingleComment: React.FC<CommentProps> = ({ comment }) => {
+  const timeSplitRegex = /((?:\d{1,2}:)?\d{1,2}:\d{2})/g; // captures hh:mm:ss or mm:ss
+  const isTimeRegex = /^(?:\d{1,2}:)?\d{1,2}:\d{2}$/;
+
+  const renderContentWithTimestamps = (text: string) => {
+    if (!text) return null;
+    const parts = text.split(timeSplitRegex);
+    return parts.map((part, idx) => {
+      if (isTimeRegex.test(part)) {
+        const seconds = parseTimestampToSeconds(part);
+        return (
+          <button
+            key={idx}
+            className="text-blue-400 underline mr-1"
+            onClick={() => {
+              const ev = new CustomEvent('seek-video', { detail: { seconds } });
+              window.dispatchEvent(ev);
+            }}
+          >
+            {part}
+          </button>
+        );
+      }
+      return <span key={idx}>{part}</span>;
+    });
+  };
+
   const [liked, setLiked] = useState<boolean>(false);
   const [showReply, setShowReply] = useState<boolean>(false);
   const [likeCount, setLikeCount] = useState<number>(comment.likes);
@@ -77,7 +104,9 @@ const SingleComment: React.FC<CommentProps> = ({ comment }) => {
           {/* <span className='py-1 px-2 text-xs font-semibold bg-red-500 rounded-full'>{comment.user.userRole}</span> */}
           <p className='text-sm text-gray-400'>{formatDate(comment.created_at)}</p>
         </div>
-        <p>{comment.content}</p>
+        <p>
+          {renderContentWithTimestamps(comment.content)}
+        </p>
         <div className="flex gap-1 sm:gap-3 items-center py-1">
           <button
             onClick={toggleLike}
