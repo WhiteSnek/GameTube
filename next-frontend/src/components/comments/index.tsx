@@ -240,6 +240,7 @@ const Comment = ({
                       className="flex-1 p-2 w-full dark:text-white focus:outline-none"
                     />
                     <button
+                      type="button"
                       className="hover:cursor-pointer"
                       onClick={() => setEmojiOpen((prev) => !prev)}
                     >
@@ -345,6 +346,7 @@ const Comments = ({ videoId }: { videoId: string }) => {
             className="flex-1 p-2 w-full dark:text-white focus:outline-none"
           />
           <button
+            type="button"
             className="hover:cursor-pointer"
             onClick={() => setEmojiOpen((prev) => !prev)}
           >
