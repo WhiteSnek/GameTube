@@ -13,11 +13,11 @@ interface VideoContextType {
     thumbnailUrl: string,
     videoFile: File,
     thumbnaiFile: File,
-    setProgress: React.Dispatch<React.SetStateAction<number>>
+    setProgress: React.Dispatch<React.SetStateAction<number>>,
   ) => Promise<any>;
   getSignedUrls: (
     email: string,
-    guild: string
+    guild: string,
   ) => Promise<{
     videoUrl: string;
     videoKey: string;
@@ -36,6 +36,9 @@ interface VideoContextType {
   checkVideoInWatchLater: (videoId: string) => Promise<boolean>;
   removeFromHistory: (entityId: string) => Promise<string>;
   checkVideo: (key: string) => Promise<boolean>;
+  // Player control helpers for cross-component control (e.g., seeking from comments)
+  registerPlayer: (player: any) => void;
+  seekTo: (seconds: number, autoPlay?: boolean) => void;
 }
 
 const VideoContext = createContext<VideoContextType | undefined>(undefined);
@@ -54,6 +57,8 @@ interface VideoProviderProps {
 
 const VideoProvider: React.FC<VideoProviderProps> = ({ children }) => {
   const [videos, setVideos] = useState<VideoType[]>([]);
+  // store a player reference to allow other components to control playback (seek)
+  const playerRef = React.useRef<any | null>(null);
 
   const addVideo = async (data: UploadVideoType): Promise<void> => {
     console.log(data);
@@ -70,7 +75,7 @@ const VideoProvider: React.FC<VideoProviderProps> = ({ children }) => {
     thumbnailUrl: string,
     videoFile: File,
     thumbnailFile: File,
-    setProgress: React.Dispatch<React.SetStateAction<number>>
+    setProgress: React.Dispatch<React.SetStateAction<number>>,
   ) => {
     try {
       // Upload Video
@@ -80,10 +85,12 @@ const VideoProvider: React.FC<VideoProviderProps> = ({ children }) => {
         },
         onUploadProgress: (progressEvent) => {
           if (progressEvent.total) {
-            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-            setProgress(percentCompleted);  
+            const percentCompleted = Math.round(
+              (progressEvent.loaded * 100) / progressEvent.total,
+            );
+            setProgress(percentCompleted);
           }
-        }
+        },
       });
       console.log("Video uploaded successfully");
       // Upload Thumbnail
@@ -102,7 +109,7 @@ const VideoProvider: React.FC<VideoProviderProps> = ({ children }) => {
 
   const getSignedUrls = async (
     email: string,
-    guild: string
+    guild: string,
   ): Promise<{
     videoUrl: string;
     videoKey: string;
@@ -111,7 +118,7 @@ const VideoProvider: React.FC<VideoProviderProps> = ({ children }) => {
   }> => {
     const username = email.split("@")[0];
     const response = await axios.get(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}/image/video/upload-url?email=${username}&guild=${guild}`
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/image/video/upload-url?email=${username}&guild=${guild}`,
     );
     const { videoUrl, videoKey, thumbnailUrl, thumbnailKey } = response.data;
     return { videoUrl, videoKey, thumbnailUrl, thumbnailKey };
@@ -131,9 +138,7 @@ const VideoProvider: React.FC<VideoProviderProps> = ({ children }) => {
     }
   };
 
-  const getVideoFiles = async (
-    videoIds: string[]
-  ): Promise<VideoImages[]> => {
+  const getVideoFiles = async (videoIds: string[]): Promise<VideoImages[]> => {
     try {
       const response = await api.post("/image/video/images", { videoIds });
       console.log(response.data.videoFiles);
@@ -181,7 +186,7 @@ const VideoProvider: React.FC<VideoProviderProps> = ({ children }) => {
   const searchVideos = async (query: string): Promise<VideoType[]> => {
     try {
       const response = await api.get(
-        `/video/search?q=${encodeURIComponent(query)}`
+        `/video/search?q=${encodeURIComponent(query)}`,
       );
       if (response.data.data) return response.data.data;
       return [];
@@ -211,7 +216,7 @@ const VideoProvider: React.FC<VideoProviderProps> = ({ children }) => {
       console.log(error);
       return "error";
     }
-  }
+  };
   const removeFromWatchLater = async (videoId: string): Promise<string> => {
     try {
       const response = await api.delete(`/video/watchlater/${videoId}`);
@@ -221,7 +226,7 @@ const VideoProvider: React.FC<VideoProviderProps> = ({ children }) => {
       console.log(error);
       return "error";
     }
-  }
+  };
 
   const checkVideoInWatchLater = async (videoId: string): Promise<boolean> => {
     try {
@@ -232,7 +237,7 @@ const VideoProvider: React.FC<VideoProviderProps> = ({ children }) => {
       console.log(error);
       return false;
     }
-  }
+  };
 
   const removeFromHistory = async (entityId: string): Promise<string> => {
     try {
@@ -243,26 +248,55 @@ const VideoProvider: React.FC<VideoProviderProps> = ({ children }) => {
       console.log(error);
       return "error";
     }
-  }
+  };
 
-  const checkVideo = async(key: string): Promise<boolean> => {
+  const checkVideo = async (key: string): Promise<boolean> => {
     try {
       const getPathFromUrl = (url: string): string => {
         const parsedUrl = new URL(url);
         return parsedUrl.pathname.startsWith("/")
-          ? parsedUrl.pathname.slice(1) 
+          ? parsedUrl.pathname.slice(1)
           : parsedUrl.pathname;
       };
       const path = getPathFromUrl(key);
-    const response = await api.get(`/image/check?key=${path}`)
-    if (response) return response.data.result
+      const response = await api.get(`/image/check?key=${path}`);
+      if (response) return response.data.result;
       return false;
     } catch (error) {
       console.log(error);
       return false;
     }
-  }
+  };
 
+  // register a video.js player instance so other components can control it
+  const registerPlayer = (player: any) => {
+    playerRef.current = player;
+  };
+
+  // seek to given seconds; optionally autoplay after seeking
+  const seekTo = (seconds: number, autoPlay: boolean = true) => {
+    try {
+      if (!playerRef.current) return;
+      const player = playerRef.current;
+      if (typeof player.currentTime === "function") {
+        player.currentTime(seconds);
+      } else if (player.seek) {
+        // fallback for other player APIs
+        player.seek(seconds);
+      }
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
+      if (autoPlay && typeof player.play === "function") {
+        player.play().catch(() => {
+          /* ignore autoplay errors */
+        });
+      }
+    } catch (error) {
+      console.error("Error seeking player:", error);
+    }
+  };
 
   return (
     <VideoContext.Provider
@@ -283,7 +317,9 @@ const VideoProvider: React.FC<VideoProviderProps> = ({ children }) => {
         removeFromWatchLater,
         checkVideoInWatchLater,
         removeFromHistory,
-        checkVideo
+        checkVideo,
+        registerPlayer,
+        seekTo,
       }}
     >
       {children}

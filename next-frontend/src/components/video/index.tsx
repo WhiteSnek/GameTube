@@ -17,7 +17,7 @@ const VideoSection: React.FC<VideoSectionProps> = ({ video }) => {
   const watchedTimeRef = useRef(0);
   const lastTimeRef = useRef(0);
   const hasCountedViewRef = useRef(false);
-  const { addView, checkVideo } = useVideo();
+  const { addView, checkVideo, registerPlayer } = useVideo();
 
   const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
 
@@ -33,9 +33,7 @@ const VideoSection: React.FC<VideoSectionProps> = ({ video }) => {
     sources: [
       {
         src: url,
-        type: url.endsWith(".m3u8")
-          ? "application/x-mpegURL"
-          : "video/mp4",
+        type: url.endsWith(".m3u8") ? "application/x-mpegURL" : "video/mp4",
       },
     ],
   });
@@ -43,7 +41,7 @@ const VideoSection: React.FC<VideoSectionProps> = ({ video }) => {
   useEffect(() => {
     const checkAvailability = async () => {
       const available = await checkVideo(video.videoUrl);
-      console.log(available)
+      console.log(available);
       setIsAvailable(available);
     };
     checkAvailability();
@@ -57,9 +55,13 @@ const VideoSection: React.FC<VideoSectionProps> = ({ video }) => {
       videoElement.classList.add("video-js", "vjs-default-skin");
       videoRef.current.appendChild(videoElement);
 
-      const player = videojs(videoElement, getVideoJsOptions(video.videoUrl), () => {
-        (player as any).hlsQualitySelector({ displayCurrentQuality: true });
-      });
+      const player = videojs(
+        videoElement,
+        getVideoJsOptions(video.videoUrl),
+        () => {
+          (player as any).hlsQualitySelector({ displayCurrentQuality: true });
+        },
+      );
 
       player.on("timeupdate", () => {
         const current = player.currentTime();
@@ -82,6 +84,12 @@ const VideoSection: React.FC<VideoSectionProps> = ({ video }) => {
       });
 
       playerRef.current = player;
+      // register player so other components (comments) can control playback
+      try {
+        registerPlayer(player);
+      } catch (err) {
+        // ignore if registerPlayer not available
+      }
     } else {
       const player = playerRef.current;
       player.src({
@@ -91,6 +99,9 @@ const VideoSection: React.FC<VideoSectionProps> = ({ video }) => {
           : "video/mp4",
       });
       player.play();
+      try {
+        registerPlayer(player);
+      } catch {}
     }
   }, [video.videoUrl, isAvailable]);
 
