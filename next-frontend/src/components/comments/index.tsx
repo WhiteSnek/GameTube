@@ -70,7 +70,7 @@ const Comment = ({
           <button
             key={idx}
             onClick={() => seekTo(seconds, true)}
-            className="text-blue-600 dark:text-blue-400 underline px-1"
+            className="text-blue-600 dark:text-blue-400 cursor-pointer"
             title={`Jump to ${part}`}
           >
             {part}
