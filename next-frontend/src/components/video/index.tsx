@@ -17,7 +17,7 @@ const VideoSection: React.FC<VideoSectionProps> = ({ video }) => {
   const watchedTimeRef = useRef(0);
   const lastTimeRef = useRef(0);
   const hasCountedViewRef = useRef(false);
-  const { addView, checkVideo } = useVideo();
+  const { addView, checkVideo, registerPlayer } = useVideo();
 
   const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
 
@@ -82,6 +82,12 @@ const VideoSection: React.FC<VideoSectionProps> = ({ video }) => {
       });
 
       playerRef.current = player;
++      // register player so other components (comments) can control playback
++      try {
++        registerPlayer(player);
++      } catch (err) {
++        // ignore if registerPlayer not available
++      }
     } else {
       const player = playerRef.current;
       player.src({
@@ -91,6 +97,7 @@ const VideoSection: React.FC<VideoSectionProps> = ({ video }) => {
           : "video/mp4",
       });
       player.play();
++      try { registerPlayer(player); } catch {};
     }
   }, [video.videoUrl, isAvailable]);
 

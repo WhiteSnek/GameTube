@@ -36,6 +36,9 @@ interface VideoContextType {
   checkVideoInWatchLater: (videoId: string) => Promise<boolean>;
   removeFromHistory: (entityId: string) => Promise<string>;
   checkVideo: (key: string) => Promise<boolean>;
+  // Player control helpers for cross-component control (e.g., seeking from comments)
+  registerPlayer: (player: any) => void;
+  seekTo: (seconds: number, autoPlay?: boolean) => void;
 }
 
 const VideoContext = createContext<VideoContextType | undefined>(undefined);
@@ -54,6 +57,8 @@ interface VideoProviderProps {
 
 const VideoProvider: React.FC<VideoProviderProps> = ({ children }) => {
   const [videos, setVideos] = useState<VideoType[]>([]);
+  // store a player reference to allow other components to control playback (seek)
+  const playerRef = React.useRef<any | null>(null);
 
   const addVideo = async (data: UploadVideoType): Promise<void> => {
     console.log(data);
@@ -263,6 +268,31 @@ const VideoProvider: React.FC<VideoProviderProps> = ({ children }) => {
     }
   }
 
+  // register a video.js player instance so other components can control it
+  const registerPlayer = (player: any) => {
+    playerRef.current = player;
+  };
+
+  // seek to given seconds; optionally autoplay after seeking
+  const seekTo = (seconds: number, autoPlay: boolean = true) => {
+    try {
+      if (!playerRef.current) return;
+      const player = playerRef.current;
+      if (typeof player.currentTime === "function") {
+        player.currentTime(seconds);
+      } else if (player.seek) {
+        // fallback for other player APIs
+        player.seek(seconds);
+      }
+      if (autoPlay && typeof player.play === "function") {
+        player.play().catch(() => {
+          /* ignore autoplay errors */
+        });
+      }
+    } catch (error) {
+      console.error("Error seeking player:", error);
+    }
+  };
 
   return (
     <VideoContext.Provider
@@ -283,7 +313,9 @@ const VideoProvider: React.FC<VideoProviderProps> = ({ children }) => {
         removeFromWatchLater,
         checkVideoInWatchLater,
         removeFromHistory,
-        checkVideo
+        checkVideo,
+        registerPlayer,
+        seekTo,
       }}
     >
       {children}

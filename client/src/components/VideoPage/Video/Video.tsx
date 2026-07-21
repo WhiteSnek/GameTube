@@ -74,6 +74,7 @@ const Video: React.FC<VideoProps> = ({ video, thumbnail, videoId }) => {
   };
 
   useEffect(() => {
+    let seekHandler: EventListener | null = null;
     if (videoRef.current && !playerRef.current) {
       const videoElement = document.createElement('video');
       videoElement.classList.add('video-js', 'vjs-big-play-centered');
@@ -86,6 +87,22 @@ const Video: React.FC<VideoProps> = ({ video, thumbnail, videoId }) => {
 
       player.addClass('vjs-theme-city');
       playerRef.current = player;
+
+      // Listen for timestamp seek events from other parts of the app
+      seekHandler = (e: Event) => {
+        try {
+          const detail: any = (e as CustomEvent).detail;
+          const seconds = detail?.seconds;
+          if (typeof seconds === 'number' && playerRef.current) {
+            playerRef.current.currentTime(seconds);
+            // ensure playback after seeking
+            playerRef.current.play().catch(() => {});
+          }
+        } catch (err) {
+          console.error('seekHandler error', err);
+        }
+      };
+      window.addEventListener('seek-video', seekHandler);
 
       // Track the timeupdate event to check video progress
       player.on('timeupdate', () => {
@@ -117,6 +134,7 @@ const Video: React.FC<VideoProps> = ({ video, thumbnail, videoId }) => {
         playerRef.current.dispose();
         playerRef.current = null;
       }
+      if (seekHandler) window.removeEventListener('seek-video', seekHandler);
     };
   }, [video, videoId, increaseViews]); // Dependencies for useEffect
 
