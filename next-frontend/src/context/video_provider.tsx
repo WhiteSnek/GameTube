@@ -36,6 +36,7 @@ interface VideoContextType {
   checkVideoInWatchLater: (videoId: string) => Promise<boolean>;
   removeFromHistory: (entityId: string) => Promise<string>;
   checkVideo: (key: string) => Promise<boolean>;
+  getGuildTags: (guildId: string) => Promise<string[]>
   // Player control helpers for cross-component control (e.g., seeking from comments)
   registerPlayer: (player: any) => void;
   seekTo: (seconds: number, autoPlay?: boolean) => void;
@@ -268,6 +269,19 @@ const VideoProvider: React.FC<VideoProviderProps> = ({ children }) => {
     }
   };
 
+  const getGuildTags = async (guildId: string): Promise<string[]> => {
+    try {
+      const response = await api.get(`/guild/tags/${guildId}`);
+      if (response){
+        return response.data.data
+      }
+      return []
+    } catch (error) {
+      console.log(error);
+      return [];
+    }
+  }
+
   // register a video.js player instance so other components can control it
   const registerPlayer = (player: any) => {
     playerRef.current = player;
@@ -318,6 +332,7 @@ const VideoProvider: React.FC<VideoProviderProps> = ({ children }) => {
         checkVideoInWatchLater,
         removeFromHistory,
         checkVideo,
+        getGuildTags,
         registerPlayer,
         seekTo,
       }}
