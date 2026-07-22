@@ -58,6 +58,7 @@
     "react-icons": "^5.5.0",
     "tailwind-merge": "^3.0.2",
     "tailwindcss-animate": "^1.0.7",
+    "truncate-html": "^1.2.2",
     "video.js": "^8.22.0",
     "videojs-hls-quality-selector": "^2.0.0"
   },

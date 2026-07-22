@@ -31,6 +31,7 @@ import { Button } from "@/components/ui/button";
 import { useUser } from "@/context/user_provider";
 import { useGuild } from "@/context/guild_provider";
 import games from "@/data/games.json";
+import RichTextEditor from "../rich_text_editor/RichTextEditor";
 const CreateGuild: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [form, setForm] = useState({
@@ -141,247 +142,261 @@ const CreateGuild: React.FC = () => {
           </DialogTrigger>
 
           {/* Dialog Content */}
-          <DialogContent className="bg-white dark:bg-zinc-900 rounded-lg p-6 w-full max-w-lg shadow-xl">
+          <DialogContent className="bg-white overflow-y-scroll dark:bg-zinc-900 rounded-lg p-6 w-full sm:max-w-7xl h-[700px] shadow-xl">
             <DialogHeader>
-              <DialogTitle className="text-xl flex gap-4 items-center justify-center font-semibold text-zinc-900 dark:text-zinc-100">
-                <Castle /> Create a New Guild
+              <DialogTitle>
+                <div className="text-xl flex gap-4 items-center justify-center font-semibold text-zinc-900 dark:text-zinc-100">
+                  <Castle /> Create a New Guild
+                </div>
+                <hr className="border-t border-red-700 m-4" />
               </DialogTitle>
             </DialogHeader>
 
             {/* Form Fields */}
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Guild Name */}
-              <div className="flex flex-col gap-1">
-                <Label className="text-zinc-700 dark:text-zinc-300">
-                  Guild Name
-                </Label>
-                <Input
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  type="text"
-                  placeholder="Enter guild name"
-                  required
-                />
-              </div>
-
-              {/* Description */}
-              <div className="flex flex-col gap-1">
-                <Label className="text-zinc-700 dark:text-zinc-300">
-                  Description
-                </Label>
-                <Textarea
-                  onChange={(e) =>
-                    setForm({ ...form, description: e.target.value })
-                  }
-                  placeholder="Describe your guild"
-                />
-              </div>
-              <h1 className="text-zinc-700 text-sm dark:text-zinc-300">
-                Upload Images
-              </h1>
-              <div className="grid grid-cols-2 justify-center items-center gap-4">
-                {/* Avatar Upload */}
-                <div
-                  className="flex flex-col text-center items-center justify-center border-2 border-dashed border-gray-400 rounded-lg p-6 cursor-pointer hover:border-gray-600"
-                  onClick={() =>
-                    document.getElementById("avatarUpload")?.click()
-                  }
-                  onDragOver={(e) => e.preventDefault()} // Prevent default browser behavior
-                  onDrop={(e) => {
-                    e.preventDefault(); // Prevent image from opening
-                    if (e.dataTransfer.files.length > 0) {
-                      handleFileChange(
-                        {
-                          target: { files: e.dataTransfer.files },
-                        } as React.ChangeEvent<HTMLInputElement>,
-                        "avatar",
-                      );
-                    }
-                  }}
-                >
-                  {form.avatar ? (
-                    <img
-                      src={URL.createObjectURL(form.avatar)}
-                      alt="Avatar Preview"
-                      className="w-24 h-24 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex flex-col items-center text-gray-500">
-                      <UploadCloud size={40} />
-                      <p className="text-sm">Click or Drag to Upload Avatar</p>
-                    </div>
-                  )}
-                  <Input
-                    id="avatarUpload"
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => handleFileChange(e, "avatar")}
-                  />
-                </div>
-
-                {/* Cover Image Upload */}
-                <div
-                  className="flex flex-col text-center  items-center justify-center border-2 border-dashed border-gray-400 rounded-lg p-6 cursor-pointer hover:border-gray-600"
-                  onClick={() =>
-                    document.getElementById("coverImageUpload")?.click()
-                  }
-                  onDragOver={(e) => e.preventDefault()} // Prevent default behavior
-                  onDrop={(e) => {
-                    e.preventDefault(); // Prevent image from opening
-                    if (e.dataTransfer.files.length > 0) {
-                      handleFileChange(
-                        {
-                          target: { files: e.dataTransfer.files },
-                        } as React.ChangeEvent<HTMLInputElement>,
-                        "coverImage",
-                      );
-                    }
-                  }}
-                >
-                  {form.coverImage ? (
-                    <img
-                      src={URL.createObjectURL(form.coverImage)}
-                      alt="Cover Preview"
-                      className="w-full h-32 object-cover rounded-lg"
-                    />
-                  ) : (
-                    <div className="flex flex-col items-center text-gray-500">
-                      <ImagePlus size={40} />
-                      <p className="text-sm">
-                        Click or Drag to Upload Cover Image
-                      </p>
-                    </div>
-                  )}
-                  <Input
-                    id="coverImageUpload"
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => handleFileChange(e, "coverImage")}
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4 items-center">
-                {/* Private Guild */}
-                <div className="flex items-center justify-between">
-                  <Label className="text-zinc-700 dark:text-zinc-300">
-                    Private Guild?
-                  </Label>
-                  <Switch
-                    checked={form.isPrivate}
-                    onCheckedChange={(value) =>
-                      setForm({ ...form, isPrivate: value })
-                    }
-                  />
-                </div>
-
-                {/* Game Select */}
+              <div className="lg:col-span-2 space-y-6">
                 <div className="flex flex-col gap-1">
                   <Label className="text-zinc-700 dark:text-zinc-300">
-                    Select Game
+                    Guild Name
                   </Label>
+                  <Input
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    type="text"
+                    placeholder="Enter guild name"
+                    required
+                  />
+                </div>
 
-                  <Popover open={gameOpen} onOpenChange={setGameOpen}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        aria-expanded={gameOpen}
-                        className="w-full justify-between font-normal"
-                      >
-                        {selectedGame || "Choose a game..."}
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
+                {/* Description */}
+                <div className="flex flex-col gap-1">
+                  <Label className="text-zinc-700 dark:text-zinc-300">
+                    Description
+                  </Label>
+                  <div className="rounded-xl overflow-hidden border border-zinc-300 dark:border-zinc-700 shadow-lg">
+                    <RichTextEditor
+                      value={form.description}
+                      placeholder="Describe your Guild..."
+                      onChange={(value) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          description: value,
+                        }))
+                      }
+                    />
+                  </div>
+                </div>
 
-                    <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
-                      <Command>
-                        <CommandInput placeholder="Search games..." />
-
-                        <CommandList>
-                          <CommandEmpty>No game found.</CommandEmpty>
-
-                          <CommandGroup>
-                            {games.map((game) => (
-                              <CommandItem
-                                key={game}
-                                value={game}
-                                onSelect={(currentValue) => {
-                                  const filteredTags = form.tags.filter(
-                                    (tag) => !games.includes(tag),
-                                  );
-
-                                  setForm({
-                                    ...form,
-                                    tags: [...filteredTags, currentValue],
-                                  });
-
-                                  setGameOpen(false);
-                                }}
-                              >
-                                <Check
-                                  className={cn(
-                                    "mr-2 h-4 w-4",
-                                    selectedGame === game
-                                      ? "opacity-100"
-                                      : "opacity-0",
-                                  )}
-                                />
-                                {game}
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
+                <div className="space-y-4">
+                  <div className="flex flex-col gap-1">
+                    <Label className="text-zinc-700 dark:text-zinc-300">
+                      Tags
+                    </Label>
+                    <Input
+                      type="text"
+                      placeholder="Add tags to help members categorize their videos"
+                      value={tagInput}
+                      onChange={(e) => setTagInput(e.target.value)}
+                      onKeyDown={handleTagKeyDown}
+                    />
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {form.tags.map((tag, index) => (
+                        <div
+                          key={index}
+                          className="bg-gray-200 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 px-3 py-1 rounded-full flex items-center gap-2"
+                        >
+                          {tag}
+                          <X
+                            size={16}
+                            className="cursor-pointer"
+                            onClick={() => removeTag(index)}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="space-y-4">
-              <div className="flex flex-col gap-1">
-                <Label className="text-zinc-700 dark:text-zinc-300">Tags</Label>
-                <Input
-                  type="text"
-                  placeholder="Add tags to help members categorize their videos"
-                  value={tagInput}
-                  onChange={(e) => setTagInput(e.target.value)}
-                  onKeyDown={handleTagKeyDown}
-                />
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {form.tags.map((tag, index) => (
-                    <div
-                      key={index}
-                      className="bg-gray-200 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 px-3 py-1 rounded-full flex items-center gap-2"
-                    >
-                      {tag}
-                      <X
-                        size={16}
-                        className="cursor-pointer"
-                        onClick={() => removeTag(index)}
+              <div>
+                <h1 className="text-zinc-700 text-sm dark:text-zinc-300">
+                  Upload Images
+                </h1>
+                <div className="lg:col-span-1 space-y-6">
+                  {/* Avatar Upload */}
+                  <div
+                    className="h-45 flex flex-col text-center items-center justify-center border-2 border-dashed border-gray-400 rounded-lg p-6 cursor-pointer hover:border-gray-600"
+                    onClick={() =>
+                      document.getElementById("avatarUpload")?.click()
+                    }
+                    onDragOver={(e) => e.preventDefault()} // Prevent default browser behavior
+                    onDrop={(e) => {
+                      e.preventDefault(); // Prevent image from opening
+                      if (e.dataTransfer.files.length > 0) {
+                        handleFileChange(
+                          {
+                            target: { files: e.dataTransfer.files },
+                          } as React.ChangeEvent<HTMLInputElement>,
+                          "avatar",
+                        );
+                      }
+                    }}
+                  >
+                    {form.avatar ? (
+                      <img
+                        src={URL.createObjectURL(form.avatar)}
+                        alt="Avatar Preview"
+                        className="w-28 h-28 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center text-gray-500">
+                        <UploadCloud size={40} />
+                        <p className="text-sm">
+                          Click or Drag to Upload Avatar
+                        </p>
+                      </div>
+                    )}
+                    <Input
+                      id="avatarUpload"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => handleFileChange(e, "avatar")}
+                    />
+                  </div>
+
+                  {/* Cover Image Upload */}
+                  <div
+                    className="h-45 flex flex-col text-center  items-center justify-center border-2 border-dashed border-gray-400 rounded-lg p-6 cursor-pointer hover:border-gray-600"
+                    onClick={() =>
+                      document.getElementById("coverImageUpload")?.click()
+                    }
+                    onDragOver={(e) => e.preventDefault()} // Prevent default behavior
+                    onDrop={(e) => {
+                      e.preventDefault(); // Prevent image from opening
+                      if (e.dataTransfer.files.length > 0) {
+                        handleFileChange(
+                          {
+                            target: { files: e.dataTransfer.files },
+                          } as React.ChangeEvent<HTMLInputElement>,
+                          "coverImage",
+                        );
+                      }
+                    }}
+                  >
+                    {form.coverImage ? (
+                      <img
+                        src={URL.createObjectURL(form.coverImage)}
+                        alt="Cover Preview"
+                        className="w-full h-32 object-cover rounded-lg"
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center text-gray-500">
+                        <ImagePlus size={40} />
+                        <p className="text-sm">
+                          Click or Drag to Upload Cover Image
+                        </p>
+                      </div>
+                    )}
+                    <Input
+                      id="coverImageUpload"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => handleFileChange(e, "coverImage")}
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 gap-4 items-center">
+                    {/* Private Guild */}
+                    <div className="flex items-center gap-3 rounded-lg border p-4">
+                      <Label className="text-zinc-700 dark:text-zinc-300">
+                        <div>
+                          <p className="font-medium">Private Guild?</p>
+                          <p className="text-sm text-zinc-500">
+                            Guild members can only be added via invite.
+                          </p>
+                        </div>
+                      </Label>
+                      <Switch
+                        checked={form.isPrivate}
+                        onCheckedChange={(value) =>
+                          setForm({ ...form, isPrivate: value })
+                        }
                       />
                     </div>
-                  ))}
+
+                    {/* Game Select */}
+                    <div className="flex flex-col gap-1">
+                      <Label className="text-zinc-700 dark:text-zinc-300">
+                        Select Game
+                      </Label>
+
+                      <Popover open={gameOpen} onOpenChange={setGameOpen}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={gameOpen}
+                            className="w-full justify-between font-normal"
+                          >
+                            {selectedGame || "Choose a game..."}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+
+                        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
+                          <Command>
+                            <CommandInput placeholder="Search games..." />
+
+                            <CommandList>
+                              <CommandEmpty>No game found.</CommandEmpty>
+
+                              <CommandGroup>
+                                {games.map((game) => (
+                                  <CommandItem
+                                    key={game}
+                                    value={game}
+                                    onSelect={(currentValue) => {
+                                      const filteredTags = form.tags.filter(
+                                        (tag) => !games.includes(tag),
+                                      );
+
+                                      setForm({
+                                        ...form,
+                                        tags: [...filteredTags, currentValue],
+                                      });
+
+                                      setGameOpen(false);
+                                    }}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        selectedGame === game
+                                          ? "opacity-100"
+                                          : "opacity-0",
+                                      )}
+                                    />
+                                    {game}
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  </div>
+                </div>
+                <div className="py-4 flex justify-end">
+                  <Button
+                    onClick={handleCreateGuild}
+                    className="bg-red-500 hover:bg-red-600 text-white"
+                  >
+                    Create Guild
+                  </Button>
                 </div>
               </div>
             </div>
-
-            {/* Footer Buttons */}
-            <DialogFooter className="flex justify-end gap-2 mt-4">
-              <Button
-                variant="outline"
-                onClick={() => setIsOpen(false)}
-                className="text-zinc-700 dark:text-zinc-300"
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleCreateGuild}
-                className="bg-red-500 hover:bg-red-600 text-white"
-              >
-                Create Guild
-              </Button>
-            </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>

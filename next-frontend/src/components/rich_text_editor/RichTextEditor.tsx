@@ -14,11 +14,13 @@ import EditorToolbar from "./EditorToolbar";
 
 type Props = {
   value: string;
+  placeholder: string;
   onChange: (value: string) => void;
 };
 
 export default function RichTextEditor({
   value,
+  placeholder,
   onChange,
 }: Props) {
   const editor = useEditor({
@@ -34,7 +36,7 @@ export default function RichTextEditor({
       }),
 
       Placeholder.configure({
-        placeholder: "Describe your video...",
+        placeholder: placeholder,
       }),
 
       TextAlign.configure({

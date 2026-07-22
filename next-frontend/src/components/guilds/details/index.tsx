@@ -1,5 +1,11 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Crown, DoorOpen } from "lucide-react";
@@ -8,7 +14,8 @@ import ManageMembers from "./ManageMembers";
 import { useGuild } from "@/context/guild_provider";
 import { useUser } from "@/context/user_provider";
 import { GuildDetailsType } from "@/types/guild.types";
-import truncateText from "@/utils/truncate_text";
+import DOMPurify from "dompurify";
+import truncate from "truncate-html";
 import Image from "next/image";
 import { useEffect } from "react";
 import { DefaultGuildCover, DefaultGuildavatar } from "@/assets";
@@ -68,6 +75,7 @@ const Details: React.FC<DetailsProps> = ({ guild }) => {
     }
     console.log(response);
   };
+  const truncated = guild.description ? truncate(DOMPurify.sanitize(guild.description),200): "No Description";
 
   useEffect(() => {
     getGuildImages(guild.id);
@@ -103,10 +111,11 @@ const Details: React.FC<DetailsProps> = ({ guild }) => {
         />
         <div>
           <h2 className="text-2xl font-semibold">{guild.name}</h2>
-          {guild.description && (
-            <p className="text-zinc-700 dark:text-zinc-300">
-              {truncateText(guild.description, 200)}
-            </p>
+          {truncated && (
+            <div
+              className="prose prose-zinc dark:prose-invert max-w-none"
+              dangerouslySetInnerHTML={{ __html: truncated }}
+            />
           )}
         </div>
       </div>
@@ -116,7 +125,10 @@ const Details: React.FC<DetailsProps> = ({ guild }) => {
         <div>
           {guild.tags &&
             guild.tags.map((tag, idx) => (
-              <span key={idx} className="bg-red-500 text-sm text-white rounded-full px-2 py-1 mx-1">
+              <span
+                key={idx}
+                className="bg-red-500 text-sm text-white rounded-full px-2 py-1 mx-1"
+              >
                 {tag}
               </span>
             ))}
@@ -129,7 +141,8 @@ const Details: React.FC<DetailsProps> = ({ guild }) => {
               onClick={toggleMembership}
               className="px-4 bg-red-500 cursor-pointer text-white py-2 rounded-lg hover:bg-red-600 transition flex items-center gap-2"
             >
-              <DoorOpen className="w-5 h-5" />{joined ? "Leave Guild" : "Join Guild"}
+              <DoorOpen className="w-5 h-5" />
+              {joined ? "Leave Guild" : "Join Guild"}
             </button>
           )}
         </div>
