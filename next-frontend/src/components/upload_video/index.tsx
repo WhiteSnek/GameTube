@@ -15,6 +15,23 @@ import { Checkbox } from "../ui/checkbox";
 import { formatText } from "@/utils/formatText";
 import styles from "./styles.module.css";
 import RichTextEditor from "../rich_text_editor/RichTextEditor";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from "@/components/ui/command";
+
+import { Badge } from "@/components/ui/badge";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 type UploadVideoProps = {
   open: boolean;
   onClose: () => void;
@@ -32,7 +49,7 @@ const UploadVideo: React.FC<UploadVideoProps> = ({
   const [title, setTitle] = useState<string>("");
   const [description, setDescription] = useState<string>("");
   const [progress, setProgress] = useState<number>(0);
-  const [tags, setTags] = useState<string>("");
+  const [openTags, setOpenTags] = useState(false);
   const [tagList, setTagList] = useState<string[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [thumbnail, setThumbnail] = useState<File | null>(null);
@@ -41,8 +58,25 @@ const UploadVideo: React.FC<UploadVideoProps> = ({
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
   const [uploaded, setUploaded] = useState<boolean>(false);
-  const { getSignedUrls, uploadFiles, addVideo } = useVideo();
+  const { getSignedUrls, uploadFiles, addVideo, getGuildTags } = useVideo();
   const { User } = useUser();
+  const [guildTags, setGuildTags] = useState<string[]>([]);
+
+  useEffect(() => {
+    const fetchGuildTags = async () => {
+      try {
+        const response = await getGuildTags(guildId);
+        setGuildTags(response);
+      } catch (error) {
+        console.error("Failed to fetch guild tags:", error);
+      }
+    };
+    console.log("guildId:", guildId);
+    if (guildId) {
+      fetchGuildTags();
+    }
+  }, [guildId]);
+
   const handleDrop = (
     e: React.DragEvent<HTMLDivElement>,
     setFile: (file: File | null) => void,
@@ -53,16 +87,10 @@ const UploadVideo: React.FC<UploadVideoProps> = ({
     }
   };
 
-  const handleTagInput = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && tags.trim() !== "") {
-      e.preventDefault();
-      setTagList([...tagList, tags.trim()]);
-      setTags("");
-    }
-  };
-
-  const removeTag = (index: number) => {
-    setTagList(tagList.filter((_, i) => i !== index));
+  const toggleTag = (tag: string) => {
+    setTagList((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
+    );
   };
 
   const removeFile = (setFile: (file: File | null) => void) => {
@@ -172,7 +200,6 @@ const UploadVideo: React.FC<UploadVideoProps> = ({
     if (uploaded) {
       setTitle("");
       setDescription("");
-      setTags("");
       setTagList([]);
       setThumbnail(null);
       setVideo(null);
@@ -267,37 +294,72 @@ const UploadVideo: React.FC<UploadVideoProps> = ({
                   <div className="space-y-2">
                     <label className="block text-sm font-medium">Tags</label>
 
-                    <Input
-                      type="text"
-                      placeholder="Type a tag and press Enter"
-                      value={tags}
-                      onChange={(e) => setTags(e.target.value)}
-                      onKeyDown={handleTagInput}
-                    />
+                    <Popover open={openTags} onOpenChange={setOpenTags}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="w-full justify-between"
+                        >
+                          {tagList.length > 0
+                            ? `${tagList.length} tag(s) selected`
+                            : "Select tags"}
+
+                          <ChevronsUpDown className="h-4 w-4 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+
+                      <PopoverContent className="w-[400px] p-0">
+                        <Command>
+                          <CommandInput placeholder="Search tags..." />
+
+                          <CommandEmpty>No tag found.</CommandEmpty>
+
+                          <CommandGroup className="max-h-64 overflow-y-auto">
+                            {guildTags?.map((tag: string) => (
+                              <CommandItem
+                                key={tag}
+                                value={tag}
+                                onSelect={() => toggleTag(tag)}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    tagList.includes(tag)
+                                      ? "opacity-100"
+                                      : "opacity-0",
+                                  )}
+                                />
+
+                                {tag}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
 
                     {tagList.length > 0 && (
                       <div className="flex flex-wrap gap-2 pt-2">
-                        {tagList.map((tag, index) => (
-                          <div
-                            key={index}
-                            className="flex items-center gap-2 rounded-full bg-red-600 text-white px-3 py-1"
+                        {tagList.map((tag) => (
+                          <Badge
+                            key={tag}
+                            variant="secondary"
+                            className="gap-1 px-3 py-1"
                           >
-                            <span className="text-sm">{tag}</span>
+                            {tag}
 
                             <button
                               type="button"
-                              onClick={() => removeTag(index)}
-                              className="hover:text-gray-300"
+                              onClick={() => toggleTag(tag)}
                             >
-                              <X size={14} />
+                              <X className="h-3 w-3" />
                             </button>
-                          </div>
+                          </Badge>
                         ))}
                       </div>
                     )}
                   </div>
-
-                  
                 </div>
 
                 {/* Right Section */}

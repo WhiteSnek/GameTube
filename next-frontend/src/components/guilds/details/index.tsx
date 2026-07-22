@@ -121,8 +121,8 @@ const Details: React.FC<DetailsProps> = ({ guild }) => {
       </div>
 
       {/* Manage Button */}
-      <div className="p-6 flex justify-between">
-        <div>
+      <div className="p-6 flex items-start justify-between gap-4">
+        <div className="flex flex-wrap gap-2 flex-1 min-w-0">
           {guild.tags &&
             guild.tags.map((tag, idx) => (
               <span
