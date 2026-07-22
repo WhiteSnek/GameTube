@@ -85,4 +85,8 @@ func GuildRoutes(r *gin.Engine) {
 	guildGroup.OPTIONS("/members/kick/:guildId/:memberId", func(ctx *gin.Context) {
 		ctx.Status(200)
 	})
+
+	guildGroup.GET("/tags/:guildId", func(ctx *gin.Context) {
+		controllers.GetGuildTags(ctx)
+	})
 }
