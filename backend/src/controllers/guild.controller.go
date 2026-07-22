@@ -831,3 +831,27 @@ func GetAllGuilds(c *gin.Context) {
 		"data":    response,
 	})
 }
+
+func GetGuildTags(c *gin.Context) {
+	guildId := c.Param("guildId")
+	if guildId == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "guildId is required"})
+		return
+	}
+
+	var tags []string
+	err := config.DB.
+		Model(&models.Tag{}).
+		Where("guild_id = ?", guildId).
+		Pluck("name", &tags).Error
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "tags fetched successfully",
+		"data":    tags,
+	})
+}
