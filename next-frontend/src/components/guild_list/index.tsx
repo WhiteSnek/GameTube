@@ -1,15 +1,16 @@
-import { useUser } from '@/context/user_provider'
-import { GuildsType } from '@/types/guild.types'
-import { Crown, DoorOpen } from 'lucide-react'
-import Link from 'next/link'
-import React from 'react'
+import { useUser } from "@/context/user_provider";
+import { GuildsType } from "@/types/guild.types";
+import { Crown, DoorOpen } from "lucide-react";
+import Link from "next/link";
+import React from "react";
+import DOMPurify from "dompurify";
 
 interface GuildListProps {
-    guilds: GuildsType[]
+  guilds: GuildsType[];
 }
 
-const GuildList:React.FC<GuildListProps> = ({guilds}) => {
-    const {User} = useUser()
+const GuildList: React.FC<GuildListProps> = ({ guilds }) => {
+  const { User } = useUser();
   return (
     <div className="space-y-3 px-10">
       {guilds.map((guild, index) => (
@@ -20,7 +21,11 @@ const GuildList:React.FC<GuildListProps> = ({guilds}) => {
         >
           {/* Guild Avatar */}
           <div className="relative w-20 h-20">
-            <img src={guild.avatar} alt='guild avatar' className='w-full h-full object-cover rounded-full' />
+            <img
+              src={guild.avatar}
+              alt="guild avatar"
+              className="w-full h-full object-cover rounded-full"
+            />
           </div>
 
           {/* Guild Details */}
@@ -28,9 +33,12 @@ const GuildList:React.FC<GuildListProps> = ({guilds}) => {
             <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
               {guild.name}
             </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              {guild.description}
-            </p>
+            <div
+              className="prose dark:prose-invert text-sm text-gray-600 dark:text-gray-400"
+              dangerouslySetInnerHTML={{
+                __html: DOMPurify.sanitize(guild.description),
+              }}
+            />
           </div>
 
           {/* Action Button */}
@@ -48,7 +56,7 @@ const GuildList:React.FC<GuildListProps> = ({guilds}) => {
         </Link>
       ))}
     </div>
-  )
-}
+  );
+};
 
-export default GuildList
+export default GuildList;

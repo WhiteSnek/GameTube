@@ -6,9 +6,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Upload, UploadCloud, X } from "lucide-react";
 import { useVideo } from "@/context/video_provider";
 import { useUser } from "@/context/user_provider";
@@ -16,7 +14,7 @@ import { UploadVideoType } from "@/types/video.types";
 import { Checkbox } from "../ui/checkbox";
 import { formatText } from "@/utils/formatText";
 import styles from "./styles.module.css";
-import RichTextEditor from "./RichTextEditor";
+import RichTextEditor from "../rich_text_editor/RichTextEditor";
 type UploadVideoProps = {
   open: boolean;
   onClose: () => void;
@@ -261,6 +259,7 @@ const UploadVideo: React.FC<UploadVideoProps> = ({
                     <div className="rounded-xl overflow-hidden border border-zinc-300 dark:border-zinc-700 shadow-lg">
                       <RichTextEditor
                         value={description}
+                        placeholder="Describe your Guild..."
                         onChange={setDescription}
                       />
                     </div>
