@@ -162,13 +162,13 @@ func FindOrCreateUser(claims jwt.MapClaims, userInfo map[string]interface{}) (*m
 		fullname = GenerateRandomName()
 	}
 
-	avatar := stringFromMap(userInfo, "picture")
+	avatar := stringFromMap(userInfo, "profile")
 	if avatar == "" {
-		avatar = stringClaim(claims, "picture")
+		avatar = stringClaim(claims, "profile")
 	}
 
 	user := models.User{
-		ID: uuid.NewString(),
+		ID:       uuid.NewString(),
 		Fullname: fullname,
 		Email:    email,
 		Avatar:   avatar,
@@ -214,7 +214,7 @@ func SetAccessTokenCookie(w http.ResponseWriter, token string) {
 		HttpOnly: true,
 		Secure:   true,
 		SameSite: http.SameSiteNoneMode,
-		Domain: ".whitesnek.xyz",
+		Domain:   ".whitesnek.xyz",
 	})
 }
 
@@ -227,7 +227,7 @@ func ClearAccessTokenCookie(w http.ResponseWriter) {
 		HttpOnly: true,
 		Secure:   true,
 		SameSite: http.SameSiteNoneMode,
-		Domain: ".whitesnek.xyz",
+		Domain:   ".whitesnek.xyz",
 	})
 }
 
