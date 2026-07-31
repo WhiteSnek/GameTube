@@ -235,9 +235,9 @@ func UpdateUser(c *gin.Context) {
 		return
 	}
 
-	// Fetch existing user
+	// Fetch existing user by IDP user ID
 	var existingUser models.User
-	if err := config.DB.First(&existingUser, "id = ?", input.ID).Error; err != nil {
+	if err := config.DB.Where("idp_user_id = ?", input.ID).First(&existingUser).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": "user not found",
 		})
@@ -286,7 +286,7 @@ func UpdateUser(c *gin.Context) {
 	}
 
 	result := config.DB.Model(&models.User{}).
-		Where("id = ?", input.ID).
+		Where("idp_user_id = ?", input.ID).
 		Updates(updates)
 
 	if result.Error != nil {
@@ -297,7 +297,7 @@ func UpdateUser(c *gin.Context) {
 	}
 
 	var updatedUser models.User
-	if err := config.DB.First(&updatedUser, "id = ?", input.ID).Error; err != nil {
+	if err := config.DB.Where("idp_user_id = ?", input.ID).First(&updatedUser).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})

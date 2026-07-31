@@ -143,9 +143,30 @@ func FindOrCreateUser(claims jwt.MapClaims, userInfo map[string]interface{}) (*m
 		return nil, errors.New("sub not found in token")
 	}
 
+	// First try to find the user by their IDP user ID.
 	var existing models.User
-	err := config.DB.Where("email = ?", email).First(&existing).Error
+	err := config.DB.Where("idp_user_id = ?", sub).First(&existing).Error
 	if err == nil {
+		return &existing, nil
+	}
+
+	if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, err
+	}
+
+	// Backward compatibility:
+	// If the user exists from before IdpUserID was introduced,
+	// match by email and populate IdpUserID.
+	err = config.DB.Where("email = ?", email).First(&existing).Error
+	if err == nil {
+		if existing.IdpUserID == "" {
+			if err := config.DB.Model(&existing).
+				Update("idp_user_id", sub).Error; err != nil {
+				return nil, err
+			}
+			existing.IdpUserID = sub
+		}
+
 		return &existing, nil
 	}
 
@@ -174,10 +195,11 @@ func FindOrCreateUser(claims jwt.MapClaims, userInfo map[string]interface{}) (*m
 	}
 
 	user := models.User{
-		ID:       uuid.NewString(),
-		Fullname: fullname,
-		Email:    email,
-		Avatar:   avatar,
+		ID:        uuid.NewString(),
+		IdpUserID: sub,
+		Fullname:  fullname,
+		Email:     email,
+		Avatar:    avatar,
 	}
 
 	if err := config.DB.Create(&user).Error; err != nil {
