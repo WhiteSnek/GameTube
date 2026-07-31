@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 
 	"github.com/WhiteSnek/GameTube/src/config"
 	"github.com/WhiteSnek/GameTube/src/dtos"
@@ -15,6 +16,7 @@ import (
 	"github.com/WhiteSnek/GameTube/src/models"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	
 )
 
 func Login(c *gin.Context) {
@@ -225,55 +227,85 @@ func UpdateUser(c *gin.Context) {
 		})
 		return
 	}
+
 	if input.ID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "id is required",
 		})
 		return
 	}
+
+	// Fetch existing user
+	var existingUser models.User
+	if err := config.DB.First(&existingUser, "id = ?", input.ID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "user not found",
+		})
+		return
+	}
+
 	updates := map[string]interface{}{}
+
 	if input.Email != nil {
 		updates["email"] = *input.Email
 	}
-	if input.FirstName != nil {
-		updates["first_name"] = *input.FirstName
+
+	// Build fullname from first + last name
+	if input.FirstName != nil || input.LastName != nil {
+		firstName := ""
+		lastName := ""
+
+		parts := strings.Fields(existingUser.Fullname)
+		if len(parts) > 0 {
+			firstName = parts[0]
+		}
+		if len(parts) > 1 {
+			lastName = strings.Join(parts[1:], " ")
+		}
+
+		if input.FirstName != nil {
+			firstName = *input.FirstName
+		}
+
+		if input.LastName != nil {
+			lastName = *input.LastName
+		}
+
+		updates["fullname"] = strings.TrimSpace(firstName + " " + lastName)
 	}
-	if input.LastName != nil {
-		updates["last_name"] = *input.LastName
-	}
+
 	if input.Profile != nil {
-		updates["profile"] = *input.Profile
+		updates["avatar"] = *input.Profile
 	}
+
 	if len(updates) == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "no fields to update",
 		})
 		return
 	}
+
 	result := config.DB.Model(&models.User{}).
 		Where("id = ?", input.ID).
 		Updates(updates)
+
 	if result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": result.Error.Error(),
 		})
 		return
 	}
-	if result.RowsAffected == 0 {
-		c.JSON(http.StatusNotFound, gin.H{
-			"error": "user not found",
-		})
-		return
-	}
-	var user models.User
-	if err := config.DB.First(&user, "id = ?", input.ID).Error; err != nil {
+
+	var updatedUser models.User
+	if err := config.DB.First(&updatedUser, "id = ?", input.ID).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
 		return
 	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"message": "User updated successfully",
-		"data":    user,
+		"data":    updatedUser,
 	})
 }
