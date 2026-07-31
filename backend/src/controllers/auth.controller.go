@@ -12,6 +12,7 @@ import (
 	"github.com/WhiteSnek/GameTube/src/config"
 	"github.com/WhiteSnek/GameTube/src/dtos"
 	"github.com/WhiteSnek/GameTube/src/utils"
+	"github.com/WhiteSnek/GameTube/src/models"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 )
@@ -213,4 +214,66 @@ func generateOAuthState() (string, error) {
 		return "", err
 	}
 	return hex.EncodeToString(bytes), nil
+}
+
+
+func UpdateUser(c *gin.Context) {
+	var input dtos.UpdateUserDTO
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	if input.ID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "id is required",
+		})
+		return
+	}
+	updates := map[string]interface{}{}
+	if input.Email != nil {
+		updates["email"] = *input.Email
+	}
+	if input.FirstName != nil {
+		updates["first_name"] = *input.FirstName
+	}
+	if input.LastName != nil {
+		updates["last_name"] = *input.LastName
+	}
+	if input.Profile != nil {
+		updates["profile"] = *input.Profile
+	}
+	if len(updates) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "no fields to update",
+		})
+		return
+	}
+	result := config.DB.Model(&models.User{}).
+		Where("id = ?", input.ID).
+		Updates(updates)
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": result.Error.Error(),
+		})
+		return
+	}
+	if result.RowsAffected == 0 {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "user not found",
+		})
+		return
+	}
+	var user models.User
+	if err := config.DB.First(&user, "id = ?", input.ID).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"message": "User updated successfully",
+		"data":    user,
+	})
 }

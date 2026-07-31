@@ -2,6 +2,7 @@ package routes
 
 import (
 	"github.com/WhiteSnek/GameTube/src/controllers"
+	"github.com/WhiteSnek/GameTube/src/middlewares"
 
 	"github.com/gin-gonic/gin"
 )
@@ -18,6 +19,10 @@ func AuthRoutes(r *gin.Engine) {
 		ctx.Status(200)
 	})
 
+	authGroup.POST("/user-sync",middlewares.VerifyWebhookSecret(), controllers.UpdateUser)
+	authGroup.OPTIONS("/user-sync", func(ctx *gin.Context) {
+		ctx.Status(200)
+	})
 	// Legacy route used by the frontend login/signup buttons
 	authGroup.GET("/google/signup", controllers.Login)
 }

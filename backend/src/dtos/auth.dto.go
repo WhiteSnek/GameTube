@@ -20,3 +20,11 @@ type UserResponse struct {
 	Avatar string `json:"avatar"`
 	CreatedAt string `json:"createdAt"`
 }
+
+type UpdateUserDTO struct {
+	ID        string  `json:"id"`
+	Email     *string `json:"email,omitempty"`
+	FirstName *string `json:"first_name,omitempty"`
+	LastName  *string `json:"last_name,omitempty"`
+	Profile   *string `json:"profile,omitempty"`
+}

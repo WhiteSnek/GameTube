@@ -112,15 +112,21 @@ func FetchUserInfo(accessToken string) (map[string]interface{}, error) {
 		return nil, err
 	}
 
+	var data map[string]interface{}
+
 	if userInfo.Data != nil {
-		return userInfo.Data, nil
+		data = userInfo.Data
+	} else {
+		if err := json.Unmarshal(body, &data); err != nil {
+			return nil, err
+		}
 	}
 
-	var raw map[string]interface{}
-	if err := json.Unmarshal(body, &raw); err != nil {
-		return nil, err
+	if profile, ok := data["profile"]; ok {
+		data["avatar"] = profile
 	}
-	return raw, nil
+
+	return data, nil
 }
 
 func FindOrCreateUser(claims jwt.MapClaims, userInfo map[string]interface{}) (*models.User, error) {
