@@ -1,11 +1,12 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import {
-  ArrowUp,
+  ArrowBigUp,
+  ChevronDown,
+  ChevronUp,
   EllipsisVertical,
-  MessageCircle,
   Smile,
-  Trash,
+  Trash
 } from "lucide-react";
 import { useComment } from "@/context/comment_provider";
 import { useUser } from "@/context/user_provider";
@@ -18,6 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { DefaultAvatar } from "@/assets";
 import EmojiPicker, { Theme, EmojiStyle } from "emoji-picker-react";
+
 interface CommentType {
   id: string;
   ownerAvatar: string;
@@ -28,6 +30,10 @@ interface CommentType {
   replies: number;
 }
 
+// Falls back to DefaultAvatar whenever ownerAvatar is missing, null, or an empty/whitespace string
+const getAvatarSrc = (avatar?: string | null) =>
+  avatar && avatar.trim() !== "" ? avatar : DefaultAvatar;
+
 const Comment = ({
   comment,
   depth = 0,
@@ -37,6 +43,7 @@ const Comment = ({
 }) => {
   const [replyCount, setReplyCount] = useState<number>(0);
   const [showReplies, setShowReplies] = useState<boolean>(false);
+  const [showReplyBox, setShowReplyBox] = useState<boolean>(false);
   const [replyText, setReplyText] = useState<string>("");
   const [replies, setReplies] = useState<CommentType[]>([]);
   const [showSetting, setShowSetting] = useState<boolean>(false);
@@ -70,7 +77,7 @@ const Comment = ({
           <button
             key={idx}
             onClick={() => seekTo(seconds, true)}
-            className="text-blue-600 dark:text-blue-400 cursor-pointer"
+            className="text-blue-600 dark:text-blue-400 font-medium hover:underline cursor-pointer"
             title={`Jump to ${part}`}
           >
             {part}
@@ -127,7 +134,7 @@ const Comment = ({
     setReplies((prevReplies) =>
       prevReplies.map((reply, idx) => ({
         ...reply,
-        ownerAvatar: avatarUrls[idx] ?? reply.ownerAvatar,
+        ownerAvatar: getAvatarSrc(avatarUrls[idx] ?? reply.ownerAvatar),
       })),
     );
   };
@@ -143,11 +150,13 @@ const Comment = ({
           ...replies,
           {
             ...response,
-            ownerAvatar: avatarUrls[0] ?? response.ownerAvatar, // Update avatar for the new reply
+            ownerAvatar: getAvatarSrc(avatarUrls[0] ?? response.ownerAvatar), // Update avatar for the new reply
           },
         ]);
         setReplyText("");
         setReplyCount((replyCount) => replyCount + 1);
+        setShowReplies(true);
+        setShowReplyBox(false);
       }
     } else {
       // TODO: Error handling
@@ -160,112 +169,162 @@ const Comment = ({
     console.log(response);
   };
 
+  // Reddit-style avatar shrink + YouTube-style tight indent per depth
+  const avatarSize = depth === 0 ? 40 : 32;
+
   return (
-    <div className="border-l-4 border-zinc-500 dark:border-zinc-700 pl-6 my-4">
-      <div className="flex items-start gap-4 bg-zinc-100 dark:bg-zinc-800 p-4 rounded-lg">
+    <div className="relative">
+      {/* Reddit-style thread line connecting this node to its parent */}
+      {depth > 0 && (
+        <div className="absolute left-[-17px] top-0 bottom-0 w-px bg-zinc-200 dark:bg-zinc-700" />
+      )}
+      <div className="group flex items-start gap-3 py-3">
         <img
-          src={comment.ownerAvatar || DefaultAvatar}
+          src={getAvatarSrc(comment.ownerAvatar)}
           alt="Avatar"
-          className="w-12 h-12 rounded-full border object-cover"
+          style={{ width: avatarSize, height: avatarSize }}
+          className="rounded-full object-cover flex-shrink-0 mt-0.5"
         />
-        <div className="w-full">
-          <div className="flex justify-between items-center w-full">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-zinc-900 dark:text-white">
-                  {comment.ownerName}
-                </span>
-                <span className="text-xs bg-zinc-300 dark:bg-zinc-600 text-zinc-700 dark:text-white px-3 py-1 rounded-full font-medium">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex flex-wrap items-baseline gap-2">
+              <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                {comment.ownerName}
+              </span>
+              {comment.role && (
+                <span className="text-[11px] leading-none bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 px-2 py-0.5 rounded-full font-medium">
                   {comment.role}
                 </span>
-              </div>
-              <p className="mt-2 text-zinc-800 dark:text-zinc-300">
-                {renderContentWithTimestamps(comment.content)}
-              </p>
+              )}
             </div>
-            <div>
-              <DropdownMenu
-                open={showSetting}
-                onOpenChange={() => setShowSetting(!showSetting)}
-              >
-                <DropdownMenuTrigger asChild>
-                  <button className="dark:hover:bg-zinc-900 p-2 rounded-full cursor-pointer transition-all">
-                    <EllipsisVertical />
+            <DropdownMenu
+              open={showSetting}
+              onOpenChange={() => setShowSetting(!showSetting)}
+            >
+              <DropdownMenuTrigger asChild>
+                <button
+                  className="opacity-0 group-hover:opacity-100 focus:opacity-100 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 p-1 rounded-full transition-opacity cursor-pointer"
+                  aria-label="Comment options"
+                >
+                  <EllipsisVertical size={16} />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="shadow-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
+                <DropdownMenuLabel className="text-sm">
+                  <button
+                    className="flex items-center gap-2 cursor-pointer text-red-600 dark:text-red-400"
+                    onClick={handleDeleteComment}
+                  >
+                    <Trash size={16} />
+                    Delete
                   </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="shadow-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900">
-                  <DropdownMenuLabel className="text-sm ">
-                    <button
-                      className="flex justify-center items-end gap-2 cursor-pointer"
-                      onClick={handleDeleteComment}
-                    >
-                      <Trash size={20} />
-                      Delete Comment
-                    </button>
-                  </DropdownMenuLabel>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+                </DropdownMenuLabel>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
-          <div className="flex items-center gap-6 mt-3 text-zinc-500 dark:text-zinc-400 text-sm">
+
+          <p className="mt-0.5 text-sm text-zinc-800 dark:text-zinc-200 leading-snug break-words">
+            {renderContentWithTimestamps(comment.content)}
+          </p>
+
+          <div className="flex items-center gap-4 mt-1.5 text-zinc-500 dark:text-zinc-400">
             <button
               onClick={handleToggleLike}
-              className={`flex items-center gap-1 hover:text-blue-600 ${liked ? "text-red-500" : ""}`}
+              aria-label="Like"
+              className={`flex items-center gap-1 rounded-full px-1.5 py-1 -ml-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors ${
+                liked ? "text-orange-600 dark:text-orange-400" : ""
+              }`}
             >
-              <ArrowUp size={16} />
-              {likes}
+              <ArrowBigUp
+                size={16}
+                fill={liked ? "currentColor" : "none"}
+              />
+              <span className="text-xs font-medium">{likes}</span>
             </button>
+
             {depth < 4 && (
               <button
-                onClick={() => setShowReplies(!showReplies)}
-                className="flex items-center gap-1 hover:text-blue-600"
+                onClick={() => setShowReplyBox((v) => !v)}
+                className="text-xs font-semibold uppercase tracking-wide hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
               >
-                <MessageCircle size={16} /> {replyCount}
+                Reply
               </button>
             )}
           </div>
-          {showReplies && (
-            <div className=" dark:border-zinc-700 ">
+
+          {/* Inline reply box, YouTube-style: hidden until "Reply" is clicked */}
+          {showReplyBox && (
+            <form
+              className="mt-3 flex items-start gap-2"
+              onSubmit={addCommentReply}
+            >
+              <div className="relative flex-1 flex items-center border-b border-zinc-300 dark:border-zinc-600 focus-within:border-zinc-900 dark:focus-within:border-zinc-100 transition-colors">
+                <input
+                  autoFocus
+                  type="text"
+                  placeholder="Add a reply..."
+                  value={replyText}
+                  onChange={(e) => setReplyText(e.target.value)}
+                  className="flex-1 py-1.5 text-sm bg-transparent dark:text-white focus:outline-none"
+                />
+                <button
+                  type="button"
+                  className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-pointer"
+                  onClick={() => setEmojiOpen((prev) => !prev)}
+                  aria-label="Add emoji"
+                >
+                  <Smile size={18} />
+                </button>
+                {emojiOpen && (
+                  <div className="absolute top-full mt-2 right-0 z-50">
+                    <EmojiPicker
+                      onEmojiClick={(emojiData) =>
+                        setReplyText((prev) => prev + emojiData.emoji)
+                      }
+                      theme={Theme.DARK}
+                      emojiStyle={EmojiStyle.NATIVE}
+                    />
+                  </div>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowReplyBox(false);
+                  setReplyText("");
+                }}
+                className="text-xs font-semibold uppercase tracking-wide px-3 py-1.5 rounded-full text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={!replyText.trim()}
+                className="text-xs font-semibold uppercase tracking-wide px-3 py-1.5 rounded-full bg-blue-600 text-white hover:bg-blue-700 disabled:bg-zinc-200 disabled:text-zinc-400 dark:disabled:bg-zinc-800 disabled:cursor-not-allowed transition-colors"
+              >
+                Reply
+              </button>
+            </form>
+          )}
+
+          {/* View replies toggle, YouTube-style chevron pill */}
+          {replyCount > 0 && depth < 4 && (
+            <button
+              onClick={() => setShowReplies((v) => !v)}
+              className="flex items-center gap-1 mt-2 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-zinc-800 rounded-full px-2 py-1 -ml-2 transition-colors"
+            >
+              {showReplies ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+              {showReplies
+                ? "Hide replies"
+                : `${replyCount} ${replyCount === 1 ? "reply" : "replies"}`}
+            </button>
+          )}
+
+          {showReplies && replies.length > 0 && (
+            <div className="mt-2 ml-3 pl-4">
               {replies.map((reply) => (
                 <Comment key={reply.id} comment={reply} depth={depth + 1} />
               ))}
-              {depth < 4 && (
-                <form className="mt-3 flex gap-2" onSubmit={addCommentReply}>
-                  <div className="relative w-full px-2 flex justify-center align-center dark:bg-zinc-700 border rounded-md">
-                    <input
-                      type="text"
-                      placeholder="Reply..."
-                      value={replyText}
-                      onChange={(e) => setReplyText(e.target.value)}
-                      className="flex-1 p-2 w-full dark:text-white focus:outline-none"
-                    />
-                    <button
-                      type="button"
-                      className="hover:cursor-pointer"
-                      onClick={() => setEmojiOpen((prev) => !prev)}
-                    >
-                      <Smile size={25} />
-                    </button>
-                    {emojiOpen && (
-                      <div className="absolute bottom-12 right-0 z-50">
-                        <EmojiPicker
-                          onEmojiClick={(emojiData) =>
-                            setReplyText((prev) => prev + emojiData.emoji)
-                          }
-                          theme={Theme.DARK}
-                          emojiStyle={EmojiStyle.NATIVE}
-                        />
-                      </div>
-                    )}
-                  </div>
-                  <button
-                    type="submit"
-                    className="px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-                  >
-                    <MessageCircle size={20} />
-                  </button>
-                </form>
-              )}
             </div>
           )}
         </div>
@@ -303,7 +362,7 @@ const Comments = ({ videoId }: { videoId: string }) => {
     setComments((prevComments) =>
       prevComments.map((comment, idx) => ({
         ...comment,
-        ownerAvatar: avatarUrls[idx] ?? comment.ownerAvatar,
+        ownerAvatar: getAvatarSrc(avatarUrls[idx] ?? comment.ownerAvatar),
       })),
     );
   };
@@ -320,7 +379,7 @@ const Comments = ({ videoId }: { videoId: string }) => {
           ...comments,
           {
             ...response,
-            ownerAvatar: avatarUrls[0] ?? response.ownerAvatar, // Update avatar for the new comment
+            ownerAvatar: getAvatarSrc(avatarUrls[0] ?? response.ownerAvatar), // Update avatar for the new comment
           },
         ]);
         setNewComment("");
@@ -332,28 +391,30 @@ const Comments = ({ videoId }: { videoId: string }) => {
   };
 
   return (
-    <div className="p-6 max-w-3xl mx-auto bg-white dark:bg-zinc-900 shadow-lg rounded-lg">
-      <h2 className="text-2xl font-semibold mb-6 text-zinc-900 dark:text-white">
-        Comments
+    <div className="p-6 max-w-3xl mx-auto bg-white dark:bg-zinc-900 rounded-lg">
+      <h2 className="text-lg font-semibold mb-5 text-zinc-900 dark:text-white">
+        {comments.length > 0 ? `${comments.length} Comments` : "Comments"}
       </h2>
-      <form className="mb-4 flex gap-2" onSubmit={addVideoComment}>
-        <div className="relative w-full px-2 flex justify-center align-center dark:bg-zinc-700 border rounded-md">
+
+      <form className="mb-6 flex items-start gap-3" onSubmit={addVideoComment}>
+        <div className="relative flex-1 flex items-center border-b border-zinc-300 dark:border-zinc-600 focus-within:border-zinc-900 dark:focus-within:border-zinc-100 transition-colors">
           <input
             type="text"
             placeholder="Add a comment..."
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
-            className="flex-1 p-2 w-full dark:text-white focus:outline-none"
+            className="flex-1 py-2 text-sm bg-transparent dark:text-white focus:outline-none"
           />
           <button
             type="button"
-            className="hover:cursor-pointer"
+            className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-pointer"
             onClick={() => setEmojiOpen((prev) => !prev)}
+            aria-label="Add emoji"
           >
-            <Smile size={25} />
+            <Smile size={20} />
           </button>
           {emojiOpen && (
-            <div className="absolute bottom-12 right-0 z-50">
+            <div className="absolute top-full mt-2 right-0 z-50">
               <EmojiPicker
                 onEmojiClick={(emojiData) =>
                   setNewComment((prev) => prev + emojiData.emoji)
@@ -366,21 +427,24 @@ const Comments = ({ videoId }: { videoId: string }) => {
         </div>
         <button
           type="submit"
-          className="px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 flex items-center gap-1"
+          disabled={!newComment.trim()}
+          className="text-xs font-semibold uppercase tracking-wide px-4 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 disabled:bg-zinc-200 disabled:text-zinc-400 dark:disabled:bg-zinc-800 disabled:cursor-not-allowed transition-colors flex-shrink-0"
         >
-          <MessageCircle size={25} />
+          Comment
         </button>
       </form>
 
       {!comments || comments.length === 0 ? (
-        <p className="text-center text-zinc-500">
+        <p className="text-center text-sm text-zinc-500 py-8">
           This section feels like a ghost town. Add a comment to bring it to
           life!
         </p>
       ) : (
-        comments.map((comment) => (
-          <Comment key={comment.id} comment={comment} />
-        ))
+        <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+          {comments.map((comment) => (
+            <Comment key={comment.id} comment={comment} />
+          ))}
+        </div>
       )}
     </div>
   );
