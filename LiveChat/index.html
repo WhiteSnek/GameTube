@@ -103,8 +103,10 @@ document.getElementById("connect").onclick = () => {
   const guildId = document.getElementById("guildId").value;
   const userId = document.getElementById("userId").value;
 
+  const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3ODU3NzUzNDAsImd1aWxkSWQiOiI1YTJhNDk4MS1mOTM2LTQ2ZjEtYmQzZS01YTBjN2QwNmY4NmUiLCJpYXQiOjE3ODU3NzQ0NDAsInJvbGUiOiJMRUFERVIiLCJ1c2VySWQiOiJjMWUzNWE3Zi0wMmIzLTRlOWItOTNiYS03N2ZhYjkwOGUyNjYifQ.dMuGf4PGP6SruXEos_g2wBCUkJqIuRtZpmTG3Xu66Us";
+
   socket = new WebSocket(
-    `ws://localhost:8080?guildId=${encodeURIComponent(guildId)}&userId=${encodeURIComponent(userId)}`
+    `ws://localhost:8080?token=${token}`
   );
 
   socket.onopen = () => {

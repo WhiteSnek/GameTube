@@ -20,8 +20,9 @@ export class ChatService {
                     senderId: sender.userId,
                     senderName: sender.fullName,
                     replyTo: null,
-                    senderProfilePicture: null,
-                    message,
+                    senderAvatar: "https://idp.whitesnek.xyz/images/profiles/nikhilkr2604/a155163f-12c8-4226-8456-7e36710a762e",
+                    senderRole: "LEADER",
+                    content: message,
                     createdAt:new Date()
                 }
             }

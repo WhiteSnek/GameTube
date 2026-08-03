@@ -1,10 +1,9 @@
 import { WebSocketServer } from "ws";
-import { randomUUID } from "crypto";
-
 import { ClientManager } from "./client.manager";
 import { WebSocketPublisher } from "../publishers/websocket.publisher";
 import { ChatService } from "../services/chat.service";
 import { ChatController } from "../controller/chat.controller";
+import { verifyToken } from "../middleware/chat.middleware";
 
 export function createGateway(){
 
@@ -25,18 +24,17 @@ export function createGateway(){
         });
 
     wss.on("connection",(ws,req)=>{
-
         const url = new URL(
             req.url!,
             "http://localhost"
         );
-
-        const guildId =
-            url.searchParams.get("guildId")!;
-
-        const userId =
-            url.searchParams.get("userId")!;
-
+        const token = url.searchParams.get("token")!;
+        const data = verifyToken(token);
+        if (!data) {
+            ws.close();
+            return;
+        }
+        const { guildId, userId } = data;
         manager.add({
             ws,
             guildId,
@@ -54,7 +52,7 @@ export function createGateway(){
                     manager.get(ws);
 
                 if(!sender) return;
-
+                console.log("Received message:", body.message, "from sender:", sender);
                 await controller.sendMessage(
                     body.message,
                     sender
@@ -65,9 +63,7 @@ export function createGateway(){
         });
 
         ws.on("close",()=>{
-
             manager.remove(ws);
-
         });
 
     });
