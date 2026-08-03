@@ -4,6 +4,7 @@ import { WebSocketPublisher } from "../publishers/websocket.publisher";
 import { ChatService } from "../services/chat.service";
 import { ChatController } from "../controller/chat.controller";
 import { verifyToken } from "../middleware/chat.middleware";
+import UserRepository from "../repository/user.repository";
 
 export function createGateway(){
 
@@ -12,8 +13,10 @@ export function createGateway(){
     const publisher =
         new WebSocketPublisher(manager);
 
+    const userRepository = new UserRepository();
+
     const service =
-        new ChatService(publisher);
+        new ChatService(publisher, userRepository);
 
     const controller =
         new ChatController(service);
@@ -52,7 +55,6 @@ export function createGateway(){
                     manager.get(ws);
 
                 if(!sender) return;
-                console.log("Received message:", body.message, "from sender:", sender);
                 await controller.sendMessage(
                     body.message,
                     sender

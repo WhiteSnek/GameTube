@@ -16,3 +16,11 @@ export interface ChatEvent {
   event: string;
   payload: unknown;
 }
+
+export interface UserDetails {
+  id: string;
+  fullname: string;
+  avatar: string;
+  guild_id: string;
+  role: string;
+}

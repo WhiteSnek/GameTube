@@ -13,8 +13,9 @@ export class ChatController{
     ){
 
         await this.service.sendMessage(
-            message,
-            sender
+            sender.guildId,
+            sender.userId,
+            message
         );
 
     }

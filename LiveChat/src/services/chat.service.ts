@@ -1,33 +1,37 @@
 import { Publisher } from "../publishers/publisher";
-import { Client } from "../types";
+import UserRepository from "../repository/user.repository";
 
 export class ChatService {
-
     constructor(
-        private publisher: Publisher
-    ){}
+        private readonly publisher: Publisher,
+        private readonly userRepository: UserRepository
+    ) {}
 
     async sendMessage(
-        message: string,
-        sender: Client
-    ){
-
-        await this.publisher.publishToGuild(
-            sender.guildId,
-            {
-                event: "MESSAGE_RECEIVED",
-                payload:{
-                    senderId: sender.userId,
-                    senderName: sender.fullName,
-                    replyTo: null,
-                    senderAvatar: "https://idp.whitesnek.xyz/images/profiles/nikhilkr2604/a155163f-12c8-4226-8456-7e36710a762e",
-                    senderRole: "LEADER",
-                    content: message,
-                    createdAt:new Date()
-                }
-            }
+        guildId: string,
+        senderId: string,
+        message: string
+    ) {
+        const sender = await this.userRepository.getUserDetails(
+            senderId,
+            guildId
         );
 
-    }
+        if (!sender) {
+            throw new Error("Sender is not a member of this guild.");
+        }
 
+        await this.publisher.publishToGuild(guildId, {
+            event: "MESSAGE_RECEIVED",
+            payload: {
+                senderId: sender.id,
+                senderName: sender.fullname,
+                senderAvatar: sender.avatar,
+                senderRole: sender.role,
+                content: message,
+                replyTo: null,
+                createdAt: new Date().toISOString(),
+            },
+        });
+    }
 }
