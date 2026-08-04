@@ -82,7 +82,7 @@ const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       const token = await getChatToken(guildId);
 
       const ws = new WebSocket(
-        `ws://localhost:8080?token=${encodeURIComponent(token)}`,
+        `${process.env.NEXT_PUBLIC_LIVE_CHAT_WEBSOCKET_API}?token=${encodeURIComponent(token)}`,
       );
 
       wsRef.current = ws;
