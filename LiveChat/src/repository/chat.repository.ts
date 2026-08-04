@@ -55,7 +55,7 @@ class ChatRepository {
         [guildId],
       );
 
-      return result.rows.map((chat) => ({
+      return result.rows.map((chat: any) => ({
         ...chat,
         message_type: MessageTypeLabel[chat.message_type] ?? "unknown",
       }));

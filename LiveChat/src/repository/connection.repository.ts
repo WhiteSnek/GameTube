@@ -62,7 +62,7 @@ class ConnectionRepository {
       [guildId]
     );
 
-    return result.rows.map((row) => ({
+    return result.rows.map((row: any) => ({
       connectionId: row.connection_id,
       guildId: row.guild_id,
       userId: row.user_id,
