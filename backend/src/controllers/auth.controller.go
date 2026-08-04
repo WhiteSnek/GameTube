@@ -11,6 +11,8 @@ import (
 	"os"
 	"strings"
 
+	"time"
+
 	"github.com/WhiteSnek/GameTube/src/config"
 	"github.com/WhiteSnek/GameTube/src/dtos"
 	"github.com/WhiteSnek/GameTube/src/models"
@@ -19,7 +21,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"gorm.io/gorm"
-	"time"
 )
 
 func Login(c *gin.Context) {
@@ -331,7 +332,7 @@ func GetChatToken(c *gin.Context) {
 	// 	return
 	// }
 
-	userIdStr := "4a19b726-6593-402b-89f8-aba6731fcb1e"
+	userIdStr := "c1e35a7f-02b3-4e9b-93ba-77fab908e266"
 
 	var requester models.GuildMember
 	err := config.DB.

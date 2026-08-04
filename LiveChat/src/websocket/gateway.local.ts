@@ -37,8 +37,7 @@ export function createGateway(
     manager.add({
       ws,
       guildId,
-      userId,
-      fullName: userId,
+      userId
     });
 
     ws.on("message", async (raw) => {

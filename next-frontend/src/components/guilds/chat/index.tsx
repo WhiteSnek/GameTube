@@ -3,14 +3,25 @@ import { useChat } from "@/context/chat_provider";
 import { Pencil, Send, Smile, MoreHorizontal, Trash2 } from "lucide-react";
 import EmojiPicker, { Theme, EmojiStyle } from "emoji-picker-react";
 import React, { useState, useRef, useEffect } from "react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface ChatProps {
   guildId: string;
 }
 
 const Chat: React.FC<ChatProps> = ({ guildId }) => {
-  const { connectToChat, send, editMessage,deleteMessage, messages, clearMessages } =
-    useChat();
+  const {
+    connectToChat,
+    send,
+    editMessage,
+    deleteMessage,
+    messages,
+    clearMessages,
+  } = useChat();
 
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editedMessage, setEditedMessage] = useState("");
@@ -105,7 +116,7 @@ const Chat: React.FC<ChatProps> = ({ guildId }) => {
       id: m.id,
       content: m.content,
       deleted: m.deleted_at,
-    }))
+    })),
   );
 
   return (
@@ -144,10 +155,7 @@ const Chat: React.FC<ChatProps> = ({ guildId }) => {
                   <span className="text-xs text-zinc-500">{createdAt}</span>
 
                   {msg.edited_at && (
-                    <Pencil
-                      size={12}
-                      className="text-zinc-500"
-                    />
+                    <Pencil size={12} className="text-zinc-500" />
                   )}
                 </div>
 
@@ -197,25 +205,34 @@ const Chat: React.FC<ChatProps> = ({ guildId }) => {
               </div>
 
               {/* Hover menu */}
-              <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition">
-                <button
-                  onClick={() =>
-                    setOpenMenuId(openMenuId === msg.id ? null : msg.id)
-                  }
-                  className="rounded-md p-1 hover:bg-zinc-300 dark:hover:bg-zinc-600"
+              <div className="absolute right-2 top-2">
+                <Popover
+                  open={openMenuId === msg.id}
+                  onOpenChange={(open) => setOpenMenuId(open ? msg.id : null)}
                 >
-                  <MoreHorizontal size={18} />
-                </button>
+                  <PopoverTrigger asChild>
+                    <button
+                      className={`
+                        rounded-md p-1 hover:bg-zinc-300 dark:hover:bg-zinc-600 transition
+                        ${openMenuId === msg.id ? "opacity-100" : "opacity-0 group-hover:opacity-100"}
+                      `}
+                    >
+                      <MoreHorizontal size={18} />
+                    </button>
+                  </PopoverTrigger>
 
-                {openMenuId === msg.id && (
-                  <div className="absolute right-0 mt-2 w-40 overflow-hidden rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-xl z-50">
+                  <PopoverContent
+                    align="end"
+                    sideOffset={8}
+                    className="w-40 p-1 border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900"
+                  >
                     <button
                       onClick={() => {
                         setEditingMessageId(msg.id);
                         setEditedMessage(msg.content);
                         setOpenMenuId(null);
                       }}
-                      className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                      className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
                     >
                       <Pencil size={15} />
                       Edit Message
@@ -223,16 +240,16 @@ const Chat: React.FC<ChatProps> = ({ guildId }) => {
 
                     <button
                       onClick={() => {
+                        deleteMessage(msg.id);
                         setOpenMenuId(null);
-                        deleteMessage(msg.id)
                       }}
-                      className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                      className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-red-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
                     >
                       <Trash2 size={15} />
                       Delete Message
                     </button>
-                  </div>
-                )}
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
           );

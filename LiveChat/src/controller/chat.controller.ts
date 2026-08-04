@@ -1,11 +1,11 @@
 import { Request, Response } from "express";
-import { Client, MessageType } from "../types";
+import { ChatUserContext, MessageType } from "../types";
 import { ChatService } from "../services/chat.service";
 
 export class ChatController {
   constructor(private service: ChatService) {}
 
-  async sendMessage(message: string, sender: Client) {
+  async sendMessage(message: string, sender: ChatUserContext) {
     await this.service.sendMessage(sender.guildId, sender.userId, message);
   }
 
@@ -19,7 +19,7 @@ export class ChatController {
   };
 
   async editMessage(
-    sender: Client,
+    sender: ChatUserContext,
     chatId: string,
     content: string,
     messageType: number = MessageType.TEXT
@@ -34,7 +34,7 @@ export class ChatController {
   }
 
   async deleteMessage(
-    sender: Client,
+    sender: ChatUserContext,
     chatId: string,
   ) {
     await this.service.deleteMessage(

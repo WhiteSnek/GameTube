@@ -1,15 +1,21 @@
 import { WebSocket } from "ws";
 
-export interface Client {
+export interface Client extends ChatUserContext {
   ws: WebSocket;
-  userId: string;
-  fullName: string;
-  guildId: string;
 }
 
 export interface ClientMessage {
   action: string;
   message: string;
+}
+
+export interface Connection extends ChatUserContext {
+  connectionId: string;
+}
+
+export interface ChatUserContext {
+  guildId: string;
+  userId: string;
 }
 
 export interface ChatEvent {
