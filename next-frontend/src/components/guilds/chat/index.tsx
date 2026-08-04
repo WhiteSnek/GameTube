@@ -1,6 +1,7 @@
 "use client";
 import { useChat } from "@/context/chat_provider";
-import { Pencil, Send } from "lucide-react";
+import { Pencil, Send, Smile } from "lucide-react";
+import EmojiPicker, { Theme, EmojiStyle } from "emoji-picker-react";
 import React, { useState, useRef, useEffect } from "react";
 
 interface ChatProps {
@@ -17,6 +18,53 @@ const Chat: React.FC<ChatProps> = ({ guildId }) => {
   const chatEndRef = useRef<HTMLDivElement | null>(null);
   const [isTyping, setIsTyping] = useState(false);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+
+  const inputRef = useRef<HTMLInputElement>(null);
+  const emojiPickerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        emojiPickerRef.current &&
+        !emojiPickerRef.current.contains(event.target as Node)
+      ) {
+        setShowEmojiPicker(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const handleEmojiClick = (emojiData: { emoji: string }) => {
+    const input = inputRef.current;
+
+    if (!input) {
+      setNewMessage((prev) => prev + emojiData.emoji);
+      return;
+    }
+
+    const start = input.selectionStart ?? newMessage.length;
+    const end = input.selectionEnd ?? newMessage.length;
+
+    const updated =
+      newMessage.slice(0, start) + emojiData.emoji + newMessage.slice(end);
+
+    setNewMessage(updated);
+
+    requestAnimationFrame(() => {
+      input.focus();
+
+      const cursor = start + emojiData.emoji.length;
+
+      input.setSelectionRange(cursor, cursor);
+    });
+  };
+
   const sendMessage = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -114,21 +162,49 @@ const Chat: React.FC<ChatProps> = ({ guildId }) => {
 
       {/* Input Field */}
       <form
-        className="flex items-center p-2  rounded-lg"
-        onSubmit={(e) => sendMessage(e)}
+        className="relative flex items-center gap-2 p-2"
+        onSubmit={sendMessage}
       >
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setShowEmojiPicker((prev) => !prev)}
+            className="p-2 rounded-lg hover:bg-zinc-300 dark:hover:bg-zinc-700 transition"
+          >
+            <Smile size={22} />
+          </button>
+
+          {showEmojiPicker && (
+            <div
+              ref={emojiPickerRef}
+              className="absolute bottom-14 left-0 z-50"
+            >
+              <EmojiPicker
+                theme={Theme.DARK}
+                emojiStyle={EmojiStyle.NATIVE}
+                lazyLoadEmojis
+                searchDisabled={false}
+                skinTonesDisabled
+                onEmojiClick={handleEmojiClick}
+              />
+            </div>
+          )}
+        </div>
+
         <input
+          ref={inputRef}
           type="text"
-          className="flex-1 p-2 border-none rounded-lg focus:outline-none dark:bg-zinc-900 bg-zinc-300 placeholder-gray-400"
-          placeholder="Type a message..."
           value={newMessage}
           onChange={handleTyping}
+          placeholder="Type a message..."
+          className="flex-1 rounded-lg bg-zinc-300 dark:bg-zinc-900 px-3 py-2 focus:outline-none"
         />
+
         <button
-          className="ml-2 bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-700 cursor-pointer transition"
           type="submit"
+          className="rounded-lg bg-red-500 px-4 py-2 text-white transition hover:bg-red-700"
         >
-          <Send />
+          <Send size={20} />
         </button>
       </form>
     </div>
