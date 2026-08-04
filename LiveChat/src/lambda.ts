@@ -10,10 +10,8 @@ const app = express();
 
 app.use(express.json());
 
-const {
-    controller
-} = createContainer();
+const { controller } = createContainer();
 
 app.use("/chat", createChatRouter(controller));
 
-export const api = serverless(app);
+export const handler = serverless(app);
