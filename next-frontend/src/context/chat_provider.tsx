@@ -1,6 +1,6 @@
 "use client";
 
-import api from "@/lib/axios";
+import { api, liveChatApi } from "@/lib/axios";
 import React, {
   createContext,
   ReactNode,
@@ -11,13 +11,17 @@ import React, {
 } from "react";
 
 export interface ChatMessage {
-  senderId: string;
-  senderName: string;
-  senderRole: string;
-  senderAvatar: string;
+  id: string;
   content: string;
-  createdAt: string;
-  replyTo?: string | null;
+  messageType: "text" | "gif";
+  reply_to?: string | null;
+  created_at: string;
+  updated_at: string | null;
+  edited_at?: string | null;
+  deleted_at?: string | null;
+  fullname: string;
+  avatar: string;
+  role: string;
 }
 
 interface ChatContextType {
@@ -54,6 +58,8 @@ const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
 
   const connectToChat = async (guildId: string) => {
     try {
+      const history = await liveChatApi.get(`/chat?guildId=${guildId}`);
+      setMessages(history.data);
       if (wsRef.current?.readyState === WebSocket.OPEN) {
         wsRef.current.send(
           JSON.stringify({

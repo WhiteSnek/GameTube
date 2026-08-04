@@ -1,5 +1,5 @@
 "use client";
-import api from "@/lib/axios";
+import { api } from "@/lib/axios";
 import { UploadVideoType, VideoImages, VideoType } from "@/types/video.types";
 import axios from "axios";
 import React, { createContext, ReactNode, useContext, useState } from "react";

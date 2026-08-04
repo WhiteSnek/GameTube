@@ -1,6 +1,6 @@
 "use client";
 import { CreateGuildType, GuildDetailsType, GuildMembersType, GuildsType, JoinedGuildType } from "@/types/guild.types";
-import api from "@/lib/axios";
+import { api } from "@/lib/axios";
 import React, { createContext, ReactNode, useContext,useState } from "react";
 import axios from "axios";
 

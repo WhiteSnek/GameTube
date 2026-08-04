@@ -7,7 +7,7 @@ import React, {
   useEffect,
   useState,
 } from "react";
-import api from "@/lib/axios";
+import { api } from "@/lib/axios";
 import axios from "axios";
 import { HistoryType, VideoType } from "@/types/video.types";
 

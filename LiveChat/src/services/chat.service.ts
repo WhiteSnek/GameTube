@@ -1,10 +1,13 @@
 import { Publisher } from "../publishers/publisher";
+import ChatRepository from "../repository/chat.repository";
 import UserRepository from "../repository/user.repository";
+import { MessageType } from "../types";
 
 export class ChatService {
     constructor(
         private readonly publisher: Publisher,
-        private readonly userRepository: UserRepository
+        private readonly userRepository: UserRepository,
+        private readonly chatRepository: ChatRepository
     ) {}
 
     async sendMessage(
@@ -24,14 +27,30 @@ export class ChatService {
         await this.publisher.publishToGuild(guildId, {
             event: "MESSAGE_RECEIVED",
             payload: {
-                senderId: sender.id,
-                senderName: sender.fullname,
-                senderAvatar: sender.avatar,
-                senderRole: sender.role,
+                id: null,
                 content: message,
-                replyTo: null,
-                createdAt: new Date().toISOString(),
+                message_type: "text",
+                reply_to: null,
+                created_at: new Date().toISOString(),
+                updated_at: null,
+                edited_at: null,
+                deleted_at: null,
+                fullname: sender.fullname,
+                avatar: sender.avatar,
+                role: sender.role,
             },
         });
+
+        await this.chatRepository.saveChatMessage(
+            guildId,
+            senderId,
+            message,
+            MessageType.TEXT,
+            null
+        );
+    }
+
+    async getChatMessages(guildId: string) {
+        return await this.chatRepository.getChatMessages(guildId);
     }
 }

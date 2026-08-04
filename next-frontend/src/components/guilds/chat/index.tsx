@@ -1,6 +1,6 @@
 "use client";
 import { useChat } from "@/context/chat_provider";
-import { Send } from "lucide-react";
+import { Pencil, Send } from "lucide-react";
 import React, { useState, useRef, useEffect } from "react";
 
 interface ChatProps {
@@ -27,7 +27,7 @@ const Chat: React.FC<ChatProps> = ({ guildId }) => {
     send(content);
 
     setNewMessage("");
-};
+  };
 
   const handleTyping = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNewMessage(e.target.value);
@@ -52,22 +52,54 @@ const Chat: React.FC<ChatProps> = ({ guildId }) => {
         Live Chat
       </h1>
       <div className="flex-1 overflow-y-auto p-2 dark:bg-zinc-800 bg-zinc-100 px-4">
-        {messages.map((msg, idx) => (
-          <div key={`${msg.senderId}-${msg.createdAt}-${idx}`} className="flex items-center">
-            <img
-              src={msg.senderAvatar}
-              alt={msg.senderName}
-              className="w-10 h-10 rounded-full object-cover"
-            />
-            <div className=" p-3 rounded-lg w-full">
-              <p className="text-sm font-bold">{msg.senderName}</p>
-              <p className="text-xs text-gray-500">{msg.senderRole}</p>
-              <p className="text-sm text-zinc-800 dark:text-zinc-200">
-                {msg.content}
-              </p>
+        {messages.map((msg) => {
+          const createdAt = new Date(msg.created_at).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+
+          return (
+            <div key={msg.id} className="flex gap-3 py-2">
+              <img
+                src={msg.avatar}
+                alt={msg.fullname}
+                className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+              />
+
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-semibold text-sm text-zinc-900 dark:text-white">
+                    {msg.fullname}
+                  </span>
+
+                  <span className="text-[11px] px-2 py-0.5 rounded bg-red-500 text-white font-medium">
+                    {msg.role}
+                  </span>
+
+                  <span className="text-xs text-zinc-500">{createdAt}</span>
+
+                  {msg.edited_at && (
+                    <Pencil
+                      size={12}
+                      className="text-zinc-400"
+                      strokeWidth={2}
+                    />
+                  )}
+                </div>
+
+                {msg.deleted_at ? (
+                  <p className="text-sm italic text-zinc-500 mt-1">
+                    This message was deleted
+                  </p>
+                ) : (
+                  <p className="mt-1 text-sm break-words text-zinc-800 dark:text-zinc-200">
+                    {msg.content}
+                  </p>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
         {/* Typing Indicator */}
         {isTyping && (
           <div className="flex items-center space-x-2 text-gray-400">

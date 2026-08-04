@@ -6,7 +6,6 @@ class UserRepository {
     const userDetails = await db.query(
       `
         SELECT
-        u.id,
         u.fullname,
         u.avatar,
         gm.guild_id,
