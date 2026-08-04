@@ -29,6 +29,7 @@ class ChatRepository {
 
   async getChatMessages(guildId: string): Promise<Chat[]> {
     try {
+      console.log("in repository")
       const result = await db.query(
         `
       SELECT
