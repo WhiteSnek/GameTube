@@ -5,6 +5,7 @@ import { Radio, Upload } from "lucide-react";
 
 import CreateGuild from "@/components/create_guild";
 import Chat from "@/components/guilds/chat";
+import ChatProvider from "@/context/chat_provider";
 import Details from "@/components/guilds/details";
 import UploadVideo from "@/components/upload_video";
 import { VideoCards } from "@/components/video_cards";
@@ -74,8 +75,9 @@ export default function Guild() {
         <hr className="border-t border-red-700 mx-4" />
         <VideoCards videos={videos} />
       </div>
-
-      <Chat />
+      <ChatProvider>
+        <Chat guildId={guildId} />
+      </ChatProvider>
     </div>
   );
 }

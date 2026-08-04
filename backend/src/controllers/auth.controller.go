@@ -320,19 +320,17 @@ func GetChatToken(c *gin.Context) {
 		return
 	}
 
-	// userId, exists := c.Get("userId")
-	// if !exists {
-	// 	c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
-	// 	return
-	// }
+	userId, exists := c.Get("userId")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
 
-	// userIdStr, ok := userId.(string)
-	// if !ok {
-	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": "Error parsing user id"})
-	// 	return
-	// }
-
-	userIdStr := "c1e35a7f-02b3-4e9b-93ba-77fab908e266"
+	userIdStr, ok := userId.(string)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error parsing user id"})
+		return
+	}
 
 	var requester models.GuildMember
 	err := config.DB.
