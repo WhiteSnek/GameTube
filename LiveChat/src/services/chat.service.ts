@@ -44,6 +44,7 @@ export class ChatService {
   }
 
   async getChatMessages(guildId: string) {
+    console.log("in service")
     return await this.chatRepository.getChatMessages(guildId);
   }
 

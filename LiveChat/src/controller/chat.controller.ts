@@ -10,6 +10,7 @@ export class ChatController {
   }
 
   getChatMessages = async (req: Request, res: Response) => {
+    console.log("In controller")
     const { guildId } = req.query as { guildId: string };
     if (!guildId) {
       return res.status(400).json({ error: "Guild ID is required." });
