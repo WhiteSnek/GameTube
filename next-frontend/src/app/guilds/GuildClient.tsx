@@ -76,7 +76,7 @@ export default function Guild() {
         <VideoCards videos={videos} />
       </div>
       <ChatProvider>
-        <Chat guildId={guildId} />
+        <Chat guildId={Guild.id} />
       </ChatProvider>
     </div>
   );
