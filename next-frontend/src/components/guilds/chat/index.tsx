@@ -1,6 +1,6 @@
 "use client";
 import { useChat } from "@/context/chat_provider";
-import { Pencil, Send, Smile } from "lucide-react";
+import { Pencil, Send, Smile, MoreHorizontal, Trash2 } from "lucide-react";
 import EmojiPicker, { Theme, EmojiStyle } from "emoji-picker-react";
 import React, { useState, useRef, useEffect } from "react";
 
@@ -9,7 +9,13 @@ interface ChatProps {
 }
 
 const Chat: React.FC<ChatProps> = ({ guildId }) => {
-  const { connectToChat, send, messages, clearMessages } = useChat();
+  const { connectToChat, send, editMessage,deleteMessage, messages, clearMessages } =
+    useChat();
+
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editedMessage, setEditedMessage] = useState("");
+
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   useEffect(() => {
     clearMessages();
     connectToChat(guildId);
@@ -73,7 +79,6 @@ const Chat: React.FC<ChatProps> = ({ guildId }) => {
     if (!content) return;
 
     send(content);
-
     setNewMessage("");
   };
 
@@ -94,6 +99,15 @@ const Chat: React.FC<ChatProps> = ({ guildId }) => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping]);
 
+  console.log("editingMessageId:", editingMessageId);
+  console.log(
+    messages.map((m) => ({
+      id: m.id,
+      content: m.content,
+      deleted: m.deleted_at,
+    }))
+  );
+
   return (
     <div className="h-[calc(100vh-100px)] w-1/4 flex flex-col bg-zinc-100 dark:bg-zinc-800 rounded-2xl shadow-lg ">
       <h1 className="text-lg font-bold text-center py-4 bg-zinc-300 dark:bg-zinc-900 rounded-t-xl">
@@ -107,7 +121,10 @@ const Chat: React.FC<ChatProps> = ({ guildId }) => {
           });
 
           return (
-            <div key={msg.id} className="flex gap-3 py-2">
+            <div
+              key={msg.id}
+              className="group relative flex gap-3 py-2 px-2 rounded-lg hover:bg-zinc-200/50 dark:hover:bg-zinc-700/30 transition"
+            >
               <img
                 src={msg.avatar}
                 alt={msg.fullname}
@@ -129,20 +146,92 @@ const Chat: React.FC<ChatProps> = ({ guildId }) => {
                   {msg.edited_at && (
                     <Pencil
                       size={12}
-                      className="text-zinc-400"
-                      strokeWidth={2}
+                      className="text-zinc-500"
                     />
                   )}
                 </div>
 
-                {msg.deleted_at ? (
-                  <p className="text-sm italic text-zinc-500 mt-1">
+                {editingMessageId === msg.id ? (
+                  <form
+                    className="mt-2"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+
+                      const value = editedMessage.trim();
+
+                      if (!value) return;
+
+                      editMessage(msg.id, value);
+
+                      setEditingMessageId(null);
+                      setEditedMessage("");
+                    }}
+                  >
+                    <input
+                      autoFocus
+                      value={editedMessage}
+                      onChange={(e) => setEditedMessage(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Escape") {
+                          setEditingMessageId(null);
+                          setEditedMessage("");
+                        }
+                      }}
+                      className="w-full rounded-md border border-zinc-500 bg-zinc-100 dark:bg-zinc-900 px-3 py-2 text-sm outline-none focus:border-red-500"
+                    />
+
+                    <p className="mt-1 text-[11px] text-zinc-500">
+                      Press <span className="font-semibold">Enter</span> to save
+                      • <span className="font-semibold">Esc</span> to cancel
+                    </p>
+                  </form>
+                ) : msg.deleted_at ? (
+                  <p className="mt-1 text-sm italic text-zinc-500">
                     This message was deleted
                   </p>
                 ) : (
                   <p className="mt-1 text-sm break-words text-zinc-800 dark:text-zinc-200">
                     {msg.content}
                   </p>
+                )}
+              </div>
+
+              {/* Hover menu */}
+              <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition">
+                <button
+                  onClick={() =>
+                    setOpenMenuId(openMenuId === msg.id ? null : msg.id)
+                  }
+                  className="rounded-md p-1 hover:bg-zinc-300 dark:hover:bg-zinc-600"
+                >
+                  <MoreHorizontal size={18} />
+                </button>
+
+                {openMenuId === msg.id && (
+                  <div className="absolute right-0 mt-2 w-40 overflow-hidden rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-xl z-50">
+                    <button
+                      onClick={() => {
+                        setEditingMessageId(msg.id);
+                        setEditedMessage(msg.content);
+                        setOpenMenuId(null);
+                      }}
+                      className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                    >
+                      <Pencil size={15} />
+                      Edit Message
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setOpenMenuId(null);
+                        deleteMessage(msg.id)
+                      }}
+                      className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                    >
+                      <Trash2 size={15} />
+                      Delete Message
+                    </button>
+                  </div>
                 )}
               </div>
             </div>

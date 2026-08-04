@@ -331,7 +331,7 @@ func GetChatToken(c *gin.Context) {
 	// 	return
 	// }
 
-	userIdStr := "c1e35a7f-02b3-4e9b-93ba-77fab908e266"
+	userIdStr := "4a19b726-6593-402b-89f8-aba6731fcb1e"
 
 	var requester models.GuildMember
 	err := config.DB.

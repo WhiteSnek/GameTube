@@ -27,6 +27,12 @@ export interface ChatMessage {
 interface ChatContextType {
   connectToChat: (guildId: string) => Promise<void>;
   send: (payload: unknown) => void;
+  editMessage: (
+    chatId: string,
+    content: string,
+    messageType?: "text" | "gif",
+  ) => void;
+  deleteMessage: (chatId: string) => void;
   disconnect: () => void;
   messages: ChatMessage[];
   clearMessages: () => void;
@@ -100,7 +106,30 @@ const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
           case "MESSAGE_RECEIVED":
             setMessages((prev) => [...prev, data.payload]);
             break;
-
+          case "MESSAGE_UPDATED":
+            setMessages((prev) =>
+              prev.map((message) =>
+                message.id === data.payload.id
+                  ? {
+                      ...message,
+                      ...data.payload,
+                    }
+                  : message,
+              ),
+            );
+            break;
+          case "MESSAGE_DELETED":
+            setMessages((prev) =>
+              prev.map((message) =>
+                message.id === data.payload.id
+                  ? {
+                      ...message,
+                      ...data.payload,
+                    }
+                  : message,
+              ),
+            );
+            break;
           default:
             console.log("Unknown event:", data.event);
         }
@@ -138,6 +167,50 @@ const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     );
   };
 
+  const editMessage = (
+    chatId: string,
+    content: string,
+    messageType: "text" | "gif" = "text",
+  ) => {
+    if (!wsRef.current) {
+      console.error("WebSocket is not initialized");
+      return;
+    }
+
+    if (wsRef.current.readyState !== WebSocket.OPEN) {
+      console.error("WebSocket is not connected");
+      return;
+    }
+
+    wsRef.current.send(
+      JSON.stringify({
+        action: "editMessage",
+        chatId,
+        content,
+        messageType,
+      }),
+    );
+  };
+
+  const deleteMessage = (chatId: string) => {
+    if (!wsRef.current) {
+      console.error("WebSocket is not initialized");
+      return;
+    }
+
+    if (wsRef.current.readyState !== WebSocket.OPEN) {
+      console.error("WebSocket is not connected");
+      return;
+    }
+
+    wsRef.current.send(
+      JSON.stringify({
+        action: "deleteMessage",
+        chatId,
+      }),
+    );
+  };
+
   const clearMessages = () => {
     setMessages([]);
   };
@@ -164,6 +237,8 @@ const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       value={{
         connectToChat,
         send,
+        editMessage,
+        deleteMessage,
         disconnect,
         messages,
         clearMessages,
