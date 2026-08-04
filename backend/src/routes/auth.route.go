@@ -23,6 +23,9 @@ func AuthRoutes(r *gin.Engine) {
 	authGroup.OPTIONS("/user-sync", func(ctx *gin.Context) {
 		ctx.Status(200)
 	})
+
+	authGroup.GET("/chat-token", controllers.GetChatToken)
+
 	// Legacy route used by the frontend login/signup buttons
 	authGroup.GET("/google/signup", controllers.Login)
 }

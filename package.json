@@ -21,7 +21,11 @@
   "license": "ISC",
   "description": "",
   "devDependencies": {
+    "@types/pg": "^8.20.3",
     "husky": "^8.0.0",
     "lint-staged": "^15.4.3"
+  },
+  "dependencies": {
+    "pg": "^8.22.0"
   }
 }

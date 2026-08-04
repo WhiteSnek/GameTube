@@ -3,6 +3,7 @@ package controllers
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -10,13 +11,16 @@ import (
 	"os"
 	"strings"
 
+	"time"
+
 	"github.com/WhiteSnek/GameTube/src/config"
 	"github.com/WhiteSnek/GameTube/src/dtos"
-	"github.com/WhiteSnek/GameTube/src/utils"
 	"github.com/WhiteSnek/GameTube/src/models"
+	"github.com/WhiteSnek/GameTube/src/utils"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
-	
+	"github.com/golang-jwt/jwt/v5"
+	"gorm.io/gorm"
 )
 
 func Login(c *gin.Context) {
@@ -218,7 +222,6 @@ func generateOAuthState() (string, error) {
 	return hex.EncodeToString(bytes), nil
 }
 
-
 func UpdateUser(c *gin.Context) {
 	var input dtos.UpdateUserDTO
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -307,5 +310,68 @@ func UpdateUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "User updated successfully",
 		"data":    updatedUser,
+	})
+}
+
+func GetChatToken(c *gin.Context) {
+	guildId := c.Query("guildId")
+	if guildId == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "guildId is required"})
+		return
+	}
+
+	// userId, exists := c.Get("userId")
+	// if !exists {
+	// 	c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+	// 	return
+	// }
+
+	// userIdStr, ok := userId.(string)
+	// if !ok {
+	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": "Error parsing user id"})
+	// 	return
+	// }
+
+	userIdStr := "c1e35a7f-02b3-4e9b-93ba-77fab908e266"
+
+	var requester models.GuildMember
+	err := config.DB.
+		Where("guild_id = ? AND user_id = ?", guildId, userIdStr).
+		First(&requester).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "You are not a part of guild!"})
+			return
+		}
+
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	secret := os.Getenv("CHAT_JWT_SECRET")
+	if secret == "" {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "CHAT_JWT_SECRET not configured"})
+		return
+	}
+
+	claims := jwt.MapClaims{
+		"userId":  userIdStr,
+		"guildId": guildId,
+		"role":    requester.Role,
+		"exp":     time.Now().Add(15 * time.Minute).Unix(),
+		"iat":     time.Now().Unix(),
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	tokenString, err := token.SignedString([]byte(secret))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"token": tokenString,
 	})
 }

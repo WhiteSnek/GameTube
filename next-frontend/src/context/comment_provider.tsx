@@ -1,5 +1,5 @@
 "use client";
-import api from "@/lib/axios";
+import { api } from "@/lib/axios";
 import React, { createContext, ReactNode, useContext } from "react";
 
 interface CommentContextType {
