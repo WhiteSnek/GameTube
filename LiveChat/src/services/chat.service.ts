@@ -1,7 +1,7 @@
 import { Publisher } from "../publishers/publisher";
 import ChatRepository from "../repository/chat.repository";
 import UserRepository from "../repository/user.repository";
-import { MessageType } from "../types";
+import { MessageTypeValue } from "../types";
 
 export class ChatService {
   constructor(
@@ -10,19 +10,34 @@ export class ChatService {
     private readonly chatRepository: ChatRepository,
   ) {}
 
-  async sendMessage(guildId: string, senderId: string, message: string) {
+  async sendMessage(
+    guildId: string,
+    senderId: string,
+    message: string,
+    replyTo: string | null,
+    messageType: "text" | "gif",
+  ) {
     const sender = await this.userRepository.getUserDetails(senderId, guildId);
 
     if (!sender) {
       throw new Error("Sender is not a member of this guild.");
     }
 
+    if (replyTo) {
+      const parent = await this.chatRepository.getMessageById(replyTo, guildId);
+      if (!parent) {
+        throw new Error(
+          "Cannot reply to a message that doesn't exist in this guild.",
+        );
+      }
+    }
+
     const chat = await this.chatRepository.saveChatMessage(
       guildId,
       senderId,
       message,
-      MessageType.TEXT,
-      null,
+      MessageTypeValue[messageType],
+      replyTo,
     );
 
     await this.publisher.publishToGuild(guildId, {
@@ -31,7 +46,7 @@ export class ChatService {
         id: chat.id,
         content: chat.content,
         message_type: chat.message_type,
-        reply_to: chat.reply_to,
+        reply_to: chat.reply_to, 
         created_at: chat.created_at,
         updated_at: chat.updated_at,
         edited_at: chat.edited_at,
@@ -44,7 +59,7 @@ export class ChatService {
   }
 
   async getChatMessages(guildId: string) {
-    console.log("in service")
+    console.log("in service");
     return await this.chatRepository.getChatMessages(guildId);
   }
 

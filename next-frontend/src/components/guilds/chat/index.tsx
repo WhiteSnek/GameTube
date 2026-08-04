@@ -1,6 +1,6 @@
 "use client";
-import { useChat } from "@/context/chat_provider";
-import { Pencil, Send, Smile, MoreHorizontal, Trash2 } from "lucide-react";
+import { ChatMessage, useChat } from "@/context/chat_provider";
+import { Pencil, Send, Smile, MoreHorizontal, Trash2, Reply, X } from "lucide-react";
 import EmojiPicker, { Theme, EmojiStyle } from "emoji-picker-react";
 import React, { useState, useRef, useEffect } from "react";
 import {
@@ -11,6 +11,14 @@ import {
 
 interface ChatProps {
   guildId: string;
+}
+
+type MessageType = "text" | "gif";
+
+interface ReplyTarget {
+  id: string;
+  fullname: string;
+  content: string;
 }
 
 const Chat: React.FC<ChatProps> = ({ guildId }) => {
@@ -27,6 +35,8 @@ const Chat: React.FC<ChatProps> = ({ guildId }) => {
   const [editedMessage, setEditedMessage] = useState("");
 
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [replyingTo, setReplyingTo] = useState<ReplyTarget | null>(null);
+
   useEffect(() => {
     clearMessages();
     connectToChat(guildId);
@@ -89,18 +99,32 @@ const Chat: React.FC<ChatProps> = ({ guildId }) => {
 
     if (!content) return;
 
-    send(content);
+    const messageType: MessageType = "text";
+    send(content, messageType, replyingTo ? replyingTo.id : null);
+
     setNewMessage("");
+    setReplyingTo(null);
   };
+
+  const startReply = (msg: ChatMessage) => {
+    if (!msg.id) return; 
+
+    setReplyingTo({
+      id: msg.id,
+      fullname: msg.fullname,
+      content: msg.content,
+    });
+    setOpenMenuId(null);
+    inputRef.current?.focus();
+  };
+
+  const cancelReply = () => setReplyingTo(null);
 
   const handleTyping = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNewMessage(e.target.value);
     setIsTyping(true);
 
-    // Clear previous timeout
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-
-    // Hide typing indicator after 2 seconds of inactivity
     typingTimeoutRef.current = setTimeout(() => {
       setIsTyping(false);
     }, 2000);
@@ -131,6 +155,8 @@ const Chat: React.FC<ChatProps> = ({ guildId }) => {
             minute: "2-digit",
           });
 
+          const replyRef = msg.reply_to;
+
           return (
             <div
               key={msg.id}
@@ -158,6 +184,17 @@ const Chat: React.FC<ChatProps> = ({ guildId }) => {
                     <Pencil size={12} className="text-zinc-500" />
                   )}
                 </div>
+                {replyRef && !msg.deleted_at && editingMessageId !== msg.id && (
+                  <div className="mt-1 mb-1 border-l-2 border-red-500 pl-2 text-xs text-zinc-500 dark:text-zinc-400 truncate">
+                    <span className="font-semibold">{replyRef.fullname}</span>
+                    {": "}
+                    {replyRef.deleted ? (
+                      <span className="italic">message deleted</span>
+                    ) : (
+                      replyRef.content
+                    )}
+                  </div>
+                )}
 
                 {editingMessageId === msg.id ? (
                   <form
@@ -226,6 +263,16 @@ const Chat: React.FC<ChatProps> = ({ guildId }) => {
                     sideOffset={8}
                     className="w-40 p-1 border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900"
                   >
+                    {!msg.deleted_at && (
+                      <button
+                        onClick={() => startReply(msg)}
+                        className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                      >
+                        <Reply size={15} />
+                        Reply
+                      </button>
+                    )}
+
                     <button
                       onClick={() => {
                         setEditingMessageId(msg.id);
@@ -266,6 +313,25 @@ const Chat: React.FC<ChatProps> = ({ guildId }) => {
         <div ref={chatEndRef} />
       </div>
 
+      {/* Reply preview bar, shown above the input when replying */}
+      {replyingTo && (
+        <div className="flex items-center justify-between gap-2 mx-2 mb-1 px-3 py-2 rounded-lg bg-zinc-200 dark:bg-zinc-900 border-l-2 border-red-500">
+          <div className="min-w-0 text-xs text-zinc-600 dark:text-zinc-300 truncate">
+            Replying to{" "}
+            <span className="font-semibold">{replyingTo.fullname}</span>
+            {": "}
+            {replyingTo.content}
+          </div>
+          <button
+            type="button"
+            onClick={cancelReply}
+            className="p-1 rounded-md hover:bg-zinc-300 dark:hover:bg-zinc-700 transition flex-shrink-0"
+          >
+            <X size={14} />
+          </button>
+        </div>
+      )}
+
       {/* Input Field */}
       <form
         className="relative flex items-center gap-2 p-2"
@@ -302,7 +368,9 @@ const Chat: React.FC<ChatProps> = ({ guildId }) => {
           type="text"
           value={newMessage}
           onChange={handleTyping}
-          placeholder="Type a message..."
+          placeholder={
+            replyingTo ? `Replying to ${replyingTo.fullname}...` : "Type a message..."
+          }
           className="flex-1 rounded-lg bg-zinc-300 dark:bg-zinc-900 px-3 py-2 focus:outline-none"
         />
 

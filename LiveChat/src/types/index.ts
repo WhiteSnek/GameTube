@@ -30,11 +30,18 @@ export interface UserDetails {
   role: string;
 }
 
+export interface ReplyToPreview {
+  id: string;
+  fullname: string;
+  content: string | null;
+  deleted: boolean;
+}
+
 export interface Chat {
   id: string | null;
   content: string;
   message_type: string;
-  reply_to: string | null;
+  reply_to: ReplyToPreview | null;
   created_at: string;
   updated_at: string | null;
   edited_at: string | null;

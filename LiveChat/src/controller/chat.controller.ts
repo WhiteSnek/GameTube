@@ -5,13 +5,24 @@ import { ChatService } from "../services/chat.service";
 export class ChatController {
   constructor(private service: ChatService) {}
 
-  async sendMessage(message: string, sender: ChatUserContext) {
-    await this.service.sendMessage(sender.guildId, sender.userId, message);
+  async sendMessage(
+    message: string,
+    messageType: "text" | "gif",
+    replyTo: string | null,
+    sender: ChatUserContext,
+  ) {
+    await this.service.sendMessage(
+      sender.guildId,
+      sender.userId,
+      message,
+      replyTo,
+      messageType,
+    );
   }
 
   getChatMessages = async (req: Request, res: Response) => {
+    console.log("In controller");
     const { guildId } = req.query as { guildId: string };
-    console.log("in controller")
     if (!guildId) {
       return res.status(400).json({ error: "Guild ID is required." });
     }
@@ -23,25 +34,18 @@ export class ChatController {
     sender: ChatUserContext,
     chatId: string,
     content: string,
-    messageType: number = MessageType.TEXT
+    messageType: number = MessageType.TEXT,
   ) {
     await this.service.editChatMessage(
       sender.guildId,
       sender.userId,
       chatId,
       content,
-      messageType
+      messageType,
     );
   }
 
-  async deleteMessage(
-    sender: ChatUserContext,
-    chatId: string,
-  ) {
-    await this.service.deleteMessage(
-      sender.guildId,
-      sender.userId,
-      chatId
-    );
+  async deleteMessage(sender: ChatUserContext, chatId: string) {
+    await this.service.deleteMessage(sender.guildId, sender.userId, chatId);
   }
 }
