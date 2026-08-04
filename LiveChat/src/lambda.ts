@@ -17,11 +17,14 @@ app.use("/chat", createChatRouter(controller));
 const httpHandler = serverless(app);
 
 export const handler = async (event: any, context: any) => {
-  // WebSocket events
+  console.log("Incoming event:", JSON.stringify(event, null, 2));
+
   if (event.requestContext?.routeKey) {
+    console.log("WebSocket event:", event.requestContext.routeKey);
     return handleWebSocket(event, controller);
   }
 
-  // HTTP events
+  console.log("HTTP event:", event.requestContext?.http);
+
   return httpHandler(event, context);
 };
