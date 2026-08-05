@@ -2,7 +2,6 @@ import { Publisher } from "../publishers/publisher";
 import ChatRepository from "../repository/chat.repository";
 import UserRepository from "../repository/user.repository";
 import { MessageTypeValue } from "../types";
-import { WebSocketError } from "../utils/error";
 
 export class ChatService {
   constructor(
