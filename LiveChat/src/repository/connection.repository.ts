@@ -8,9 +8,10 @@ class ConnectionRepository {
       INSERT INTO connections (
         connection_id,
         guild_id,
-        user_id
+        user_id,
+        role
       )
-      VALUES ($1, $2, $3)
+      VALUES ($1, $2, $3, $4)
       ON CONFLICT (connection_id)
       DO UPDATE SET
         guild_id = EXCLUDED.guild_id,
@@ -20,6 +21,7 @@ class ConnectionRepository {
         connection.connectionId,
         connection.guildId,
         connection.userId,
+        connection.role
       ]
     );
   }
