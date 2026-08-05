@@ -1,6 +1,7 @@
 "use client";
 
 import { api, liveChatApi } from "@/lib/axios";
+import { toast } from "sonner";
 import React, {
   createContext,
   ReactNode,
@@ -30,9 +31,24 @@ export interface ChatMessage {
   avatar: string;
   role: string;
 }
+
+export interface ChatError {
+  code: string;
+  message: string;
+}
+
+export interface ChatEvent {
+  event: string;
+  payload: ChatMessage | ChatError;
+}
+
 interface ChatContextType {
   connectToChat: (guildId: string) => Promise<void>;
-  send: (message: string, messageType: "text" | "gif", replyTo: string | null) => void;
+  send: (
+    message: string,
+    messageType: "text" | "gif",
+    replyTo: string | null,
+  ) => void;
   editMessage: (
     chatId: string,
     content: string,
@@ -136,6 +152,16 @@ const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
               ),
             );
             break;
+          case "ERROR": {
+            const error = data.payload as ChatError;
+
+            toast.error(error.code, {
+              description: error.message,
+            });
+
+            break;
+          }
+
           default:
             console.log("Unknown event:", data.event);
         }
@@ -154,7 +180,11 @@ const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     }
   };
 
-  const send = (message: string, messageType: "text" | "gif", replyTo: string | null) => {
+  const send = (
+    message: string,
+    messageType: "text" | "gif",
+    replyTo: string | null,
+  ) => {
     if (!wsRef.current) {
       console.error("WebSocket is not initialized");
       return;
@@ -170,7 +200,7 @@ const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         action: "sendMessage",
         message,
         messageType,
-        replyTo
+        replyTo,
       }),
     );
   };

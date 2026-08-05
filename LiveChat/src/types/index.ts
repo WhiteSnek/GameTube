@@ -20,7 +20,7 @@ export interface ChatUserContext {
 
 export interface ChatEvent {
   event: string;
-  payload: Chat;
+  payload: Chat | Error;
 }
 
 export interface UserDetails {
@@ -49,6 +49,11 @@ export interface Chat {
   fullname: string;
   avatar: string;
   role: string;
+}
+
+export interface Error {
+  code: string;
+  message: string;
 }
 
 export const MessageType = {

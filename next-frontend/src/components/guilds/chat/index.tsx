@@ -224,108 +224,102 @@ const Chat: React.FC<ChatProps> = ({ guildId }) => {
                   key={msg.id}
                   className="group relative flex gap-3 py-2 px-2 rounded-lg hover:bg-zinc-200/50 dark:hover:bg-zinc-700/30 transition"
                 >
-                  <div
-                    key={msg.id}
-                    className="group relative flex gap-3 py-2 px-2 rounded-lg hover:bg-zinc-200/50 dark:hover:bg-zinc-700/30 transition"
-                  >
-                    <img
-                      src={msg.avatar}
-                      alt={msg.fullname}
-                      className="w-10 h-10 rounded-full object-cover flex-shrink-0"
-                    />
+                  <img
+                    src={msg.avatar}
+                    alt={msg.fullname}
+                    className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                  />
 
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-semibold text-sm text-zinc-900 dark:text-white">
-                          {msg.fullname}
-                        </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-semibold text-sm text-zinc-900 dark:text-white">
+                        {msg.fullname}
+                      </span>
 
-                        <span className="text-[11px] px-2 py-0.5 rounded bg-red-500 text-white font-medium">
-                          {msg.role}
-                        </span>
+                      <span className="text-[11px] px-2 py-0.5 rounded bg-red-500 text-white font-medium">
+                        {msg.role}
+                      </span>
 
-                        <span className="text-xs text-zinc-500">
-                          {createdAt}
-                        </span>
+                      <span className="text-xs text-zinc-500">{createdAt}</span>
 
-                        {msg.edited_at && (
-                          <Pencil size={12} className="text-zinc-500" />
-                        )}
-                      </div>
-                      {replyRef &&
-                        !msg.deleted_at &&
-                        editingMessageId !== msg.id && (
-                          <div className="mt-1 mb-1 border-l-2 border-red-500 pl-2 text-xs text-zinc-500 dark:text-zinc-400 truncate">
-                            <span className="font-semibold">
-                              {replyRef.fullname}
-                            </span>
-                            {": "}
-                            {replyRef.deleted ? (
-                              <span className="italic">message deleted</span>
-                            ) : (
-                              replyRef.content
-                            )}
-                          </div>
-                        )}
-
-                      {editingMessageId === msg.id ? (
-                        <form
-                          className="mt-2"
-                          onSubmit={(e) => {
-                            e.preventDefault();
-
-                            const value = editedMessage.trim();
-
-                            if (!value) return;
-
-                            editMessage(msg.id, value);
-
-                            setEditingMessageId(null);
-                            setEditedMessage("");
-                          }}
-                        >
-                          <input
-                            autoFocus
-                            value={editedMessage}
-                            onChange={(e) => setEditedMessage(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === "Escape") {
-                                setEditingMessageId(null);
-                                setEditedMessage("");
-                              }
-                            }}
-                            className="w-full rounded-md border border-zinc-500 bg-zinc-100 dark:bg-zinc-900 px-3 py-2 text-sm outline-none focus:border-red-500"
-                          />
-
-                          <p className="mt-1 text-[11px] text-zinc-500">
-                            Press <span className="font-semibold">Enter</span>{" "}
-                            to save • <span className="font-semibold">Esc</span>{" "}
-                            to cancel
-                          </p>
-                        </form>
-                      ) : msg.deleted_at ? (
-                        <p className="mt-1 text-sm italic text-zinc-500">
-                          This message was deleted
-                        </p>
-                      ) : (
-                        <p className="mt-1 text-sm break-words text-zinc-800 dark:text-zinc-200">
-                          {msg.content}
-                        </p>
+                      {msg.edited_at && (
+                        <Pencil size={12} className="text-zinc-500" />
                       )}
                     </div>
+                    {replyRef &&
+                      !msg.deleted_at &&
+                      editingMessageId !== msg.id && (
+                        <div className="mt-1 mb-1 border-l-2 border-red-500 pl-2 text-xs text-zinc-500 dark:text-zinc-400 truncate">
+                          <span className="font-semibold">
+                            {replyRef.fullname}
+                          </span>
+                          {": "}
+                          {replyRef.deleted ? (
+                            <span className="italic">message deleted</span>
+                          ) : (
+                            replyRef.content
+                          )}
+                        </div>
+                      )}
 
-                    {/* Hover menu */}
-                    <div className="absolute right-2 top-2">
-                      <Popover
-                        open={openMenuId === msg.id}
-                        onOpenChange={(open) =>
-                          setOpenMenuId(open ? msg.id : null)
-                        }
+                    {editingMessageId === msg.id ? (
+                      <form
+                        className="mt-2"
+                        onSubmit={(e) => {
+                          e.preventDefault();
+
+                          const value = editedMessage.trim();
+
+                          if (!value) return;
+
+                          editMessage(msg.id, value);
+
+                          setEditingMessageId(null);
+                          setEditedMessage("");
+                        }}
                       >
-                        <PopoverTrigger asChild>
-                          {!msg.deleted_at && (
-                            <button
-                              className={`
+                        <input
+                          autoFocus
+                          value={editedMessage}
+                          onChange={(e) => setEditedMessage(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Escape") {
+                              setEditingMessageId(null);
+                              setEditedMessage("");
+                            }
+                          }}
+                          className="w-full rounded-md border border-zinc-500 bg-zinc-100 dark:bg-zinc-900 px-3 py-2 text-sm outline-none focus:border-red-500"
+                        />
+
+                        <p className="mt-1 text-[11px] text-zinc-500">
+                          Press <span className="font-semibold">Enter</span> to
+                          save • <span className="font-semibold">Esc</span> to
+                          cancel
+                        </p>
+                      </form>
+                    ) : msg.deleted_at ? (
+                      <p className="mt-1 text-sm italic text-zinc-500">
+                        This message was deleted
+                      </p>
+                    ) : (
+                      <p className="mt-1 text-sm break-words text-zinc-800 dark:text-zinc-200">
+                        {msg.content}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Hover menu */}
+                  <div className="absolute right-2 top-2">
+                    <Popover
+                      open={openMenuId === msg.id}
+                      onOpenChange={(open) =>
+                        setOpenMenuId(open ? msg.id : null)
+                      }
+                    >
+                      <PopoverTrigger asChild>
+                        {!msg.deleted_at && (
+                          <button
+                            className={`
                           rounded-md p-1 hover:bg-zinc-300 dark:hover:bg-zinc-600 transition
                           ${
                             openMenuId === msg.id
@@ -333,52 +327,51 @@ const Chat: React.FC<ChatProps> = ({ guildId }) => {
                               : "opacity-0 group-hover:opacity-100"
                           }
                         `}
-                            >
-                              <MoreHorizontal size={18} />
-                            </button>
-                          )}
-                        </PopoverTrigger>
+                          >
+                            <MoreHorizontal size={18} />
+                          </button>
+                        )}
+                      </PopoverTrigger>
 
-                        <PopoverContent
-                          align="end"
-                          sideOffset={8}
-                          className="w-40 p-1 border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900"
-                        >
-                          {!msg.deleted_at && (
-                            <button
-                              onClick={() => startReply(msg)}
-                              className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                            >
-                              <Reply size={15} />
-                              Reply
-                            </button>
-                          )}
-
+                      <PopoverContent
+                        align="end"
+                        sideOffset={8}
+                        className="w-40 p-1 border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900"
+                      >
+                        {!msg.deleted_at && (
                           <button
-                            onClick={() => {
-                              setEditingMessageId(msg.id);
-                              setEditedMessage(msg.content);
-                              setOpenMenuId(null);
-                            }}
+                            onClick={() => startReply(msg)}
                             className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
                           >
-                            <Pencil size={15} />
-                            Edit Message
+                            <Reply size={15} />
+                            Reply
                           </button>
+                        )}
 
-                          <button
-                            onClick={() => {
-                              deleteMessage(msg.id);
-                              setOpenMenuId(null);
-                            }}
-                            className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-red-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                          >
-                            <Trash2 size={15} />
-                            Delete Message
-                          </button>
-                        </PopoverContent>
-                      </Popover>
-                    </div>
+                        <button
+                          onClick={() => {
+                            setEditingMessageId(msg.id);
+                            setEditedMessage(msg.content);
+                            setOpenMenuId(null);
+                          }}
+                          className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                        >
+                          <Pencil size={15} />
+                          Edit Message
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            deleteMessage(msg.id);
+                            setOpenMenuId(null);
+                          }}
+                          className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-red-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                        >
+                          <Trash2 size={15} />
+                          Delete Message
+                        </button>
+                      </PopoverContent>
+                    </Popover>
                   </div>
                 </div>
               );

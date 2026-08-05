@@ -4,6 +4,7 @@ import "./globals.css";
 import Navbar from "@/components/navbar";
 import Sidebar from "@/components/sidebar";
 import { ParticlesBackground } from "@/components/particles";
+import { Toaster } from "@/components/ui/sonner";
 import ThemeProvider from "@/context/theme_provider";
 import UserProvider from "@/context/user_provider";
 import GuildProvider from "@/context/guild_provider";
@@ -53,6 +54,23 @@ export default function RootLayout({
             </GuildProvider>
           </UserProvider>
         </ThemeProvider>
+        <Toaster
+          richColors
+          closeButton
+          expand
+          visibleToasts={5}
+          duration={4000}
+          toastOptions={{
+            classNames: {
+              toast:
+                "rounded-xl border shadow-lg bg-zinc-900 text-white dark:bg-zinc-800",
+              title: "font-semibold",
+              description: "text-zinc-300",
+              actionButton: "bg-blue-600 hover:bg-blue-700",
+              cancelButton: "bg-zinc-700 hover:bg-zinc-600",
+            },
+          }}
+        />
       </body>
     </html>
   );
