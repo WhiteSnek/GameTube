@@ -3,6 +3,12 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { Radio, Upload } from "lucide-react";
 
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable";
+
 import CreateGuild from "@/components/create_guild";
 import Chat from "@/components/guilds/chat";
 import ChatProvider from "@/context/chat_provider";
@@ -46,38 +52,55 @@ export default function Guild() {
   if (!Guild) return <CreateGuild />;
 
   return (
-    <div className="relative flex justify-between px-6 py-2">
-      <div className="flex-1 max-w-4xl h-[calc(100vh-100px)] overflow-y-scroll px-4">
-        <Details guild={Guild} />
+    <ResizablePanelGroup
+      orientation="horizontal"
+      className="h-[calc(100vh-80px)] px-6 py-2"
+    >
+      <ResizablePanel defaultSize={72} minSize={50}>
+        <div className="h-full overflow-y-auto pr-4">
+          <Details guild={Guild} />
 
-        {/* Guild Videos Header with Upload Button */}
-        <div className="flex items-center justify-between p-4">
-          <h1 className="text-3xl font-bold">Guild Videos</h1>
-          <div className="flex justify-center items-center gap-3">
-            <button
-              onClick={() => setIsUploadOpen(true)}
-              className="bg-red-500 flex justify-center items-center gap-2 hover:bg-red-700 text-white px-4 py-2 rounded-md cursor-pointer transition"
-            >
-              <Upload /> Upload
-            </button>
-            <UploadVideo
-              open={isUploadOpen}
-              onClose={() => setIsUploadOpen(false)}
-              guildName={Guild.name}
-              guildId={Guild.id}
-            />
-            <button className="bg-red-500 flex justify-center items-center gap-2 hover:bg-red-700 text-white px-4 py-2 rounded-md cursor-pointer transition">
-              <Radio /> Go Live
-            </button>
+          <div className="flex items-center justify-between p-4">
+            <h1 className="text-3xl font-bold">Guild Videos</h1>
+
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setIsUploadOpen(true)}
+                className="flex items-center gap-2 rounded-md bg-red-500 px-4 py-2 text-white transition hover:bg-red-700"
+              >
+                <Upload />
+                Upload
+              </button>
+
+              <UploadVideo
+                open={isUploadOpen}
+                onClose={() => setIsUploadOpen(false)}
+                guildName={Guild.name}
+                guildId={Guild.id}
+              />
+
+              <button className="flex items-center gap-2 rounded-md bg-red-500 px-4 py-2 text-white transition hover:bg-red-700">
+                <Radio />
+                Go Live
+              </button>
+            </div>
           </div>
-        </div>
 
-        <hr className="border-t border-red-700 mx-4" />
-        <VideoCards videos={videos} />
-      </div>
-      <ChatProvider>
-        <Chat guildId={Guild.id} />
-      </ChatProvider>
-    </div>
+          <hr className="mx-4 border-t border-red-700" />
+
+          <VideoCards videos={videos} />
+        </div>
+      </ResizablePanel>
+
+      <ResizableHandle withHandle />
+
+      <ResizablePanel defaultSize={28} minSize={20} maxSize={40}>
+        <div className="h-full pl-4">
+          <ChatProvider>
+            <Chat guildId={Guild.id} />
+          </ChatProvider>
+        </div>
+      </ResizablePanel>
+    </ResizablePanelGroup>
   );
 }
