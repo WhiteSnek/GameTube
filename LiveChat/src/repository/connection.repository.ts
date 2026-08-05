@@ -75,7 +75,7 @@ class ConnectionRepository {
     }));
   }
 
-  async getUserConnections(guildId: string, userId: string): Promise<Connection[]> {
+  async getUserConnections(userId: string,guildId: string): Promise<Connection[]> {
     const result = await db.query(
       `
       SELECT
