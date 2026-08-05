@@ -75,6 +75,28 @@ class ConnectionRepository {
     }));
   }
 
+  async getUserConnections(guildId: string, userId: string): Promise<Connection[]> {
+    const result = await db.query(
+      `
+      SELECT
+        connection_id,
+        guild_id,
+        user_id,
+        role
+      FROM connections
+      WHERE guild_id = $1 AND user_id = $2
+      `,
+      [guildId, userId]
+    );
+
+    return result.rows.map((row: any) => ({
+      connectionId: row.connection_id,
+      guildId: row.guild_id,
+      userId: row.user_id,
+      role: row.role
+    }));
+  }
+
   async remove(connectionId: string): Promise<void> {
     await db.query(
       `

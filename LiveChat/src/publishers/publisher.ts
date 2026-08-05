@@ -5,4 +5,10 @@ export interface Publisher {
     guildId: string,
     event: ChatEvent
   ): Promise<void>;
+
+  publishToUser(
+    userId: string,
+    guildId: string,
+    event: ChatEvent
+  ): Promise<void>;
 }

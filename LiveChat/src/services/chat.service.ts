@@ -20,7 +20,7 @@ export class ChatService {
     const sender = await this.userRepository.getUserDetails(senderId, guildId);
 
     if (!sender) {
-      await this.publisher.publishToGuild(guildId, {
+      await this.publisher.publishToUser(senderId, guildId, {
         event: "ERROR",
         payload: {
           code: "FORBIDDEN",
@@ -34,7 +34,7 @@ export class ChatService {
       const parent = await this.chatRepository.getMessageById(replyTo, guildId);
 
       if (!parent) {
-        await this.publisher.publishToGuild(guildId, {
+        await this.publisher.publishToUser(senderId, guildId, {
           event: "ERROR",
           payload: {
             code: "NOT_FOUND",
@@ -88,7 +88,7 @@ export class ChatService {
     const data = await this.chatRepository.getChatOwnerId(chatId);
 
     if (!data || !data.senderId) {
-      await this.publisher.publishToGuild(guildId, {
+      await this.publisher.publishToUser(senderId, guildId, {
         event: "ERROR",
         payload: {
           code: "NOT_FOUND",
@@ -99,7 +99,7 @@ export class ChatService {
     }
 
     if (data.senderId !== senderId) {
-      await this.publisher.publishToGuild(guildId, {
+      await this.publisher.publishToUser(senderId, guildId, {
         event: "ERROR",
         payload: {
           code: "FORBIDDEN",
@@ -127,7 +127,7 @@ export class ChatService {
     const data = await this.chatRepository.getChatOwnerId(chatId);
     console.log("role in service: ",senderRole)
     if (!data || !data.senderId) {
-      await this.publisher.publishToGuild(guildId, {
+      await this.publisher.publishToUser(senderId, guildId, {
         event: "ERROR",
         payload: {
           code: "NOT_FOUND",
@@ -142,7 +142,7 @@ export class ChatService {
       senderRole !== "LEADER" &&
       senderRole !== "CO_LEADER"
     ) {
-      await this.publisher.publishToGuild(guildId, {
+      await this.publisher.publishToUser(senderId, guildId, {
         event: "ERROR",
         payload: {
           code: "FORBIDDEN",
