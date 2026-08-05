@@ -1,7 +1,7 @@
 import { Publisher } from "../publishers/publisher";
 import ChatRepository from "../repository/chat.repository";
 import UserRepository from "../repository/user.repository";
-import { MessageType } from "../types";
+import { MessageTypeValue } from "../types";
 
 export class ChatService {
   constructor(
@@ -10,19 +10,34 @@ export class ChatService {
     private readonly chatRepository: ChatRepository,
   ) {}
 
-  async sendMessage(guildId: string, senderId: string, message: string) {
+  async sendMessage(
+    guildId: string,
+    senderId: string,
+    message: string,
+    replyTo: string | null,
+    messageType: "text" | "gif",
+  ) {
     const sender = await this.userRepository.getUserDetails(senderId, guildId);
 
     if (!sender) {
       throw new Error("Sender is not a member of this guild.");
     }
 
+    if (replyTo) {
+      const parent = await this.chatRepository.getMessageById(replyTo, guildId);
+      if (!parent) {
+        throw new Error(
+          "Cannot reply to a message that doesn't exist in this guild.",
+        );
+      }
+    }
+
     const chat = await this.chatRepository.saveChatMessage(
       guildId,
       senderId,
       message,
-      MessageType.TEXT,
-      null,
+      MessageTypeValue[messageType],
+      replyTo,
     );
 
     await this.publisher.publishToGuild(guildId, {
@@ -44,7 +59,7 @@ export class ChatService {
   }
 
   async getChatMessages(guildId: string) {
-    console.log("in service")
+    console.log("in service");
     return await this.chatRepository.getChatMessages(guildId);
   }
 
@@ -55,13 +70,13 @@ export class ChatService {
     newContent: string,
     messageType: number,
   ) {
-    const ownerId = await this.chatRepository.getChatOwnerId(chatId);
+    const data = await this.chatRepository.getChatOwnerIdAndRole(chatId);
 
-    if (!ownerId) {
+    if (!data || !data.senderId) {
       throw new Error("Message not found.");
     }
 
-    if (ownerId !== senderId) {
+    if (data.senderId !== senderId) {
       throw new Error("You can only edit your own messages.");
     }
 
@@ -80,12 +95,18 @@ export class ChatService {
   }
 
   async deleteMessage(guildId: string, senderId: string, chatId: string) {
-    const ownerId = await this.chatRepository.getChatOwnerId(chatId);
-    if (!ownerId) {
+    const data = await this.chatRepository.getChatOwnerIdAndRole(chatId);
+
+    if (!data || !data.senderId) {
       throw new Error("Message not found.");
     }
-    if (ownerId !== senderId) {
-      throw new Error("You can only edit your own messages.");
+
+    if (
+      data.senderId !== senderId &&
+      data.role !== "LEADER" &&
+      data.role !== "CO_LEADER"
+    ) {
+      throw new Error("You can only delete your own messages.");
     }
     const updatedMessage = await this.chatRepository.deleteChat(chatId);
     await this.publisher.publishToGuild(guildId, {

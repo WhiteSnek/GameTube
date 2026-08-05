@@ -10,11 +10,18 @@ import React, {
   useState,
 } from "react";
 
+export interface ReplyToPreview {
+  id: string;
+  fullname: string;
+  content: string | null;
+  deleted: boolean;
+}
+
 export interface ChatMessage {
   id: string;
   content: string;
   messageType: "text" | "gif";
-  reply_to?: string | null;
+  reply_to?: ReplyToPreview | null;
   created_at: string;
   updated_at: string | null;
   edited_at?: string | null;
@@ -23,10 +30,9 @@ export interface ChatMessage {
   avatar: string;
   role: string;
 }
-
 interface ChatContextType {
   connectToChat: (guildId: string) => Promise<void>;
-  send: (payload: unknown) => void;
+  send: (message: string, messageType: "text" | "gif", replyTo: string | null) => void;
   editMessage: (
     chatId: string,
     content: string,
@@ -82,7 +88,7 @@ const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       const token = await getChatToken(guildId);
 
       const ws = new WebSocket(
-        `${process.env.NEXT_PUBLIC_LIVE_CHAT_WEBSOCKET_API}token=${encodeURIComponent(token)}`,
+        `${process.env.NEXT_PUBLIC_LIVE_CHAT_WEBSOCKET_API}?token=${encodeURIComponent(token)}`,
       );
 
       wsRef.current = ws;
@@ -148,7 +154,7 @@ const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     }
   };
 
-  const send = (message: string) => {
+  const send = (message: string, messageType: "text" | "gif", replyTo: string | null) => {
     if (!wsRef.current) {
       console.error("WebSocket is not initialized");
       return;
@@ -163,6 +169,8 @@ const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       JSON.stringify({
         action: "sendMessage",
         message,
+        messageType,
+        replyTo
       }),
     );
   };

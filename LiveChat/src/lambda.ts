@@ -8,6 +8,7 @@ import { handleWebSocket } from "./websocket/gateway.lambda";
 process.env.RUNTIME = "lambda";
 
 const app = express();
+
 app.use(express.json());
 
 const { controller } = createContainer();
@@ -19,12 +20,16 @@ const httpHandler = serverless(app);
 export const handler = async (event: any, context: any) => {
   console.log("Incoming event:", JSON.stringify(event, null, 2));
 
-  if (event.requestContext?.routeKey) {
+  if (!event.requestContext?.http) {
     console.log("WebSocket event:", event.requestContext.routeKey);
     return handleWebSocket(event, controller);
   }
 
-  console.log("HTTP event:", event.requestContext?.http);
+  console.log(
+    "HTTP event:",
+    event.requestContext.http.method,
+    event.rawPath
+  );
 
   return httpHandler(event, context);
 };

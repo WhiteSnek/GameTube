@@ -37,7 +37,7 @@ export function createGateway(
     manager.add({
       ws,
       guildId,
-      userId
+      userId,
     });
 
     ws.on("message", async (raw) => {
@@ -50,7 +50,12 @@ export function createGateway(
 
         switch (body.action) {
           case "sendMessage":
-            await controller.sendMessage(body.message, sender);
+            await controller.sendMessage(
+              body.message,
+              body.messageType,
+              body.replyTo,
+              sender,
+            );
             break;
 
           case "editMessage":
