@@ -9,6 +9,7 @@ const verifyToken = (token: string): { userId: string; guildId: string, role: st
         }
 
         const decoded = jwt.verify(token, secret) as { userId: string; guildId: string, role: string };
+        console.log("role in middleware: ", decoded.role)
         return decoded;
     } catch (error) {
         console.error("Error verifying token:", error);

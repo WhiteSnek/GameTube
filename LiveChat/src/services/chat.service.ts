@@ -125,7 +125,7 @@ export class ChatService {
 
   async deleteMessage(guildId: string, senderId: string,senderRole: string, chatId: string) {
     const data = await this.chatRepository.getChatOwnerId(chatId);
-    console.log(senderRole)
+    console.log("role in service: ",senderRole)
     if (!data || !data.senderId) {
       await this.publisher.publishToGuild(guildId, {
         event: "ERROR",

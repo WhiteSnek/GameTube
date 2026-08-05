@@ -59,6 +59,7 @@ export async function handleWebSocket(
           break;
 
         case "deleteMessage":
+          console.log("role in gateway: ", sender.role)
           await controller.deleteMessage(sender, body.chatId);
           break;
       }
