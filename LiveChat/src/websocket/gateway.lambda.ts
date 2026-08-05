@@ -26,6 +26,7 @@ export async function handleWebSocket(
         connectionId: event.requestContext.connectionId!,
         guildId: payload.guildId,
         userId: payload.userId,
+        role: payload.role
       });
 
       return { statusCode: 200 };

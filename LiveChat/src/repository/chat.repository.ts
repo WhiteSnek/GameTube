@@ -15,6 +15,16 @@ const REPLY_SELECT_SQL = `
   reply_parent_user.fullname AS reply_to_fullname
 `;
 
+const DELETED_BY_JOIN_SQL = `
+  LEFT JOIN users AS deleted_by_user
+    ON deleted_by_user.id = c.deleted_by
+`;
+
+const DELETED_BY_SELECT_SQL = `
+  c.deleted_by,
+  deleted_by_user.fullname AS deleted_by_name
+`;
+
 export interface SavedChatRow {
   id: string;
   content: string;
@@ -49,6 +59,8 @@ function shapeChat(row: any): Chat {
     updated_at: row.updated_at,
     edited_at: row.edited_at,
     deleted_at: row.deleted_at,
+    deleted_by: row.deleted_by,
+    deleted_by_name: row.deleted_by_name,
     fullname: row.fullname,
     avatar: row.avatar,
     role: row.role,
@@ -114,7 +126,7 @@ class ChatRepository {
 
   async getChatMessages(guildId: string): Promise<Chat[]> {
     try {
-      console.log("in repository")
+      console.log("in repository");
       const result = await db.query(
         `
       SELECT
@@ -129,7 +141,8 @@ class ChatRepository {
           u.fullname,
           u.avatar,
           gm.role,
-          ${REPLY_SELECT_SQL}
+          ${REPLY_SELECT_SQL},
+          ${DELETED_BY_SELECT_SQL}
       FROM chats c
       JOIN users u
           ON c.sender_id = u.id
@@ -137,6 +150,7 @@ class ChatRepository {
           ON gm.user_id = c.sender_id
          AND gm.guild_id = c.guild_id
       ${REPLY_JOIN_SQL}
+      ${DELETED_BY_JOIN_SQL}
       WHERE c.guild_id = $1
       ORDER BY c.created_at ASC;
       `,
@@ -180,7 +194,8 @@ class ChatRepository {
           u.fullname,
           u.avatar,
           gm.role,
-          ${REPLY_SELECT_SQL}
+          ${REPLY_SELECT_SQL},
+          ${DELETED_BY_SELECT_SQL}
       FROM updated
       JOIN users u
           ON updated.sender_id = u.id
@@ -190,7 +205,9 @@ class ChatRepository {
       LEFT JOIN chats AS reply_parent
           ON reply_parent.id = updated.reply_to
       LEFT JOIN users AS reply_parent_user
-          ON reply_parent_user.id = reply_parent.sender_id;
+          ON reply_parent_user.id = reply_parent.sender_id
+      LEFT JOIN users AS deleted_by_user
+          ON deleted_by_user.id = updated.deleted_by;
       `,
         [newContent, messageType, chatId],
       );
@@ -206,20 +223,13 @@ class ChatRepository {
     }
   }
 
-  async getChatOwnerIdAndRole(
-    chatId: string,
-  ): Promise<{ senderId: string; role: string } | null> {
+  async getChatOwnerId(chatId: string): Promise<{ senderId: string } | null> {
     try {
       const result = await db.query(
         `
-      SELECT
-          c.sender_id,
-          gm.role
-      FROM chats c
-      JOIN guild_members gm
-          ON c.sender_id = gm.user_id
-         AND c.guild_id = gm.guild_id
-      WHERE c.id = $1;
+      SELECT sender_id
+      FROM chats
+      WHERE id = $1;
       `,
         [chatId],
       );
@@ -230,25 +240,28 @@ class ChatRepository {
 
       return {
         senderId: result.rows[0].sender_id,
-        role: result.rows[0].role,
       };
     } catch (error) {
-      console.error("Error retrieving chat owner ID and role:", error);
-      throw new Error("Failed to retrieve chat owner ID and role");
+      console.error("Error retrieving chat owner ID:", error);
+      throw new Error("Failed to retrieve chat owner ID");
     }
   }
 
-  async deleteChat(chatId: string): Promise<Chat> {
+  async deleteChat(chatId: string, deletedBy: string): Promise<Chat> {
     try {
       const result = await db.query(
         `
       WITH updated AS (
-        UPDATE chats c
-        SET
-            deleted_at = NOW(),
-            content = ''
-        WHERE c.id = $1
-        RETURNING *
+      UPDATE chats c
+      SET
+          deleted_at = NOW(),
+          content = '',
+          deleted_by = CASE
+              WHEN c.sender_id <> $2 THEN $2
+              ELSE NULL
+          END
+      WHERE c.id = $1
+      RETURNING *
       )
       SELECT
           updated.id,
@@ -263,19 +276,23 @@ class ChatRepository {
           u.fullname,
           u.avatar,
           gm.role,
-          ${REPLY_SELECT_SQL}
+          ${REPLY_SELECT_SQL},
+          updated.deleted_by,
+          deleted_by_user.fullname AS deleted_by_name
       FROM updated
       JOIN users u
           ON updated.sender_id = u.id
       JOIN guild_members gm
           ON gm.user_id = updated.sender_id
-         AND gm.guild_id = updated.guild_id
+        AND gm.guild_id = updated.guild_id
       LEFT JOIN chats AS reply_parent
           ON reply_parent.id = updated.reply_to
       LEFT JOIN users AS reply_parent_user
-          ON reply_parent_user.id = reply_parent.sender_id;
+          ON reply_parent_user.id = reply_parent.sender_id
+      LEFT JOIN users AS deleted_by_user
+          ON deleted_by_user.id = updated.deleted_by;
       `,
-        [chatId],
+        [chatId, deletedBy],
       );
 
       if (result.rowCount === 0) {

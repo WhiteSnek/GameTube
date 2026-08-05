@@ -46,6 +46,6 @@ export class ChatController {
   }
 
   async deleteMessage(sender: ChatUserContext, chatId: string) {
-    await this.service.deleteMessage(sender.guildId, sender.userId, chatId);
+    await this.service.deleteMessage(sender.guildId, sender.userId,sender.role, chatId);
   }
 }

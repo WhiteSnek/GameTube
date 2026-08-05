@@ -27,6 +27,8 @@ export interface ChatMessage {
   updated_at: string | null;
   edited_at?: string | null;
   deleted_at?: string | null;
+  deleted_by?: string | null;
+  deleted_by_name?: string | null;
   fullname: string;
   avatar: string;
   role: string;

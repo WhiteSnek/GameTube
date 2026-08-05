@@ -65,6 +65,8 @@ export class ChatService {
         updated_at: chat.updated_at,
         edited_at: chat.edited_at,
         deleted_at: chat.deleted_at,
+        deleted_by: null,
+        deleted_by_name: null,
         fullname: sender.fullname,
         avatar: sender.avatar,
         role: sender.role,
@@ -83,7 +85,7 @@ export class ChatService {
     newContent: string,
     messageType: number,
   ) {
-    const data = await this.chatRepository.getChatOwnerIdAndRole(chatId);
+    const data = await this.chatRepository.getChatOwnerId(chatId);
 
     if (!data || !data.senderId) {
       await this.publisher.publishToGuild(guildId, {
@@ -121,8 +123,8 @@ export class ChatService {
     return updatedMessage;
   }
 
-  async deleteMessage(guildId: string, senderId: string, chatId: string) {
-    const data = await this.chatRepository.getChatOwnerIdAndRole(chatId);
+  async deleteMessage(guildId: string, senderId: string,senderRole: string, chatId: string) {
+    const data = await this.chatRepository.getChatOwnerId(chatId);
 
     if (!data || !data.senderId) {
       await this.publisher.publishToGuild(guildId, {
@@ -137,8 +139,8 @@ export class ChatService {
 
     if (
       data.senderId !== senderId &&
-      data.role !== "LEADER" &&
-      data.role !== "CO_LEADER"
+      senderRole !== "LEADER" &&
+      senderRole !== "CO_LEADER"
     ) {
       await this.publisher.publishToGuild(guildId, {
         event: "ERROR",
@@ -150,7 +152,7 @@ export class ChatService {
       return;
     }
 
-    const updatedMessage = await this.chatRepository.deleteChat(chatId);
+    const updatedMessage = await this.chatRepository.deleteChat(chatId, senderId);
 
     await this.publisher.publishToGuild(guildId, {
       event: "MESSAGE_DELETED",

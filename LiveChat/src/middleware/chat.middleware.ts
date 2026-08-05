@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 
-const verifyToken = (token: string): { userId: string; guildId: string } | null => {
+const verifyToken = (token: string): { userId: string; guildId: string, role: string } | null => {
     try {
         const secret = process.env.CHAT_JWT_SECRET;
         if (!secret) {
@@ -8,7 +8,7 @@ const verifyToken = (token: string): { userId: string; guildId: string } | null 
             return null;
         }
 
-        const decoded = jwt.verify(token, secret) as { userId: string; guildId: string };
+        const decoded = jwt.verify(token, secret) as { userId: string; guildId: string, role: string };
         return decoded;
     } catch (error) {
         console.error("Error verifying token:", error);

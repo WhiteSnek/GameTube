@@ -299,7 +299,7 @@ const Chat: React.FC<ChatProps> = ({ guildId }) => {
                       </form>
                     ) : msg.deleted_at ? (
                       <p className="mt-1 text-sm italic text-zinc-500">
-                        This message was deleted
+                        {`This message was deleted ${msg.deleted_by ? `by ${msg.deleted_by_name}` : ""}`}
                       </p>
                     ) : (
                       <p className="mt-1 text-sm break-words text-zinc-800 dark:text-zinc-200">

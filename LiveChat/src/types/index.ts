@@ -16,6 +16,7 @@ export interface Connection extends ChatUserContext {
 export interface ChatUserContext {
   guildId: string;
   userId: string;
+  role: string;
 }
 
 export interface ChatEvent {
@@ -46,6 +47,8 @@ export interface Chat {
   updated_at: string | null;
   edited_at: string | null;
   deleted_at: string | null;
+  deleted_by: string | null;
+  deleted_by_name: string | null;
   fullname: string;
   avatar: string;
   role: string;

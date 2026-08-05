@@ -32,12 +32,13 @@ export function createGateway(
       return;
     }
 
-    const { guildId, userId } = data;
+    const { guildId, userId, role } = data;
 
     manager.add({
       ws,
       guildId,
       userId,
+      role
     });
 
     ws.on("message", async (raw) => {

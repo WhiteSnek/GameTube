@@ -30,7 +30,8 @@ class ConnectionRepository {
       SELECT
         connection_id,
         guild_id,
-        user_id
+        user_id,
+        role
       FROM connections
       WHERE connection_id = $1
       LIMIT 1
@@ -46,6 +47,7 @@ class ConnectionRepository {
       connectionId: result.rows[0].connection_id,
       guildId: result.rows[0].guild_id,
       userId: result.rows[0].user_id,
+      role: result.rows[0].role
     };
   }
 
@@ -55,7 +57,8 @@ class ConnectionRepository {
       SELECT
         connection_id,
         guild_id,
-        user_id
+        user_id,
+        role
       FROM connections
       WHERE guild_id = $1
       `,
@@ -66,6 +69,7 @@ class ConnectionRepository {
       connectionId: row.connection_id,
       guildId: row.guild_id,
       userId: row.user_id,
+      role: row.role
     }));
   }
 
