@@ -46,7 +46,7 @@ export class ChatService {
         id: chat.id,
         content: chat.content,
         message_type: chat.message_type,
-        reply_to: chat.reply_to, 
+        reply_to: chat.reply_to,
         created_at: chat.created_at,
         updated_at: chat.updated_at,
         edited_at: chat.edited_at,
@@ -70,13 +70,13 @@ export class ChatService {
     newContent: string,
     messageType: number,
   ) {
-    const ownerId = await this.chatRepository.getChatOwnerId(chatId);
+    const data = await this.chatRepository.getChatOwnerIdAndRole(chatId);
 
-    if (!ownerId) {
+    if (!data || !data.senderId) {
       throw new Error("Message not found.");
     }
 
-    if (ownerId !== senderId) {
+    if (data.senderId !== senderId) {
       throw new Error("You can only edit your own messages.");
     }
 
@@ -95,12 +95,18 @@ export class ChatService {
   }
 
   async deleteMessage(guildId: string, senderId: string, chatId: string) {
-    const ownerId = await this.chatRepository.getChatOwnerId(chatId);
-    if (!ownerId) {
+    const data = await this.chatRepository.getChatOwnerIdAndRole(chatId);
+
+    if (!data || !data.senderId) {
       throw new Error("Message not found.");
     }
-    if (ownerId !== senderId) {
-      throw new Error("You can only edit your own messages.");
+
+    if (
+      data.senderId !== senderId &&
+      data.role !== "LEADER" &&
+      data.role !== "CO_LEADER"
+    ) {
+      throw new Error("You can only delete your own messages.");
     }
     const updatedMessage = await this.chatRepository.deleteChat(chatId);
     await this.publisher.publishToGuild(guildId, {

@@ -205,20 +205,35 @@ class ChatRepository {
     }
   }
 
-  async getChatOwnerId(chatId: string): Promise<string | null> {
+  async getChatOwnerIdAndRole(
+    chatId: string,
+  ): Promise<{ senderId: string; role: string } | null> {
     try {
       const result = await db.query(
         `
-        SELECT sender_id
-        FROM chats
-        WHERE id = $1;
-        `,
+      SELECT
+          c.sender_id,
+          gm.role
+      FROM chats c
+      JOIN guild_members gm
+          ON c.sender_id = gm.user_id
+         AND c.guild_id = gm.guild_id
+      WHERE c.id = $1;
+      `,
         [chatId],
       );
-      return result.rows[0]?.sender_id || null;
+
+      if (result.rows.length === 0) {
+        return null;
+      }
+
+      return {
+        senderId: result.rows[0].sender_id,
+        role: result.rows[0].role,
+      };
     } catch (error) {
-      console.error("Error retrieving chat owner ID:", error);
-      throw new Error("Failed to retrieve chat owner ID");
+      console.error("Error retrieving chat owner ID and role:", error);
+      throw new Error("Failed to retrieve chat owner ID and role");
     }
   }
 
