@@ -4,8 +4,6 @@ import { useSearchParams } from "next/navigation";
 import { Radio, Upload } from "lucide-react";
 
 import CreateGuild from "@/components/create_guild";
-import Chat from "@/components/guilds/chat";
-import ChatProvider from "@/context/chat_provider";
 import Details from "@/components/guilds/details";
 import UploadVideo from "@/components/upload_video";
 import { VideoCards } from "@/components/video_cards";
@@ -13,6 +11,7 @@ import { VideoCards } from "@/components/video_cards";
 import { useGuild } from "@/context/guild_provider";
 import { useVideo } from "@/context/video_provider";
 import { VideoType } from "@/types/video.types";
+
 export default function Guild() {
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [videos, setVideos] = useState<VideoType[]>([]);
@@ -20,6 +19,7 @@ export default function Guild() {
   const { getVideos } = useVideo();
   const searchParams = useSearchParams();
   const guildId = searchParams.get("guildId");
+
   // Fetch guild details
   useEffect(() => {
     if (!guildId) return;
@@ -46,8 +46,8 @@ export default function Guild() {
   if (!Guild) return <CreateGuild />;
 
   return (
-    <div className="relative flex justify-between px-6 py-2">
-      <div className="flex-1 max-w-4xl h-[calc(100vh-100px)] overflow-y-scroll px-4">
+    <div className="relative px-6 py-2">
+      <div className="w-full h-[calc(100vh-100px)] overflow-y-scroll px-4">
         <Details guild={Guild} />
 
         {/* Guild Videos Header with Upload Button */}
@@ -75,9 +75,6 @@ export default function Guild() {
         <hr className="border-t border-red-700 mx-4" />
         <VideoCards videos={videos} />
       </div>
-      <ChatProvider>
-        <Chat guildId={Guild.id} />
-      </ChatProvider>
     </div>
   );
 }
