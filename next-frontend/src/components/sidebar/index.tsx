@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Castle, History, List, ThumbsUp, Clock, Map } from "lucide-react";
+import { Home, Castle, History, List, ThumbsUp, Clock, Map, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const Sidebar = () => {
@@ -12,7 +12,7 @@ const Sidebar = () => {
     { name: "Home", icon: Home, link: "/" },
     { name: "Joined Guilds", icon: List, link: "/joined" },
     { name: "Your Guild", icon: Castle, link: `/guilds?guildId=1` },
-    { name: "Chats", icon: Castle, link: `/chats` },
+    { name: "Chats", icon: MessageCircle, link: `/chats` },
     { name: "Explore Guilds", icon: Map, link: `/guilds/explore` },
     { name: "History", icon: History, link: "/history" },
     { name: "Liked Videos", icon: ThumbsUp, link: "/liked-videos" },

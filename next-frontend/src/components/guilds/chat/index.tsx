@@ -191,7 +191,7 @@ const Chat: React.FC<ChatProps> = ({ guildId }) => {
   }, []);
 
   return (
-    <div className="h-[calc(100vh-100px)] w-1/4 flex flex-col bg-zinc-100 dark:bg-zinc-800 rounded-2xl shadow-lg ">
+    <div className="h-[calc(100vh-100px)] w-full flex flex-col bg-zinc-100 dark:bg-zinc-800 rounded-2xl shadow-lg ">
       <h1 className="text-lg font-bold text-center py-4 bg-zinc-300 dark:bg-zinc-900 rounded-t-xl">
         Live Chat
       </h1>
