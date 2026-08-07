@@ -190,35 +190,23 @@ const Chat: React.FC<ChatProps> = ({ guildId }) => {
   }, [messages, lastReadDetails, hasLoadedLastRead]);
 
   useEffect(() => {
-    if (hasScrolledToUnread) {
-      chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-      return;
-    }
-
-    if (!hasLoadedLastRead || messages.length === 0) {
-      return;
-    }
+    if (hasScrolledToUnread) return;
+    if (!hasLoadedLastRead) return;
 
     if (!firstUnreadMessageId) {
-      chatEndRef.current?.scrollIntoView({ behavior: "auto" });
+      chatEndRef.current?.scrollIntoView();
       setHasScrolledToUnread(true);
       return;
     }
-    if (unreadDividerRef.current) {
-      unreadDividerRef.current.scrollIntoView({
-        behavior: "auto",
-        block: "start",
-      });
-      setHasScrolledToUnread(true);
-    }
 
-  }, [
-    messages,
-    isTyping,
-    hasLoadedLastRead,
-    hasScrolledToUnread,
-    firstUnreadMessageId,
-  ]);
+    if (!unreadDividerRef.current) return;
+
+    unreadDividerRef.current.scrollIntoView({
+      block: "start",
+    });
+
+    setHasScrolledToUnread(true);
+  }, [hasLoadedLastRead, firstUnreadMessageId, hasScrolledToUnread]);
 
   const getDateLabel = (date: Date) => {
     const today = new Date();
