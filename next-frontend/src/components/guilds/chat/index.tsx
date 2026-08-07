@@ -60,25 +60,6 @@ const Chat: React.FC<ChatProps> = ({ guildId }) => {
     useState<LastReadDetails | null>(null);
   const [hasLoadedLastRead, setHasLoadedLastRead] = useState(false);
 
-  useEffect(() => {
-    clearMessages();
-    connectToChat(guildId);
-
-    setHasLoadedLastRead(false);
-    setLastReadDetails(null);
-
-    const fetchLastRead = async () => {
-      try {
-        const details = await getLastReadMessageDetails(guildId);
-        setLastReadDetails(details);
-      } finally {
-        setHasLoadedLastRead(true);
-      }
-    };
-
-    fetchLastRead();
-  }, [guildId]);
-
   const [newMessage, setNewMessage] = useState("");
   const chatEndRef = useRef<HTMLDivElement | null>(null);
   const unreadDividerRef = useRef<HTMLDivElement | null>(null);
@@ -209,23 +190,28 @@ const Chat: React.FC<ChatProps> = ({ guildId }) => {
   }, [messages, lastReadDetails, hasLoadedLastRead]);
 
   useEffect(() => {
-    if (!hasScrolledToUnread && hasLoadedLastRead && messages.length > 0) {
-      if (firstUnreadMessageId && unreadDividerRef.current) {
-        unreadDividerRef.current.scrollIntoView({
-          behavior: "auto",
-          block: "start",
-        });
-      } else {
-        chatEndRef.current?.scrollIntoView({ behavior: "auto" });
-      }
-
-      setHasScrolledToUnread(true);
+    if (hasScrolledToUnread) {
+      chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
       return;
     }
 
-    if (hasScrolledToUnread) {
-      chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (!hasLoadedLastRead || messages.length === 0) {
+      return;
     }
+
+    if (!firstUnreadMessageId) {
+      chatEndRef.current?.scrollIntoView({ behavior: "auto" });
+      setHasScrolledToUnread(true);
+      return;
+    }
+    if (unreadDividerRef.current) {
+      unreadDividerRef.current.scrollIntoView({
+        behavior: "auto",
+        block: "start",
+      });
+      setHasScrolledToUnread(true);
+    }
+
   }, [
     messages,
     isTyping,
