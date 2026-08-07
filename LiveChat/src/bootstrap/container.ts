@@ -7,6 +7,7 @@ import ChatRepository from "../repository/chat.repository";
 import { ChatService } from "../services/chat.service";
 import { ChatController } from "../controller/chat.controller";
 import { ApiGatewayPublisher } from "../publishers/apigateway.publisher";
+import UnreadChatRepository from "../repository/unread.repository";
 
 export function createContainer() {
 
@@ -19,11 +20,13 @@ export function createContainer() {
 
     const userRepository = new UserRepository();
     const chatRepository = new ChatRepository();
+    const unreadChatRepository = new UnreadChatRepository()
 
     const service = new ChatService(
         publisher,
         userRepository,
-        chatRepository
+        chatRepository,
+        unreadChatRepository
     );
 
     const controller = new ChatController(service);

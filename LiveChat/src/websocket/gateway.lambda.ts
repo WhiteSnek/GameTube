@@ -1,8 +1,8 @@
 import { APIGatewayProxyWebsocketEventV2 } from "aws-lambda";
 
 import { ChatController } from "../controller/chat.controller";
-import { verifyToken } from "../middleware/chat.middleware";
 import ConnectionRepository from "../repository/connection.repository";
+import { verifyToken } from "../utils/jwt";
 
 const repository = new ConnectionRepository();
 

@@ -3,8 +3,8 @@ import { Server } from "http";
 
 import { ClientManager } from "./client.manager";
 import { ChatController } from "../controller/chat.controller";
-import { verifyToken } from "../middleware/chat.middleware";
 import { MessageTypeValue } from "../types";
+import { verifyToken } from "../utils/jwt";
 
 export function createGateway(
   server: Server,

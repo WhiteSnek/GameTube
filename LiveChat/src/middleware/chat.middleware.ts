@@ -1,20 +1,34 @@
-import jwt from "jsonwebtoken";
+import { Request, Response, NextFunction } from "express";
+import { verifyToken } from "../utils/jwt";
 
-const verifyToken = (token: string): { userId: string; guildId: string, role: string } | null => {
-    try {
-        const secret = process.env.CHAT_JWT_SECRET;
-        if (!secret) {
-            console.error("CHAT_JWT_SECRET not configured");
-            return null;
-        }
-
-        const decoded = jwt.verify(token, secret) as { userId: string; guildId: string, role: string };
-        console.log("role in middleware: ", decoded.role)
-        return decoded;
-    } catch (error) {
-        console.error("Error verifying token:", error);
-        return null;
-    }
+export interface AuthenticatedRequest extends Request {
+  user?: {
+    userId: string;
+    guildId: string;
+    role: string;
+  };
 }
 
-export { verifyToken };
+export const authenticate = (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader?.startsWith("Bearer ")) {
+    return res.status(401).json({
+      error: "Authorization token is required.",
+    });
+  }
+  const token = authHeader.split(" ")[1];
+  const decoded = verifyToken(token);
+
+  if (!decoded) {
+    return res.status(401).json({
+      error: "Invalid or expired token.",
+    });
+  }
+  req.user = decoded;
+  next();
+};

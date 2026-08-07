@@ -57,6 +57,10 @@ interface ChatContextType {
     messageType?: "text" | "gif",
   ) => void;
   deleteMessage: (chatId: string) => void;
+  getLastReadMessageDetails: (
+    guildId: string,
+  ) => Promise<{ last_read_message_id: string; last_read_at: string } | null>;
+  getUnreadMessageCount: (guildId: string) => Promise<{ count: number }>;
   disconnect: () => void;
   messages: ChatMessage[];
   clearMessages: () => void;
@@ -251,6 +255,33 @@ const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     );
   };
 
+  const getLastReadMessageDetails = async (guildId: string) => {
+    const token = await getChatToken(guildId);
+
+    const response = await liveChatApi.get("/chat/unread", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return response.data;
+  };
+
+  const getUnreadMessageCount = async (guildId: string) => {
+    const token = await getChatToken(guildId);
+
+    const response = await liveChatApi.get(
+      `/chat/unread-count?guildId=${guildId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
+
+    return response.data;
+  };
+
   const clearMessages = () => {
     setMessages([]);
   };
@@ -279,6 +310,8 @@ const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         send,
         editMessage,
         deleteMessage,
+        getLastReadMessageDetails,
+        getUnreadMessageCount,
         disconnect,
         messages,
         clearMessages,

@@ -1,5 +1,6 @@
 import { Publisher } from "../publishers/publisher";
 import ChatRepository from "../repository/chat.repository";
+import UnreadChatRepository from "../repository/unread.repository";
 import UserRepository from "../repository/user.repository";
 import { MessageTypeValue } from "../types";
 
@@ -8,6 +9,7 @@ export class ChatService {
     private readonly publisher: Publisher,
     private readonly userRepository: UserRepository,
     private readonly chatRepository: ChatRepository,
+    private readonly unreadChatRepository: UnreadChatRepository,
   ) {}
 
   async sendMessage(
@@ -123,9 +125,14 @@ export class ChatService {
     return updatedMessage;
   }
 
-  async deleteMessage(guildId: string, senderId: string,senderRole: string, chatId: string) {
+  async deleteMessage(
+    guildId: string,
+    senderId: string,
+    senderRole: string,
+    chatId: string,
+  ) {
     const data = await this.chatRepository.getChatOwnerId(chatId);
-    console.log("role in service: ",senderRole)
+    console.log("role in service: ", senderRole);
     if (!data || !data.senderId) {
       await this.publisher.publishToUser(senderId, guildId, {
         event: "ERROR",
@@ -152,7 +159,10 @@ export class ChatService {
       return;
     }
 
-    const updatedMessage = await this.chatRepository.deleteChat(chatId, senderId);
+    const updatedMessage = await this.chatRepository.deleteChat(
+      chatId,
+      senderId,
+    );
 
     await this.publisher.publishToGuild(guildId, {
       event: "MESSAGE_DELETED",
@@ -160,5 +170,19 @@ export class ChatService {
     });
 
     return updatedMessage;
+  }
+
+  async getLastReadMessageDetails(
+    senderId: string,
+    guildId: string,
+  ): Promise<{ last_read_message_id: string; last_read_at: string } | null> {
+    return await this.unreadChatRepository.getLastReadMessageDetails(
+      senderId,
+      guildId,
+    );
+  }
+
+  async getUnreadMessageCount(senderId: string, guildId: string) {
+    return this.unreadChatRepository.getUnreadMessagesCount(senderId, guildId);
   }
 }
