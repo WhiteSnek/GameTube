@@ -81,12 +81,34 @@ const Chat: React.FC<ChatProps> = ({ guildId }) => {
 
   const [newMessage, setNewMessage] = useState("");
   const chatEndRef = useRef<HTMLDivElement | null>(null);
+  const unreadDividerRef = useRef<HTMLDivElement | null>(null);
+  const [hasScrolledToUnread, setHasScrolledToUnread] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    clearMessages();
+    connectToChat(guildId);
+
+    setHasLoadedLastRead(false);
+    setLastReadDetails(null);
+    setHasScrolledToUnread(false);
+
+    const fetchLastRead = async () => {
+      try {
+        const details = await getLastReadMessageDetails(guildId);
+        setLastReadDetails(details);
+      } finally {
+        setHasLoadedLastRead(true);
+      }
+    };
+
+    fetchLastRead();
+  }, [guildId]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -168,9 +190,49 @@ const Chat: React.FC<ChatProps> = ({ guildId }) => {
     }, 2000);
   };
 
+  const firstUnreadMessageId = useMemo(() => {
+    if (!hasLoadedLastRead) return null;
+    if (!lastReadDetails) {
+      return messages.length > 0 ? messages[0].id : null;
+    }
+
+    const lastReadIndex = messages.findIndex(
+      (msg) => msg.id === lastReadDetails.last_read_message_id,
+    );
+    if (lastReadIndex === -1) {
+      return messages.length > 0 ? messages[0].id : null;
+    }
+
+    const nextMessage = messages[lastReadIndex + 1];
+
+    return nextMessage?.id ?? null;
+  }, [messages, lastReadDetails, hasLoadedLastRead]);
+
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isTyping]);
+    if (!hasScrolledToUnread && hasLoadedLastRead && messages.length > 0) {
+      if (firstUnreadMessageId && unreadDividerRef.current) {
+        unreadDividerRef.current.scrollIntoView({
+          behavior: "auto",
+          block: "start",
+        });
+      } else {
+        chatEndRef.current?.scrollIntoView({ behavior: "auto" });
+      }
+
+      setHasScrolledToUnread(true);
+      return;
+    }
+
+    if (hasScrolledToUnread) {
+      chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [
+    messages,
+    isTyping,
+    hasLoadedLastRead,
+    hasScrolledToUnread,
+    firstUnreadMessageId,
+  ]);
 
   const getDateLabel = (date: Date) => {
     const today = new Date();
@@ -191,24 +253,6 @@ const Chat: React.FC<ChatProps> = ({ guildId }) => {
       day: "numeric",
     });
   };
-
-  const firstUnreadMessageId = useMemo(() => {
-    if (!hasLoadedLastRead) return null;
-    if (!lastReadDetails) {
-      return messages.length > 0 ? messages[0].id : null;
-    }
-
-    const lastReadIndex = messages.findIndex(
-      (msg) => msg.id === lastReadDetails.last_read_message_id,
-    );
-    if (lastReadIndex === -1) {
-      return messages.length > 0 ? messages[0].id : null;
-    }
-
-    const nextMessage = messages[lastReadIndex + 1];
-
-    return nextMessage?.id ?? null;
-  }, [messages, lastReadDetails, hasLoadedLastRead]);
 
   const groupedMessages = messages.reduce<MessageGroup[]>((groups, message) => {
     const date = getDateLabel(new Date(message.created_at));
@@ -262,7 +306,10 @@ const Chat: React.FC<ChatProps> = ({ guildId }) => {
               return (
                 <React.Fragment key={msg.id}>
                   {isFirstUnread && (
-                    <div className="relative my-4 flex items-center">
+                    <div
+                      ref={unreadDividerRef}
+                      className="relative my-4 flex items-center"
+                    >
                       <div className="flex-1 border-t border-red-500" />
                       <span className="mx-3 rounded-full bg-red-500 px-3 py-1 text-xs font-semibold text-white">
                         New messages
