@@ -26,14 +26,18 @@ export async function handleWebSocket(
         connectionId: event.requestContext.connectionId!,
         guildId: payload.guildId,
         userId: payload.userId,
-        role: payload.role
+        role: payload.role,
       });
 
       return { statusCode: 200 };
     }
 
     case "$disconnect":
-      await repository.remove(event.requestContext.connectionId!);
+      const connection = await repository.get(event.requestContext.connectionId!);
+      if (connection) {
+        await controller.getActiveConnections(connection.guildId);
+        await repository.remove(connection.connectionId);
+      }
 
       return { statusCode: 200 };
 
@@ -62,7 +66,7 @@ export async function handleWebSocket(
           await controller.deleteMessage(sender, body.chatId);
           break;
         case "getOnlineUsers":
-          await controller.getActiveConnections(body.guildId)
+          await controller.getActiveConnections(body.guildId);
           break;
       }
 

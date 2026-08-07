@@ -185,12 +185,6 @@ const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
 
       ws.onclose = () => {
         console.log("Disconnected from chat server");
-        ws.send(
-          JSON.stringify({
-            action: "getOnlineUsers",
-            guildId,
-          }),
-        );
         wsRef.current = null;
       };
     } catch (error) {
