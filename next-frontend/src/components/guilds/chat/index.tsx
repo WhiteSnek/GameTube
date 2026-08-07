@@ -203,6 +203,7 @@ const Chat: React.FC<ChatProps> = ({ guildId }) => {
 
     unreadDividerRef.current.scrollIntoView({
       block: "start",
+      behavior: "smooth"
     });
 
     setHasScrolledToUnread(true);
