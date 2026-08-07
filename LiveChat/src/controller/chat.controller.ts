@@ -77,4 +77,8 @@ export class ChatController {
   async getActiveConnections(guildId: string){
     await this.service.getActiveUsers(guildId)
   }
+
+  async startTyping(sender: ChatUserContext){
+    await this.service.startTyping(sender.userId, sender.guildId);
+  }
 }

@@ -195,4 +195,15 @@ export class ChatService {
       payload: connections,
     });
   }
+
+  async startTyping(userId: string, guildId: string){
+    const user = await this.userRepository.getUserDetails(userId,guildId);
+    const fullname = user.fullname
+    await this.publisher.publishToGuild(guildId, {
+      event: "TYPING",
+      payload: {
+        fullname
+      }
+    })
+  }
 }

@@ -73,6 +73,9 @@ export function createGateway(
           case "getOnlineUsers":
             await controller.getActiveConnections(body.guildId)
             break;
+          case "startTyping":
+            await controller.startTyping(sender)
+            break;
           default:
             ws.send(
               JSON.stringify({

@@ -1,5 +1,5 @@
 "use client";
-import Chat from "@/components/guilds/chat";
+import Chat from "@/components/chat";
 import ChatProvider, { useChat } from "@/context/chat_provider";
 import { useGuild } from "@/context/guild_provider";
 import { JoinedGuildType } from "@/types/guild.types";

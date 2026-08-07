@@ -65,6 +65,9 @@ interface ChatContextType {
   messages: ChatMessage[];
   clearMessages: () => void;
   onlineUsers: number;
+  startTyping: () => void;
+  typing: boolean;
+  typingUser: string | null;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -87,6 +90,9 @@ const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
   const wsRef = useRef<WebSocket | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [onlineUsers, setOnlineUsers] = useState<number>(0);
+  const [typing, setTyping] = useState<boolean>(false);
+  const [typingUser, setTypingUser] = useState<string | null>(null);
+  const typingResetRef = useRef<NodeJS.Timeout | null>(null);
   const getChatToken = async (guildId: string): Promise<string> => {
     const response = await api.get(`/auth/chat-token?guildId=${guildId}`);
     return response.data.token;
@@ -161,9 +167,23 @@ const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
             );
             break;
           case "ACTIVE_CONNECTION_COUNT":
-            console.log("Active connections: ", data.payload)
+            console.log("Active connections: ", data.payload);
             setOnlineUsers(data.payload);
             break;
+          case "TYPING": {
+            const payload = data.payload as { fullname?: string };
+
+            setTyping(true);
+            setTypingUser(payload?.fullname ?? null);
+
+            if (typingResetRef.current) clearTimeout(typingResetRef.current);
+            typingResetRef.current = setTimeout(() => {
+              setTyping(false);
+              setTypingUser(null);
+            }, 3000);
+
+            break;
+          }
           case "ERROR": {
             const error = data.payload as ChatError;
 
@@ -288,6 +308,24 @@ const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     return response.data;
   };
 
+  const startTyping = () => {
+    if (!wsRef.current) {
+      console.error("WebSocket is not initialized");
+      return;
+    }
+
+    if (wsRef.current.readyState !== WebSocket.OPEN) {
+      console.error("WebSocket is not connected");
+      return;
+    }
+
+    wsRef.current.send(
+      JSON.stringify({
+        action: "startTyping",
+      }),
+    );
+  };
+
   const clearMessages = () => {
     setMessages([]);
   };
@@ -296,6 +334,10 @@ const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     if (wsRef.current) {
       wsRef.current.close();
       wsRef.current = null;
+    }
+    if (typingResetRef.current) {
+      clearTimeout(typingResetRef.current);
+      typingResetRef.current = null;
     }
   };
 
@@ -321,7 +363,10 @@ const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         disconnect,
         messages,
         clearMessages,
-        onlineUsers
+        onlineUsers,
+        startTyping,
+        typing,
+        typingUser
       }}
     >
       {children}

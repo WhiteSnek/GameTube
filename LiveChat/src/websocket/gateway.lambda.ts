@@ -68,6 +68,9 @@ export async function handleWebSocket(
         case "getOnlineUsers":
           await controller.getActiveConnections(body.guildId);
           break;
+        case "startTyping":
+          await controller.startTyping(sender)
+          break;
       }
 
       return {
