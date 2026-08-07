@@ -1,5 +1,6 @@
 import { Publisher } from "../publishers/publisher";
 import ChatRepository from "../repository/chat.repository";
+import ConnectionRepository from "../repository/connection.repository";
 import UnreadChatRepository from "../repository/unread.repository";
 import UserRepository from "../repository/user.repository";
 import { MessageTypeValue } from "../types";
@@ -10,6 +11,7 @@ export class ChatService {
     private readonly userRepository: UserRepository,
     private readonly chatRepository: ChatRepository,
     private readonly unreadChatRepository: UnreadChatRepository,
+    private readonly connectionRepository: ConnectionRepository
   ) {}
 
   async sendMessage(
@@ -184,5 +186,13 @@ export class ChatService {
 
   async getUnreadMessageCount(senderId: string, guildId: string) {
     return this.unreadChatRepository.getUnreadMessagesCount(senderId, guildId);
+  }
+
+  async getActiveUsers(guildId: string){
+    const connections = await this.connectionRepository.getActiveConnections(guildId);
+    await this.publisher.publishToGuild(guildId, {
+      event: "ACTIVE_CONNECTION_COUNT",
+      payload: connections,
+    });
   }
 }

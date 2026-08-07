@@ -64,6 +64,7 @@ interface ChatContextType {
   disconnect: () => void;
   messages: ChatMessage[];
   clearMessages: () => void;
+  onlineUsers: number;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -85,6 +86,7 @@ interface ChatProviderProps {
 const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
   const wsRef = useRef<WebSocket | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [onlineUsers, setOnlineUsers] = useState<number>(0);
   const getChatToken = async (guildId: string): Promise<string> => {
     const response = await api.get(`/auth/chat-token?guildId=${guildId}`);
     return response.data.token;
@@ -97,7 +99,7 @@ const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       if (wsRef.current?.readyState === WebSocket.OPEN) {
         wsRef.current.send(
           JSON.stringify({
-            action: "joinGuild",
+            action: "getOnlineUsers",
             guildId,
           }),
         );
@@ -119,7 +121,7 @@ const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         console.log("Connected to chat server");
         ws.send(
           JSON.stringify({
-            action: "joinGuild",
+            action: "getOnlineUsers",
             guildId,
           }),
         );
@@ -158,6 +160,10 @@ const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
               ),
             );
             break;
+          case "ACTIVE_CONNECTION_COUNT":
+            console.log("Active connections: ", data.payload)
+            setOnlineUsers(data.payload);
+            break;
           case "ERROR": {
             const error = data.payload as ChatError;
 
@@ -179,6 +185,12 @@ const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
 
       ws.onclose = () => {
         console.log("Disconnected from chat server");
+        ws.send(
+          JSON.stringify({
+            action: "getOnlineUsers",
+            guildId,
+          }),
+        );
         wsRef.current = null;
       };
     } catch (error) {
@@ -315,6 +327,7 @@ const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         disconnect,
         messages,
         clearMessages,
+        onlineUsers
       }}
     >
       {children}

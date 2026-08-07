@@ -167,7 +167,7 @@ export default function Subscriptions() {
           <div className="flex-1">
             {selectedGuild ? (
               <ChatProvider key={selectedGuild.id}>
-                <Chat guildId={selectedGuild.id} />
+                <Chat guild={selectedGuild} />
               </ChatProvider>
             ) : (
               <div className="h-[calc(100vh-100px)] w-full flex flex-col items-center justify-center bg-zinc-100 dark:bg-zinc-800 rounded-2xl shadow-lg text-zinc-500">

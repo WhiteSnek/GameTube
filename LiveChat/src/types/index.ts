@@ -21,7 +21,7 @@ export interface ChatUserContext {
 
 export interface ChatEvent {
   event: string;
-  payload: Chat | Error;
+  payload: any;
 }
 
 export interface UserDetails {

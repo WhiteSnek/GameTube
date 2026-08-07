@@ -97,6 +97,18 @@ class ConnectionRepository {
     }));
   }
 
+  async getActiveConnections(guildId: string){
+    const result = await db.query(
+      `
+      SELECT COUNT(*)
+      FROM connections
+      WHERE guild_id = $1
+      `,
+      [guildId]
+    )
+    return Number(result.rows[0].count)
+  }
+
   async remove(connectionId: string): Promise<void> {
     await db.query(
       `

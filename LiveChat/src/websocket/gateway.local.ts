@@ -70,7 +70,9 @@ export function createGateway(
           case "deleteMessage":
             await controller.deleteMessage(sender, body.chatId);
             break;
-
+          case "getOnlineUsers":
+            await controller.getActiveConnections(body.guildId)
+            break;
           default:
             ws.send(
               JSON.stringify({

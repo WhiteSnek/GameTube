@@ -46,7 +46,6 @@ export class ChatController {
   }
 
   async deleteMessage(sender: ChatUserContext, chatId: string) {
-    console.log("role in controller: ",sender.role)
     await this.service.deleteMessage(sender.guildId, sender.userId,sender.role, chatId);
   }
 
@@ -73,5 +72,9 @@ export class ChatController {
     }
     const count = await this.service.getUnreadMessageCount(userId,guildId);
     return res.json({count});
+  }
+
+  async getActiveConnections(guildId: string){
+    await this.service.getActiveUsers(guildId)
   }
 }
