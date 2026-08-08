@@ -9,6 +9,7 @@ import VideoSection from "@/components/video";
 import CommentProvider from "@/context/comment_provider";
 import { useVideo } from "@/context/video_provider";
 import { VideoDetailstype, VideoImages } from "@/types/video.types";
+import { VideoPageSkeleton } from "@/components/skeletons";
 
 export default function Video() {
   const { getVideoById, getVideoFiles } = useVideo();
@@ -48,7 +49,7 @@ export default function Video() {
   }
 
   if (!video) {
-    return <div>Loading...</div>;
+    return <VideoPageSkeleton />;
   }
 
   return (

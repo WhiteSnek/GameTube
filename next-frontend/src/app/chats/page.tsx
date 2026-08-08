@@ -5,6 +5,7 @@ import { useGuild } from "@/context/guild_provider";
 import { JoinedGuildType } from "@/types/guild.types";
 import { useCallback, useEffect, useState, useRef } from "react";
 import { MessageSquare } from "lucide-react";
+import { ChatPageSkeleton } from "@/components/skeletons";
 
 function GuildUnreadCountFetcher({
   guildId,
@@ -52,6 +53,7 @@ export default function Subscriptions() {
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>(
     {},
   );
+  const [isLoading, setIsLoading] = useState(true);
 
   const { getJoinedGuilds, getGuildAvatars } = useGuild();
 
@@ -73,6 +75,8 @@ export default function Subscriptions() {
         }
       } catch (error) {
         console.error("Error fetching data:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -106,6 +110,10 @@ export default function Subscriptions() {
     setSelectedGuild(guild);
     setUnreadCounts((prev) => ({ ...prev, [guild.id]: 0 }));
   };
+
+  if (isLoading) {
+    return <ChatPageSkeleton />;
+  }
 
   return (
     <div className="relative">

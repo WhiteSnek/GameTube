@@ -13,6 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import GuildCard from "@/components/guild_card";
 import { GuildsType } from "@/types/guild.types";
+import { ExploreGuildsSkeleton } from "@/components/skeletons";
 import { Search } from "lucide-react";
 import { useGuild } from "@/context/guild_provider";
 
@@ -21,37 +22,43 @@ export default function ExploreGuilds() {
   const [filter, setFilter] = useState("all");
   const [tagFilter, setTagFilter] = useState("");
   const [guilds, setGuilds] = useState<GuildsType[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const { searchGuilds, getGuildAvatars } = useGuild();
 
   // Debounce search/filter trigger
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
       const fetchGuilds = async () => {
-        const tags = tagFilter
-          .split(',')
-          .map(tag => tag.trim())
-          .filter(tag => tag !== "");
-  
-        const res = await searchGuilds({
-          query: query.trim(),
-          filter: filter !== "all" ? (filter as "joined" | "not_joined") : undefined,
-          tags: tags.length > 0 ? tags : undefined,
-          limit: 20,
-          skip: 0,
-        });
-  
-        if (res) {
-          const guildIds = res.map(guild => guild.id);
-          const guildAvatars = await getGuildAvatars(guildIds);
-          if(!guildAvatars) return;
-          const updatedGuilds = res.map((guild, idx) => ({
-            ...guild,
-            avatar: guildAvatars[idx],
-          }));
-          setGuilds(updatedGuilds);
+        setIsLoading(true);
+        try {
+          const tags = tagFilter
+            .split(',')
+            .map(tag => tag.trim())
+            .filter(tag => tag !== "");
+    
+          const res = await searchGuilds({
+            query: query.trim(),
+            filter: filter !== "all" ? (filter as "joined" | "not_joined") : undefined,
+            tags: tags.length > 0 ? tags : undefined,
+            limit: 20,
+            skip: 0,
+          });
+    
+          if (res) {
+            const guildIds = res.map(guild => guild.id);
+            const guildAvatars = await getGuildAvatars(guildIds);
+            if(!guildAvatars) return;
+            const updatedGuilds = res.map((guild, idx) => ({
+              ...guild,
+              avatar: guildAvatars[idx],
+            }));
+            setGuilds(updatedGuilds);
+          }
+        } finally {
+          setIsLoading(false);
         }
       };
-  
+    
       fetchGuilds();
     }, 400);
   
@@ -61,6 +68,10 @@ export default function ExploreGuilds() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
   };
+
+  if (isLoading && guilds.length === 0) {
+    return <ExploreGuildsSkeleton />;
+  }
 
   return (
     <div className="p-10 relative">

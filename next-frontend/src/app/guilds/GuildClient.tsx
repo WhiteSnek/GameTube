@@ -11,10 +11,12 @@ import { VideoCards } from "@/components/video_cards";
 import { useGuild } from "@/context/guild_provider";
 import { useVideo } from "@/context/video_provider";
 import { VideoType } from "@/types/video.types";
+import { GuildPageSkeleton } from "@/components/skeletons";
 
 export default function Guild() {
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [videos, setVideos] = useState<VideoType[]>([]);
+  const [isGuildLoading, setIsGuildLoading] = useState(true);
   const { Guild, getGuild } = useGuild();
   const { getVideos } = useVideo();
   const searchParams = useSearchParams();
@@ -22,8 +24,21 @@ export default function Guild() {
 
   // Fetch guild details
   useEffect(() => {
-    if (!guildId) return;
-    getGuild(guildId !== "1" ? guildId : undefined);
+    const fetchGuild = async () => {
+      setIsGuildLoading(true);
+      try {
+        await getGuild(guildId !== "1" ? guildId ?? undefined : undefined);
+      } finally {
+        setIsGuildLoading(false);
+      }
+    };
+
+    if (!guildId) {
+      setIsGuildLoading(false);
+      return;
+    }
+
+    fetchGuild();
   }, [guildId]);
 
   // Fetch videos when the guild is available
@@ -41,6 +56,10 @@ export default function Guild() {
 
     fetchVideos();
   }, [Guild?.id]);
+
+  if (isGuildLoading) {
+    return <GuildPageSkeleton />;
+  }
 
   // If the guild does not exist, show the guild creation screen
   if (!Guild) return <CreateGuild />;

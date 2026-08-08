@@ -1,9 +1,10 @@
 import { Suspense } from "react";
 import SearchClient from "./SearchClient";
+import { ListPageSkeleton } from "@/components/skeletons";
 
 export default function SearchPage() {
   return (
-    <Suspense fallback={<div className="text-center py-10">Loading...</div>}>
+    <Suspense fallback={<ListPageSkeleton />}>
       <SearchClient />
     </Suspense>
   );

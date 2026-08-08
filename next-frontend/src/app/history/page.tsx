@@ -4,7 +4,8 @@ import VideoList from "@/components/videolist";
 import { useUser } from "@/context/user_provider";
 import { useVideo } from "@/context/video_provider";
 import { HistoryType, VideoImages, VideoType } from "@/types/video.types";
-import { HistoryIcon, MoreVertical } from "lucide-react"; // Importing MoreVertical icon
+import { HistoryPageSkeleton } from "@/components/skeletons";
+import { HistoryIcon, MoreVertical } from "lucide-react";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
@@ -16,52 +17,57 @@ import {
 
 export default function History() {
   const [history, setHistory] = useState<HistoryType>({});
+  const [isLoading, setIsLoading] = useState(true);
   const { getHistory, clearHistory } = useUser();
   const { getVideoFiles, removeFromHistory } = useVideo();
 
   useEffect(() => {
     const fetchHistory = async () => {
-      const response = await getHistory();
-      if (!response) return;
-  
-      const allVideos: (VideoType & { viewedDate: string })[] = [];
-      Object.entries(response).forEach(([date, videos]) => {
-        videos.forEach((video) => {
-          allVideos.push({ ...video, viewedDate: date });
+      try {
+        const response = await getHistory();
+        if (!response) return;
+    
+        const allVideos: (VideoType & { viewedDate: string })[] = [];
+        Object.entries(response).forEach(([date, videos]) => {
+          videos.forEach((video) => {
+            allVideos.push({ ...video, viewedDate: date });
+          });
         });
-      });
-  
-      const videoIds = allVideos.map((video) => video.id);
-      const videoFiles: VideoImages[] | null = await getVideoFiles(videoIds);
-      if (!videoFiles || videoFiles.length === 0) return;
-  
-      const enrichedVideos = allVideos.map((video, idx) => ({
-        ...video,
-        thumbnail: videoFiles[idx]?.thumbnail,
-        videoUrl: videoFiles[idx]?.video,
-        guildAvatar: videoFiles[idx]?.avatar,
-      }));
-  
-      const groupedByDate: HistoryType = {};
-      enrichedVideos.forEach((video) => {
-        if (!groupedByDate[video.viewedDate]) {
-          groupedByDate[video.viewedDate] = [];
-        }
-        groupedByDate[video.viewedDate].push(video);
-      });
-  
-      const parseDDMMYYYY = (dateStr: string) => {
-        const [day, month, year] = dateStr.split("-").map(Number);
-        return new Date(year, month - 1, day).getTime(); // month is 0-indexed
-      };
-      
-      const sortedHistory: HistoryType = Object.fromEntries(
-        Object.entries(groupedByDate).sort(
-          ([dateA], [dateB]) => parseDDMMYYYY(dateB) - parseDDMMYYYY(dateA)
-        )
-      );
-  
-      setHistory(sortedHistory);
+    
+        const videoIds = allVideos.map((video) => video.id);
+        const videoFiles: VideoImages[] | null = await getVideoFiles(videoIds);
+        if (!videoFiles || videoFiles.length === 0) return;
+    
+        const enrichedVideos = allVideos.map((video, idx) => ({
+          ...video,
+          thumbnail: videoFiles[idx]?.thumbnail,
+          videoUrl: videoFiles[idx]?.video,
+          guildAvatar: videoFiles[idx]?.avatar,
+        }));
+    
+        const groupedByDate: HistoryType = {};
+        enrichedVideos.forEach((video) => {
+          if (!groupedByDate[video.viewedDate]) {
+            groupedByDate[video.viewedDate] = [];
+          }
+          groupedByDate[video.viewedDate].push(video);
+        });
+    
+        const parseDDMMYYYY = (dateStr: string) => {
+          const [day, month, year] = dateStr.split("-").map(Number);
+          return new Date(year, month - 1, day).getTime();
+        };
+        
+        const sortedHistory: HistoryType = Object.fromEntries(
+          Object.entries(groupedByDate).sort(
+            ([dateA], [dateB]) => parseDDMMYYYY(dateB) - parseDDMMYYYY(dateA)
+          )
+        );
+    
+        setHistory(sortedHistory);
+      } finally {
+        setIsLoading(false);
+      }
     };
   
     fetchHistory();
@@ -85,6 +91,10 @@ export default function History() {
     if (!response) return;
     setHistory({});
   };
+
+  if (isLoading) {
+    return <HistoryPageSkeleton />;
+  }
 
   return (
     <div className="relative max-w-6xl mx-auto p-4">

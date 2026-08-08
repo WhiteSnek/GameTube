@@ -15,9 +15,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useRouter } from "next/navigation";
 import { Button } from "../ui/button";
+import { NavbarUserSkeleton } from "@/components/skeletons";
+
 const Navbar: React.FC = () => {
   const { theme, setTheme } = useTheme();
-  const { User, images, getUserImages, logout } = useUser();
+  const { User, isAuthLoading, images, getUserImages, logout } = useUser();
   const handleLogin = async () => {
     window.location.href = `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/login`;
   };
@@ -61,7 +63,9 @@ const Navbar: React.FC = () => {
         >
           {theme === "dark" ? <Sun size={24} /> : <Moon size={24} />}
         </button>
-        {User ? (
+        {isAuthLoading ? (
+          <NavbarUserSkeleton />
+        ) : User ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="w-14">

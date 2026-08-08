@@ -7,6 +7,7 @@ import { SearchCheck } from "lucide-react";
 import VideoList from "@/components/videolist";
 import { useVideo } from "@/context/video_provider";
 import { VideoImages, VideoType } from "@/types/video.types";
+import { ListPageSkeleton } from "@/components/skeletons";
 
 export default function SearchClient() {
   const searchParams = useSearchParams();
@@ -51,7 +52,7 @@ export default function SearchClient() {
   }, [query, searchVideos, getVideoFiles]);
 
   if (videos === null) {
-    return <div className="text-center py-10">Loading...</div>;
+    return <ListPageSkeleton />;
   }
 
   if (videos.length === 0) {

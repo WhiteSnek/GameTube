@@ -3,10 +3,12 @@ import VideoList from "@/components/videolist";
 import { useUser } from "@/context/user_provider";
 import { useVideo } from "@/context/video_provider";
 import { VideoImages, VideoType } from "@/types/video.types";
+import { ListPageSkeleton } from "@/components/skeletons";
 import { Clock } from "lucide-react";
 import { useEffect, useState } from "react";
 export default function WatchLater() {
   const [videos, setVideos] = useState<VideoType[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const { getWatchLater } = useUser();
   const { getVideoFiles, removeFromWatchLater } = useVideo();
   useEffect(() => {
@@ -27,6 +29,8 @@ export default function WatchLater() {
         setVideos(newVideos);
       } catch (error) {
         console.error("Error fetching videos:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchVideos();
@@ -38,6 +42,11 @@ export default function WatchLater() {
     const newVideos = videos.filter((video) => video.id !== videoId);
     setVideos(newVideos);
   }
+
+  if (isLoading) {
+    return <ListPageSkeleton />;
+  }
+
   return (
     <div className="relative max-w-5xl mx-auto">
       <div className="flex items-end gap-4">

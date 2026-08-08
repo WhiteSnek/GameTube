@@ -5,11 +5,13 @@ import { useGuild } from "@/context/guild_provider";
 import { useVideo } from "@/context/video_provider";
 import { JoinedGuildType } from "@/types/guild.types";
 import { VideoType } from "@/types/video.types";
+import { JoinedPageSkeleton } from "@/components/skeletons";
 import { useEffect, useState } from "react";
 
 export default function Subscriptions() {
   const [guilds, setGuilds] = useState<JoinedGuildType[]>([]);
   const [videos, setVideos] = useState<VideoType[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   
   const { getJoinedGuilds, getGuildAvatars } = useGuild();
   const { getJoinedGuildVideos } = useVideo();
@@ -39,11 +41,17 @@ export default function Subscriptions() {
         }
       } catch (error) {
         console.error("Error fetching data:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     fetchData();
   }, []);
+
+  if (isLoading) {
+    return <JoinedPageSkeleton />;
+  }
 
   return (
     <div className="relative">

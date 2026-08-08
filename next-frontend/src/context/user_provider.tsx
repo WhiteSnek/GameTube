@@ -13,6 +13,7 @@ import { HistoryType, VideoType } from "@/types/video.types";
 
 interface UserContextType {
   User: UserType | null;
+  isAuthLoading: boolean;
   setUser: React.Dispatch<React.SetStateAction<UserType | null>>;
   signup: (data: SignUpUser) => Promise<void>;
   getSignedUrls: (
@@ -54,6 +55,7 @@ interface UserProviderProps {
 
 const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   const [User, setUser] = useState<UserType | null>(null);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [images, setImages] = useState<{ avatarUrl: string}>(
     {
       avatarUrl: "",
@@ -69,6 +71,8 @@ const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         }
       } catch (error) {
         console.error("Token expired or invalid:", error);
+      } finally {
+        setIsAuthLoading(false);
       }
     };
     getCurrentUser();
@@ -221,6 +225,7 @@ const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     <UserContext.Provider
       value={{
         User,
+        isAuthLoading,
         setUser,
         signup,
         getSignedUrls,
