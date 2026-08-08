@@ -58,6 +58,8 @@ export class ChatService {
       replyTo,
     );
 
+    await this.updateLastReadMessage(senderId,guildId,chat.id)
+
     await this.publisher.publishToGuild(guildId, {
       event: "MESSAGE_RECEIVED",
       payload: {
@@ -203,6 +205,16 @@ export class ChatService {
       event: "TYPING",
       payload: {
         fullname
+      }
+    })
+  }
+
+  async updateLastReadMessage(userId: string, guildId: string, chatId: string){
+    await this.unreadChatRepository.updateLastReadMessage(userId, guildId, chatId);
+    await this.publisher.publishToUser(userId, guildId, {
+      event: "UPDATE_LAST_READ",
+      payload: {
+        chatId
       }
     })
   }

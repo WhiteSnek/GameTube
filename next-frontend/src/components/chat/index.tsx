@@ -50,11 +50,15 @@ const Chat: React.FC<ChatProps> = ({ guild }) => {
     deleteMessage,
     getLastReadMessageDetails,
     messages,
+    updateLastRead,
     clearMessages,
     startTyping,
     typing,
     typingUser,
   } = useChat();
+
+  const messagesContainerRef = useRef<HTMLDivElement | null>(null);
+  const [isAtBottom, setIsAtBottom] = useState(true);
 
   const lastTypingSentRef = useRef<number>(0);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
@@ -173,11 +177,15 @@ const Chat: React.FC<ChatProps> = ({ guild }) => {
     if (now - lastTypingSentRef.current > 2000) {
       startTyping();
       lastTypingSentRef.current = now;
-      chatEndRef.current.scrollIntoView({
-        block: "start",
-        behavior: "smooth",
-      });
     }
+  };
+
+  const markAsRead = (messageId: string) => {
+    updateLastRead(messageId);
+    setLastReadDetails({
+      last_read_message_id: messageId,
+      last_read_at: new Date().toISOString(),
+    });
   };
 
   const firstUnreadMessageId = useMemo(() => {
@@ -197,6 +205,67 @@ const Chat: React.FC<ChatProps> = ({ guild }) => {
 
     return nextMessage?.id ?? null;
   }, [messages, lastReadDetails, hasLoadedLastRead]);
+
+  const showUnreadDivider = firstUnreadMessageId !== null && !isAtBottom;
+
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    const target = chatEndRef.current;
+    if (!container || !target) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsAtBottom(entry.isIntersecting),
+      { root: container, threshold: 1.0 },
+    );
+
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, []);
+
+  const prevMessagesLengthRef = useRef(0);
+
+  useEffect(() => {
+    const grew = messages.length > prevMessagesLengthRef.current;
+    prevMessagesLengthRef.current = messages.length;
+
+    if (!hasScrolledToUnread) return;
+    if (!grew) return;
+
+    if (isAtBottom) {
+      chatEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    }
+  }, [messages, hasScrolledToUnread, isAtBottom]);
+
+  useEffect(() => {
+    if (!hasScrolledToUnread) return;
+    if (!isAtBottom) return;
+    if (messages.length === 0) return;
+    if (document.visibilityState !== "visible") return;
+
+    const lastMessage = messages[messages.length - 1];
+    updateLastRead(lastMessage.id);
+    markAsRead(lastMessage.id);
+  }, [messages, isAtBottom, hasScrolledToUnread]);
+
+  useEffect(() => {
+    const markReadIfCaughtUp = () => {
+      if (!isAtBottom) return;
+      if (messages.length === 0) return;
+      if (document.visibilityState !== "visible") return;
+
+      const lastMessage = messages[messages.length - 1];
+      updateLastRead(lastMessage.id);
+      markAsRead(lastMessage.id);
+    };
+
+    document.addEventListener("visibilitychange", markReadIfCaughtUp);
+    window.addEventListener("focus", markReadIfCaughtUp);
+
+    return () => {
+      document.removeEventListener("visibilitychange", markReadIfCaughtUp);
+      window.removeEventListener("focus", markReadIfCaughtUp);
+    };
+  }, [isAtBottom, messages]);
 
   useEffect(() => {
     if (hasScrolledToUnread) return;
@@ -258,7 +327,10 @@ const Chat: React.FC<ChatProps> = ({ guild }) => {
   return (
     <div className="h-[calc(100vh-100px)] w-full flex flex-col bg-zinc-100 dark:bg-zinc-800 rounded-2xl shadow-lg ">
       <ChatDetails guild={guild} />
-      <div className="flex-1 overflow-y-auto p-2 dark:bg-zinc-800 bg-zinc-100 px-4">
+      <div
+        ref={messagesContainerRef}
+        className="flex-1 overflow-y-auto p-2 dark:bg-zinc-800 bg-zinc-100 px-4"
+      >
         {groupedMessages.map((group) => (
           <React.Fragment key={group.date}>
             <div className="relative my-4 flex items-center">
@@ -282,8 +354,7 @@ const Chat: React.FC<ChatProps> = ({ guild }) => {
 
               const replyRef = msg.reply_to;
               const isFirstUnread =
-                firstUnreadMessageId !== null &&
-                msg.id === firstUnreadMessageId;
+                showUnreadDivider && msg.id === firstUnreadMessageId;
 
               return (
                 <React.Fragment key={msg.id}>
@@ -458,24 +529,22 @@ const Chat: React.FC<ChatProps> = ({ guild }) => {
             })}
           </React.Fragment>
         ))}
-        {/* Typing Indicator */}
-        {typing && (
-          <div className="flex items-center gap-2 px-2 py-1 text-zinc-500 dark:text-zinc-400">
-            <span className="text-xs">
-              {typingUser
-                ? `${typingUser} is typing...`
-                : "Someone is typing..."}
-            </span>
-            <div className="flex gap-1">
-              <div className="w-1.5 h-1.5 rounded-full bg-zinc-400 animate-bounce [animation-delay:-0.3s]" />
-              <div className="w-1.5 h-1.5 rounded-full bg-zinc-400 animate-bounce [animation-delay:-0.15s]" />
-              <div className="w-1.5 h-1.5 rounded-full bg-zinc-400 animate-bounce" />
-            </div>
-          </div>
-        )}
+
         <div ref={chatEndRef} />
       </div>
-
+      {/* Typing Indicator */}
+      {typing && (
+        <div className="flex items-center gap-2 px-2 py-1 text-zinc-500 dark:text-zinc-400">
+          <span className="text-xs">
+            {typingUser ? `${typingUser} is typing...` : "Someone is typing..."}
+          </span>
+          <div className="flex gap-1">
+            <div className="w-1.5 h-1.5 rounded-full bg-zinc-400 animate-bounce [animation-delay:-0.3s]" />
+            <div className="w-1.5 h-1.5 rounded-full bg-zinc-400 animate-bounce [animation-delay:-0.15s]" />
+            <div className="w-1.5 h-1.5 rounded-full bg-zinc-400 animate-bounce" />
+          </div>
+        </div>
+      )}
       {/* Reply preview bar, shown above the input when replying */}
       {replyingTo && (
         <div className="flex items-center justify-between gap-2 mx-2 mb-1 px-3 py-2 rounded-lg bg-zinc-200 dark:bg-zinc-900 border-l-2 border-red-500">

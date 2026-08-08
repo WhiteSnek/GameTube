@@ -255,7 +255,6 @@ class ChatRepository {
       UPDATE chats c
       SET
           deleted_at = NOW(),
-          content = '',
           deleted_by = CASE
               WHEN c.sender_id <> $2 THEN $2
               ELSE NULL

@@ -51,6 +51,26 @@ class UnreadChatRepository {
       );
     }
   }
+
+  async updateLastReadMessage(userId: string, guildId: string, chatId: string) {
+    await db.query(
+      `
+      INSERT INTO read_chats (
+        user_id,
+        guild_id,
+        last_read_message_id,
+        last_read_at
+      )
+      VALUES ($1, $2, $3, NOW())
+      ON CONFLICT (user_id, guild_id)
+      DO UPDATE
+      SET
+        last_read_message_id = EXCLUDED.last_read_message_id,
+        last_read_at = NOW();
+    `,
+      [userId, guildId, chatId],
+    );
+  }
 }
 
 export default UnreadChatRepository;

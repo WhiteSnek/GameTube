@@ -81,4 +81,8 @@ export class ChatController {
   async startTyping(sender: ChatUserContext){
     await this.service.startTyping(sender.userId, sender.guildId);
   }
+
+  async updateLastReadMessage(sender: ChatUserContext, chatId: string){
+    await this.service.updateLastReadMessage(sender.userId, sender.guildId, chatId);
+  }
 }

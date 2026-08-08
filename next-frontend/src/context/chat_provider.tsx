@@ -61,6 +61,7 @@ interface ChatContextType {
     guildId: string,
   ) => Promise<{ last_read_message_id: string; last_read_at: string } | null>;
   getUnreadMessageCount: (guildId: string) => Promise<{ count: number }>;
+  updateLastRead: (chatId: string) => void;
   disconnect: () => void;
   messages: ChatMessage[];
   clearMessages: () => void;
@@ -182,6 +183,11 @@ const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
               setTypingUser(null);
             }, 3000);
 
+            break;
+          }
+          case "UPDATE_LAST_READ": {
+            const payload = data.payload as {chatId?: string};
+            console.log("Last read updated:", payload?.chatId);
             break;
           }
           case "ERROR": {
@@ -326,6 +332,25 @@ const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     );
   };
 
+  const updateLastRead = (chatId: string) => {
+    if (!wsRef.current) {
+      console.error("WebSocket is not initialized");
+      return;
+    }
+
+    if (wsRef.current.readyState !== WebSocket.OPEN) {
+      console.error("WebSocket is not connected");
+      return;
+    }
+
+    wsRef.current.send(
+      JSON.stringify({
+        action: "updateLastRead",
+        chatId,
+      }),
+    );
+  }
+
   const clearMessages = () => {
     setMessages([]);
   };
@@ -360,6 +385,7 @@ const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         deleteMessage,
         getLastReadMessageDetails,
         getUnreadMessageCount,
+        updateLastRead,
         disconnect,
         messages,
         clearMessages,

@@ -71,6 +71,9 @@ export async function handleWebSocket(
         case "startTyping":
           await controller.startTyping(sender)
           break;
+        case "updateLastRead":
+          await controller.updateLastReadMessage(sender, body.chatId);
+          break;
       }
 
       return {
