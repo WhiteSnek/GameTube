@@ -58,6 +58,7 @@ const Chat: React.FC<ChatProps> = ({ guild }) => {
   } = useChat();
 
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
+  const isAtBottomRef = useRef(true);
   const [isAtBottom, setIsAtBottom] = useState(true);
 
   const lastTypingSentRef = useRef<number>(0);
@@ -70,34 +71,55 @@ const Chat: React.FC<ChatProps> = ({ guild }) => {
   const [lastReadDetails, setLastReadDetails] =
     useState<LastReadDetails | null>(null);
   const [hasLoadedLastRead, setHasLoadedLastRead] = useState(false);
+  const [isHistoryLoaded, setIsHistoryLoaded] = useState(false);
 
   const [newMessage, setNewMessage] = useState("");
   const chatEndRef = useRef<HTMLDivElement | null>(null);
-  const unreadDividerRef = useRef<HTMLDivElement | null>(null);
-  const [hasScrolledToUnread, setHasScrolledToUnread] = useState(false);
+  const firstUnreadMessageRef = useRef<HTMLDivElement | null>(null);
+  const [hasInitialScrollDone, setHasInitialScrollDone] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    clearMessages();
-    connectToChat(guild.id);
+    let cancelled = false;
 
+    clearMessages();
     setHasLoadedLastRead(false);
     setLastReadDetails(null);
-    setHasScrolledToUnread(false);
+    setIsHistoryLoaded(false);
+    setHasInitialScrollDone(false);
+    isAtBottomRef.current = true;
+    setIsAtBottom(true);
+
+    const loadChat = async () => {
+      try {
+        await connectToChat(guild.id);
+        if (!cancelled) setIsHistoryLoaded(true);
+      } catch (error) {
+        console.error("Error loading chat history:", error);
+        if (!cancelled) setIsHistoryLoaded(true);
+      }
+    };
 
     const fetchLastRead = async () => {
       try {
         const details = await getLastReadMessageDetails(guild.id);
-        setLastReadDetails(details);
+        if (!cancelled) setLastReadDetails(details);
+      } catch (error) {
+        console.error("Error fetching last read details:", error);
       } finally {
-        setHasLoadedLastRead(true);
+        if (!cancelled) setHasLoadedLastRead(true);
       }
     };
 
+    loadChat();
     fetchLastRead();
+
+    return () => {
+      cancelled = true;
+    };
   }, [guild.id]);
 
   useEffect(() => {
@@ -188,11 +210,11 @@ const Chat: React.FC<ChatProps> = ({ guild }) => {
     });
   };
 
+  const isNewMember = hasLoadedLastRead && lastReadDetails === null;
+
   const firstUnreadMessageId = useMemo(() => {
-    if (!hasLoadedLastRead) return null;
-    if (!lastReadDetails) {
-      return messages.length > 0 ? messages[0].id : null;
-    }
+    if (!hasLoadedLastRead || isNewMember) return null;
+    if (!lastReadDetails) return null;
 
     const lastReadIndex = messages.findIndex(
       (msg) => msg.id === lastReadDetails.last_read_message_id,
@@ -204,48 +226,64 @@ const Chat: React.FC<ChatProps> = ({ guild }) => {
     const nextMessage = messages[lastReadIndex + 1];
 
     return nextMessage?.id ?? null;
-  }, [messages, lastReadDetails, hasLoadedLastRead]);
+  }, [messages, lastReadDetails, hasLoadedLastRead, isNewMember]);
 
   const showUnreadDivider = firstUnreadMessageId !== null && !isAtBottom;
 
+  const scrollToBottom = (behavior: ScrollBehavior = "auto") => {
+    chatEndRef.current?.scrollIntoView({ behavior, block: "end" });
+    isAtBottomRef.current = true;
+    setIsAtBottom(true);
+  };
+
   useEffect(() => {
     const container = messagesContainerRef.current;
-    const target = chatEndRef.current;
-    if (!container || !target) return;
+    if (!container) return;
 
-    const observer = new IntersectionObserver(
-      ([entry]) => setIsAtBottom(entry.isIntersecting),
-      { root: container, threshold: 1.0 },
-    );
+    const updateIsAtBottom = () => {
+      const threshold = 80;
+      const atBottom =
+        container.scrollHeight - container.scrollTop - container.clientHeight <=
+        threshold;
+      isAtBottomRef.current = atBottom;
+      setIsAtBottom(atBottom);
+    };
 
-    observer.observe(target);
-    return () => observer.disconnect();
-  }, []);
+    container.addEventListener("scroll", updateIsAtBottom, { passive: true });
+    updateIsAtBottom();
+
+    return () => container.removeEventListener("scroll", updateIsAtBottom);
+  }, [guild.id]);
 
   const prevMessagesLengthRef = useRef(0);
+
+  useEffect(() => {
+    prevMessagesLengthRef.current = 0;
+  }, [guild.id]);
 
   useEffect(() => {
     const grew = messages.length > prevMessagesLengthRef.current;
     prevMessagesLengthRef.current = messages.length;
 
-    if (!hasScrolledToUnread) return;
+    if (!hasInitialScrollDone) return;
     if (!grew) return;
 
-    if (isAtBottom) {
-      chatEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    if (isAtBottomRef.current) {
+      requestAnimationFrame(() => {
+        scrollToBottom("smooth");
+      });
     }
-  }, [messages, hasScrolledToUnread, isAtBottom]);
+  }, [messages, hasInitialScrollDone]);
 
   useEffect(() => {
-    if (!hasScrolledToUnread) return;
+    if (!hasInitialScrollDone) return;
     if (!isAtBottom) return;
     if (messages.length === 0) return;
     if (document.visibilityState !== "visible") return;
 
     const lastMessage = messages[messages.length - 1];
-    updateLastRead(lastMessage.id);
     markAsRead(lastMessage.id);
-  }, [messages, isAtBottom, hasScrolledToUnread]);
+  }, [messages, isAtBottom, hasInitialScrollDone]);
 
   useEffect(() => {
     const markReadIfCaughtUp = () => {
@@ -254,7 +292,6 @@ const Chat: React.FC<ChatProps> = ({ guild }) => {
       if (document.visibilityState !== "visible") return;
 
       const lastMessage = messages[messages.length - 1];
-      updateLastRead(lastMessage.id);
       markAsRead(lastMessage.id);
     };
 
@@ -268,24 +305,48 @@ const Chat: React.FC<ChatProps> = ({ guild }) => {
   }, [isAtBottom, messages]);
 
   useEffect(() => {
-    if (hasScrolledToUnread) return;
-    if (!hasLoadedLastRead) return;
+    if (hasInitialScrollDone) return;
+    if (!hasLoadedLastRead || !isHistoryLoaded) return;
 
-    if (!firstUnreadMessageId) {
-      chatEndRef.current?.scrollIntoView();
-      setHasScrolledToUnread(true);
-      return;
-    }
+    let attempts = 0;
 
-    if (!unreadDividerRef.current) return;
+    const performInitialScroll = () => {
+      if (isNewMember || !firstUnreadMessageId) {
+        scrollToBottom();
+        setHasInitialScrollDone(true);
+        return;
+      }
 
-    unreadDividerRef.current.scrollIntoView({
-      block: "start",
-      behavior: "smooth",
-    });
+      if (firstUnreadMessageRef.current) {
+        firstUnreadMessageRef.current.scrollIntoView({
+          block: "start",
+          behavior: "smooth",
+        });
+        isAtBottomRef.current = false;
+        setIsAtBottom(false);
+        setHasInitialScrollDone(true);
+        return;
+      }
 
-    setHasScrolledToUnread(true);
-  }, [hasLoadedLastRead, firstUnreadMessageId, hasScrolledToUnread]);
+      attempts += 1;
+      if (attempts < 10) {
+        requestAnimationFrame(performInitialScroll);
+        return;
+      }
+
+      scrollToBottom();
+      setHasInitialScrollDone(true);
+    };
+
+    requestAnimationFrame(performInitialScroll);
+  }, [
+    hasInitialScrollDone,
+    hasLoadedLastRead,
+    isHistoryLoaded,
+    isNewMember,
+    firstUnreadMessageId,
+    messages.length,
+  ]);
 
   const getDateLabel = (date: Date) => {
     const today = new Date();
@@ -359,10 +420,7 @@ const Chat: React.FC<ChatProps> = ({ guild }) => {
               return (
                 <React.Fragment key={msg.id}>
                   {isFirstUnread && (
-                    <div
-                      ref={unreadDividerRef}
-                      className="relative my-4 flex items-center"
-                    >
+                    <div className="relative my-4 flex items-center">
                       <div className="flex-1 border-t border-red-500" />
                       <span className="mx-3 rounded-full bg-red-500 px-3 py-1 text-xs font-semibold text-white">
                         New messages
@@ -371,7 +429,14 @@ const Chat: React.FC<ChatProps> = ({ guild }) => {
                     </div>
                   )}
 
-                  <div className="group relative flex gap-3 py-2 px-2 rounded-lg hover:bg-zinc-200/50 dark:hover:bg-zinc-700/30 transition">
+                  <div
+                    ref={
+                      msg.id === firstUnreadMessageId
+                        ? firstUnreadMessageRef
+                        : undefined
+                    }
+                    className="group relative flex gap-3 py-2 px-2 rounded-lg hover:bg-zinc-200/50 dark:hover:bg-zinc-700/30 transition"
+                  >
                     <img
                       src={msg.avatar}
                       alt={msg.fullname}

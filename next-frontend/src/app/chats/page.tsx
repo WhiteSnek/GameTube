@@ -8,11 +8,9 @@ import { MessageSquare } from "lucide-react";
 
 function GuildUnreadCountFetcher({
   guildId,
-  refreshToken,
   onCount,
 }: {
   guildId: string;
-  refreshToken: number;
   onCount: (guildId: string, count: number) => void;
 }) {
   const { getUnreadMessageCount, connectToChat } = useChat();
@@ -29,7 +27,7 @@ function GuildUnreadCountFetcher({
     };
     fetchCount();
     return () => { cancelled = true; };
-  }, [guildId, refreshToken]);
+  }, [guildId]);
 
   useEffect(() => {
     connectToChat(guildId);
@@ -54,7 +52,6 @@ export default function Subscriptions() {
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>(
     {},
   );
-  const [refreshToken, setRefreshToken] = useState(0);
 
   const { getJoinedGuilds, getGuildAvatars } = useGuild();
 
@@ -88,6 +85,7 @@ export default function Subscriptions() {
   }, [selectedGuild]);
 
   const handleUnreadCount = useCallback((guildId: string, count: number) => {
+    if (selectedGuildIdRef.current === guildId) return;
     setUnreadCounts((prev) => ({ ...prev, [guildId]: count }));
   }, []);
 
@@ -99,18 +97,26 @@ export default function Subscriptions() {
     }));
   }, []);
 
+  const handleChatRead = useCallback((guildId: string) => {
+    setUnreadCounts((prev) => ({ ...prev, [guildId]: 0 }));
+  }, []);
+
   const handleSelectGuild = (guild: JoinedGuildType) => {
+    selectedGuildIdRef.current = guild.id;
     setSelectedGuild(guild);
-    setRefreshToken((prev) => prev + 1);
+    setUnreadCounts((prev) => ({ ...prev, [guild.id]: 0 }));
   };
 
   return (
     <div className="relative">
       {guilds.map((guild) => (
-        <ChatProvider key={`unread-${guild.id}`} onMessageReceived={handleNewMessage}>
+        <ChatProvider
+          key={`unread-${guild.id}`}
+          onMessageReceived={handleNewMessage}
+          onLastReadUpdated={handleChatRead}
+        >
           <GuildUnreadCountFetcher
             guildId={guild.id}
-            refreshToken={refreshToken}
             onCount={handleUnreadCount}
           />
         </ChatProvider>
@@ -181,7 +187,11 @@ export default function Subscriptions() {
 
           <div className="flex-1">
             {selectedGuild ? (
-              <ChatProvider key={selectedGuild.id}>
+              <ChatProvider
+                key={selectedGuild.id}
+                onMessageReceived={handleNewMessage}
+                onLastReadUpdated={handleChatRead}
+              >
                 <Chat guild={selectedGuild} />
               </ChatProvider>
             ) : (

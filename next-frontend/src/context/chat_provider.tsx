@@ -86,16 +86,19 @@ export const useChat = () => {
 interface ChatProviderProps {
   children: ReactNode;
   onMessageReceived?: (guildId: string, message: ChatMessage) => void;
+  onLastReadUpdated?: (guildId: string) => void;
 }
 
 const ChatProvider: React.FC<ChatProviderProps> = ({
   children,
   onMessageReceived,
+  onLastReadUpdated,
 }) => {
   const wsRef = useRef<WebSocket | null>(null);
   const currentGuildIdRef = useRef<string | null>(null);
   const connectingGuildIdRef = useRef<string | null>(null); 
   const onMessageReceivedRef = useRef(onMessageReceived);
+  const onLastReadUpdatedRef = useRef(onLastReadUpdated);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [onlineUsers, setOnlineUsers] = useState<number>(0);
   const [typing, setTyping] = useState<boolean>(false);
@@ -109,6 +112,10 @@ const ChatProvider: React.FC<ChatProviderProps> = ({
   useEffect(() => {
     onMessageReceivedRef.current = onMessageReceived;
   }, [onMessageReceived]);
+
+  useEffect(() => {
+    onLastReadUpdatedRef.current = onLastReadUpdated;
+  }, [onLastReadUpdated]);
 
   const connectToChat = async (guildId: string) => {
     if (
@@ -217,8 +224,9 @@ const ChatProvider: React.FC<ChatProviderProps> = ({
             break;
           }
           case "UPDATE_LAST_READ": {
-            const payload = data.payload as { chatId?: string };
-            console.log("Last read updated:", payload?.chatId);
+            if (currentGuildIdRef.current) {
+              onLastReadUpdatedRef.current?.(currentGuildIdRef.current);
+            }
             break;
           }
           case "ERROR": {
