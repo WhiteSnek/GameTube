@@ -85,10 +85,17 @@ export const useChat = () => {
 
 interface ChatProviderProps {
   children: ReactNode;
+  onMessageReceived?: (guildId: string, message: ChatMessage) => void;
 }
 
-const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
+const ChatProvider: React.FC<ChatProviderProps> = ({
+  children,
+  onMessageReceived,
+}) => {
   const wsRef = useRef<WebSocket | null>(null);
+  const currentGuildIdRef = useRef<string | null>(null);
+  const connectingGuildIdRef = useRef<string | null>(null); 
+  const onMessageReceivedRef = useRef(onMessageReceived);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [onlineUsers, setOnlineUsers] = useState<number>(0);
   const [typing, setTyping] = useState<boolean>(false);
@@ -99,7 +106,25 @@ const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     return response.data.token;
   };
 
+  useEffect(() => {
+    onMessageReceivedRef.current = onMessageReceived;
+  }, [onMessageReceived]);
+
   const connectToChat = async (guildId: string) => {
+    if (
+      connectingGuildIdRef.current === guildId ||
+      (currentGuildIdRef.current === guildId &&
+        wsRef.current?.readyState === WebSocket.OPEN)
+    ) {
+      if (wsRef.current?.readyState === WebSocket.OPEN) {
+        wsRef.current.send(JSON.stringify({ action: "getOnlineUsers", guildId }));
+      }
+      return;
+    }
+
+    connectingGuildIdRef.current = guildId;
+    currentGuildIdRef.current = guildId;
+
     try {
       const history = await liveChatApi.get(`/chat?guildId=${guildId}`);
       setMessages(history.data);
@@ -117,7 +142,7 @@ const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       }
 
       const token = await getChatToken(guildId);
-
+      if (connectingGuildIdRef.current !== guildId) return;
       const ws = new WebSocket(
         `${process.env.NEXT_PUBLIC_LIVE_CHAT_WEBSOCKET_API}?token=${encodeURIComponent(token)}`,
       );
@@ -142,6 +167,12 @@ const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         switch (data.event) {
           case "MESSAGE_RECEIVED":
             setMessages((prev) => [...prev, data.payload]);
+            if (currentGuildIdRef.current) {
+              onMessageReceivedRef.current?.(
+                currentGuildIdRef.current,
+                data.payload,
+              );
+            }
             break;
           case "MESSAGE_UPDATED":
             setMessages((prev) =>
@@ -186,7 +217,7 @@ const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
             break;
           }
           case "UPDATE_LAST_READ": {
-            const payload = data.payload as {chatId?: string};
+            const payload = data.payload as { chatId?: string };
             console.log("Last read updated:", payload?.chatId);
             break;
           }
@@ -215,6 +246,10 @@ const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       };
     } catch (error) {
       console.error("Failed to connect to chat:", error);
+    } finally {
+      if (connectingGuildIdRef.current === guildId) {
+        connectingGuildIdRef.current = null;
+      }
     }
   };
 
@@ -302,14 +337,11 @@ const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
   const getUnreadMessageCount = async (guildId: string) => {
     const token = await getChatToken(guildId);
 
-    const response = await liveChatApi.get(
-      `/chat/unread-count?guildId=${guildId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+    const response = await liveChatApi.get(`/chat/unread-count?guildId=${guildId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
       },
-    );
+    });
 
     return response.data;
   };
@@ -349,7 +381,7 @@ const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         chatId,
       }),
     );
-  }
+  };
 
   const clearMessages = () => {
     setMessages([]);
@@ -392,7 +424,7 @@ const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         onlineUsers,
         startTyping,
         typing,
-        typingUser
+        typingUser,
       }}
     >
       {children}

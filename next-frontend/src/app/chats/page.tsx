@@ -3,8 +3,9 @@ import Chat from "@/components/chat";
 import ChatProvider, { useChat } from "@/context/chat_provider";
 import { useGuild } from "@/context/guild_provider";
 import { JoinedGuildType } from "@/types/guild.types";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import { MessageSquare } from "lucide-react";
+
 function GuildUnreadCountFetcher({
   guildId,
   refreshToken,
@@ -14,35 +15,36 @@ function GuildUnreadCountFetcher({
   refreshToken: number;
   onCount: (guildId: string, count: number) => void;
 }) {
-  const { getUnreadMessageCount } = useChat();
+  const { getUnreadMessageCount, connectToChat } = useChat();
 
   useEffect(() => {
     let cancelled = false;
-
     const fetchCount = async () => {
       try {
         const result = await getUnreadMessageCount(guildId);
-
-        if (!cancelled) {
-          onCount(guildId, result?.count ?? 0);
-        }
+        if (!cancelled) onCount(guildId, result?.count ?? 0);
       } catch (error) {
-        console.error(
-          `Error fetching unread count for guild ${guildId}:`,
-          error,
-        );
+        console.error(`Error fetching unread count for guild ${guildId}:`, error);
       }
     };
-
     fetchCount();
-
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [guildId, refreshToken]);
+
+  useEffect(() => {
+    connectToChat(guildId);
+  }, [guildId]);
 
   return null;
 }
+
+// const guilds: JoinedGuildType[] = [{
+//   id: "5a2a4981-f936-46f1-bd3e-5a0c7d06f86e",
+//   name: "Racoon Police Department",
+//   ownerId: "5a2a4981-f936-46f1-bd3e-5a0c7d06f86e",
+//   avatar: "https://idp.whitesnek.xyz/images/profiles/nikhilkr2604/a155163f-12c8-4226-8456-7e36710a762e",
+//   role: "LEADER"
+// }]
 
 export default function Subscriptions() {
   const [guilds, setGuilds] = useState<JoinedGuildType[]>([]);
@@ -80,8 +82,21 @@ export default function Subscriptions() {
     fetchData();
   }, []);
 
+  const selectedGuildIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    selectedGuildIdRef.current = selectedGuild?.id ?? null;
+  }, [selectedGuild]);
+
   const handleUnreadCount = useCallback((guildId: string, count: number) => {
     setUnreadCounts((prev) => ({ ...prev, [guildId]: count }));
+  }, []);
+
+  const handleNewMessage = useCallback((guildId: string) => {
+    if (selectedGuildIdRef.current === guildId) return;
+    setUnreadCounts((prev) => ({
+      ...prev,
+      [guildId]: (prev[guildId] ?? 0) + 1,
+    }));
   }, []);
 
   const handleSelectGuild = (guild: JoinedGuildType) => {
@@ -92,7 +107,7 @@ export default function Subscriptions() {
   return (
     <div className="relative">
       {guilds.map((guild) => (
-        <ChatProvider key={`unread-${guild.id}`}>
+        <ChatProvider key={`unread-${guild.id}`} onMessageReceived={handleNewMessage}>
           <GuildUnreadCountFetcher
             guildId={guild.id}
             refreshToken={refreshToken}
