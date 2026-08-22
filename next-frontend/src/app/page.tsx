@@ -26,6 +26,7 @@ export default function Home() {
   if (!isReady) {
     return <VideoGridSkeleton />;
   }
+  
 
   return (
     <div>
