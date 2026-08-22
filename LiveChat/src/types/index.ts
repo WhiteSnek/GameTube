@@ -35,6 +35,7 @@ export interface ReplyToPreview {
   id: string;
   fullname: string;
   content: string | null;
+  message_type: string;
   deleted: boolean;
 }
 

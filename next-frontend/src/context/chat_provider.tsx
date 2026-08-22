@@ -15,13 +15,14 @@ export interface ReplyToPreview {
   id: string;
   fullname: string;
   content: string | null;
+  message_type: "text" | "gif",
   deleted: boolean;
 }
 
 export interface ChatMessage {
   id: string;
   content: string;
-  messageType: "text" | "gif";
+  message_type: "text" | "gif";
   reply_to?: ReplyToPreview | null;
   created_at: string;
   updated_at: string | null;
@@ -134,6 +135,7 @@ const ChatProvider: React.FC<ChatProviderProps> = ({
 
     try {
       const history = await liveChatApi.get(`/chat?guildId=${guildId}`);
+      console.log(history.data)
       setMessages(history.data);
       if (wsRef.current?.readyState === WebSocket.OPEN) {
         wsRef.current.send(

@@ -76,11 +76,17 @@ export function createGateway(
           case "startTyping":
             await controller.startTyping(sender)
             break;
+          case "updateLastRead":
+            await controller.updateLastReadMessage(sender, body.chatId);
+            break;
           default:
             ws.send(
               JSON.stringify({
                 event: "ERROR",
-                message: "Unknown action.",
+                payload: {
+                  code: "UNKNOWN",
+                  message: "UNKNOWN OPERATION"
+                }
               }),
             );
         }

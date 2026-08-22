@@ -9,6 +9,7 @@ import {
   Reply,
   X,
   Hash,
+  Image,
 } from "lucide-react";
 import EmojiPicker, { Theme, EmojiStyle } from "emoji-picker-react";
 import React, { useState, useRef, useEffect, useMemo } from "react";
@@ -19,6 +20,7 @@ import {
 } from "@/components/ui/popover";
 import { JoinedGuildType } from "@/types/guild.types";
 import ChatDetails from "./Details";
+import GifPicker from "../gif";
 
 interface ChatProps {
   guild: JoinedGuildType;
@@ -35,6 +37,7 @@ interface ReplyTarget {
   id: string;
   fullname: string;
   content: string;
+  message_type: MessageType;
 }
 
 interface LastReadDetails {
@@ -78,9 +81,11 @@ const Chat: React.FC<ChatProps> = ({ guild }) => {
   const firstUnreadMessageRef = useRef<HTMLDivElement | null>(null);
   const [hasInitialScrollDone, setHasInitialScrollDone] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [showGifPicker, setShowGifPicker] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
+  const gifPickerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -130,6 +135,13 @@ const Chat: React.FC<ChatProps> = ({ guild }) => {
       ) {
         setShowEmojiPicker(false);
       }
+
+      if (
+        gifPickerRef.current &&
+        !gifPickerRef.current.contains(event.target as Node)
+      ) {
+        setShowGifPicker(false);
+      }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
@@ -164,6 +176,18 @@ const Chat: React.FC<ChatProps> = ({ guild }) => {
     });
   };
 
+  const handleGifClick = (gif: {
+    images: { fixed_width: { url: string } };
+  }) => {
+    const gifUrl = gif.images.fixed_width.url;
+    const messageType: MessageType = "gif";
+
+    send(gifUrl, messageType, replyingTo ? replyingTo.id : null);
+
+    setShowGifPicker(false);
+    setReplyingTo(null);
+  };
+
   const sendMessage = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -185,6 +209,7 @@ const Chat: React.FC<ChatProps> = ({ guild }) => {
       id: msg.id,
       fullname: msg.fullname,
       content: msg.content,
+      message_type: msg.message_type,
     });
     setOpenMenuId(null);
     inputRef.current?.focus();
@@ -471,6 +496,8 @@ const Chat: React.FC<ChatProps> = ({ guild }) => {
                             {": "}
                             {replyRef.deleted ? (
                               <span className="italic">message deleted</span>
+                            ) : replyRef.message_type === "gif" ? (
+                              "[GIF]"
                             ) : (
                               replyRef.content
                             )}
@@ -516,6 +543,12 @@ const Chat: React.FC<ChatProps> = ({ guild }) => {
                         <p className="mt-1 text-sm italic text-zinc-500">
                           {`This message was deleted ${msg.deleted_by ? `by ${msg.deleted_by_name}` : ""}`}
                         </p>
+                      ) : msg.message_type === "gif" ? (
+                        <img
+                          src={msg.content}
+                          alt="gif"
+                          className="mt-1 max-h-52 rounded-lg object-contain"
+                        />
                       ) : (
                         <p className="mt-1 text-sm break-words text-zinc-800 dark:text-zinc-200">
                           {msg.content}
@@ -563,17 +596,19 @@ const Chat: React.FC<ChatProps> = ({ guild }) => {
                             </button>
                           )}
 
-                          <button
-                            onClick={() => {
-                              setEditingMessageId(msg.id);
-                              setEditedMessage(msg.content);
-                              setOpenMenuId(null);
-                            }}
-                            className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                          >
-                            <Pencil size={15} />
-                            Edit Message
-                          </button>
+                          {!msg.deleted_at && msg.message_type !== "gif" && (
+                            <button
+                              onClick={() => {
+                                setEditingMessageId(msg.id);
+                                setEditedMessage(msg.content);
+                                setOpenMenuId(null);
+                              }}
+                              className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                            >
+                              <Pencil size={15} />
+                              Edit Message
+                            </button>
+                          )}
 
                           <button
                             onClick={() => {
@@ -617,7 +652,7 @@ const Chat: React.FC<ChatProps> = ({ guild }) => {
             Replying to{" "}
             <span className="font-semibold">{replyingTo.fullname}</span>
             {": "}
-            {replyingTo.content}
+            {replyingTo.message_type === "gif" ? "[GIF]" : replyingTo.content}
           </div>
           <button
             type="button"
@@ -656,6 +691,22 @@ const Chat: React.FC<ChatProps> = ({ guild }) => {
                 skinTonesDisabled
                 onEmojiClick={handleEmojiClick}
               />
+            </div>
+          )}
+        </div>
+
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setShowGifPicker((prev) => !prev)}
+            className="p-2 rounded-lg hover:bg-zinc-300 dark:hover:bg-zinc-700 transition"
+          >
+            <Image size={22} />
+          </button>
+
+          {showGifPicker && (
+            <div ref={gifPickerRef} className="absolute bottom-14 left-0 z-50">
+              <GifPicker onSelect={handleGifClick} />
             </div>
           )}
         </div>

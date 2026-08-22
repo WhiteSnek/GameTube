@@ -11,6 +11,7 @@ const REPLY_JOIN_SQL = `
 const REPLY_SELECT_SQL = `
   reply_parent.id           AS reply_to_id,
   reply_parent.content      AS reply_to_content,
+  reply_parent.message_type      AS reply_to_message_type,
   reply_parent.deleted_at   AS reply_to_deleted_at,
   reply_parent_user.fullname AS reply_to_fullname
 `;
@@ -45,6 +46,7 @@ function shapeReplyTo(row: any): ReplyToPreview | null {
     id: row.reply_to_id,
     fullname: row.reply_to_fullname,
     content: row.reply_to_deleted_at ? null : row.reply_to_content,
+    message_type: MessageTypeLabel[row.reply_to_message_type] ?? "unknown" ,
     deleted: !!row.reply_to_deleted_at,
   };
 }

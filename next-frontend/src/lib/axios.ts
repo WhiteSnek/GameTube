@@ -15,3 +15,7 @@ export const liveChatApi = axios.create({
     "Content-Type": "application/json",
   },
 });
+
+export const giphyApi = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_GIPHY_API_ENDPOINT
+})
