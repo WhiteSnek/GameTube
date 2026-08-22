@@ -67,11 +67,11 @@ func AddComment(c *gin.Context) {
 
 	var input struct {
 		Content     string `json:"content" binding:"required"`
-		CommentType string `json:"commentType" binding:"required,oneof=text gif"`
+		CommentType string `json:"comment_type" binding:"required,oneof=text gif"`
 	}
 
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Content is missing"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Content or CommentType is missing"})
 		return
 	}
 
@@ -341,11 +341,11 @@ func AddReply(c *gin.Context) {
 
 	var input struct {
 		Content     string `json:"content" binding:"required"`
-		CommentType string `json:"commentType" binding:"required,oneof=text gif"`
+		CommentType string `json:"comment_type" binding:"required,oneof=text gif"`
 	}
 
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Content is missing"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Content or comment_type is missing"})
 		return
 	}
 
