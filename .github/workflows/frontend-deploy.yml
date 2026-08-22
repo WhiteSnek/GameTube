@@ -38,7 +38,7 @@ jobs:
           NEXT_PUBLIC_LIVE_CHAT_API_BASE_URL: ${{ secrets.NEXT_PUBLIC_LIVE_CHAT_API_BASE_URL }}
           NEXT_PUBLIC_LIVE_CHAT_WEBSOCKET_API: ${{ secrets.NEXT_PUBLIC_LIVE_CHAT_WEBSOCKET_API }}
           NEXT_PUBLIC_GIPHY_API_ENDPOINT: ${{ secrets.NEXT_PUBLIC_GIPHY_API_ENDPOINT }}
-          NEXT_PUBLIC_GIPHY_API_KEY: ${{ NEXT_PUBLIC_GIPHY_API_KEY }}
+          NEXT_PUBLIC_GIPHY_API_KEY: ${{ secrets.NEXT_PUBLIC_GIPHY_API_KEY }}
         run: npm run build
 
       - name: Configure AWS credentials
