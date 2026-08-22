@@ -4,9 +4,9 @@ import React, { createContext, ReactNode, useContext } from "react";
 
 interface CommentContextType {
   getComments: (videoId: string) => Promise<any>;
-  addComment: (videoId: string, content: string) => Promise<any>;
+  addComment: (videoId: string, content: string, commentTye: "text" | "gif") => Promise<any>;
   getReplies: (commentId: string) => Promise<any>;
-  addReply: (commentId: string, content: string) => Promise<any>;
+  addReply: (commentId: string, content: string, commentType: "text" | "gif") => Promise<any>;
   deleteComment: (commentId: string) => Promise<string>;
 }
 
@@ -34,9 +34,9 @@ const CommentProvider: React.FC<CommentProviderProps> = ({ children }) => {
     }
   };
 
-  const addComment = async (videoId: string, content: string): Promise<any> => {
+  const addComment = async (videoId: string, content: string, commentType: "text" | "gif"): Promise<any> => {
     try {
-      const response = await api.post(`/comment/video/${videoId}`, { content });
+      const response = await api.post(`/comment/video/${videoId}`, { content, comment_type: commentType });
       if (response) return response.data.data;
     } catch (error) {
       console.log(error);
@@ -52,10 +52,11 @@ const CommentProvider: React.FC<CommentProviderProps> = ({ children }) => {
     }
   };
 
-  const addReply = async (commentId: string, content: string): Promise<any> => {
+  const addReply = async (commentId: string, content: string, commentType: "text" | "gif"): Promise<any> => {
     try {
       const response = await api.post(`/comment/reply/${commentId}`, {
         content,
+        comment_type: commentType
       });
       if (response) return response.data.data;
     } catch (error) {

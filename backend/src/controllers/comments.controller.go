@@ -2,13 +2,13 @@ package controllers
 
 import (
 	"errors"
-	"net/http"
 	"github.com/WhiteSnek/GameTube/src/config"
 	"github.com/WhiteSnek/GameTube/src/dtos"
 	"github.com/WhiteSnek/GameTube/src/models"
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
+	"net/http"
 )
 
 func AddComment(c *gin.Context) {
@@ -66,7 +66,8 @@ func AddComment(c *gin.Context) {
 	}
 
 	var input struct {
-		Content string `json:"content"`
+		Content     string `json:"content" binding:"required"`
+		CommentType string `json:"commentType" binding:"required,oneof=text gif"`
 	}
 
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -74,12 +75,27 @@ func AddComment(c *gin.Context) {
 		return
 	}
 
+	var commentType models.CommentType
+
+	switch input.CommentType {
+	case "text":
+		commentType = models.CommentTypeText
+	case "gif":
+		commentType = models.CommentTypeGIF
+	default:
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "commentType must be either 'text' or 'gif'",
+		})
+		return
+	}
+
 	comment := models.Comment{
-		ID:      uuid.NewString(),
-		OwnerID: userIdStr,
-		VideoID: videoId,
-		Role:    guildMember.Role,
-		Content: input.Content,
+		ID:          uuid.NewString(),
+		OwnerID:     userIdStr,
+		VideoID:     videoId,
+		Role:        guildMember.Role,
+		Content:     input.Content,
+		CommentType: commentType,
 	}
 
 	if err := config.DB.Create(&comment).Error; err != nil {
@@ -102,6 +118,7 @@ func AddComment(c *gin.Context) {
 	response := dtos.CommentType{
 		Id:          comment.ID,
 		Content:     comment.Content,
+		CommentType: comment.CommentType,
 		OwnerName:   comment.Owner.Fullname,
 		OwnerAvatar: comment.Owner.Avatar,
 		Role:        comment.Role,
@@ -145,6 +162,7 @@ func GetVideoComments(c *gin.Context) {
 		response = append(response, dtos.CommentType{
 			Id:          comment.ID,
 			Content:     comment.Content,
+			CommentType: comment.CommentType,
 			OwnerName:   comment.Owner.Fullname,
 			OwnerAvatar: comment.Owner.Avatar,
 			Role:        comment.Role,
@@ -322,7 +340,8 @@ func AddReply(c *gin.Context) {
 	}
 
 	var input struct {
-		Content string `json:"content"`
+		Content     string `json:"content" binding:"required"`
+		CommentType string `json:"commentType" binding:"required,oneof=text gif"`
 	}
 
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -330,12 +349,27 @@ func AddReply(c *gin.Context) {
 		return
 	}
 
+	var commentType models.CommentType
+
+	switch input.CommentType {
+	case "text":
+		commentType = models.CommentTypeText
+	case "gif":
+		commentType = models.CommentTypeGIF
+	default:
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "commentType must be either 'text' or 'gif'",
+		})
+		return
+	}
+
 	newReply := models.Reply{
-		ID:      uuid.NewString(),
-		OwnerID: userIdStr,
-		VideoID: videoID,
-		Role:    guildMember.Role,
-		Content: input.Content,
+		ID:          uuid.NewString(),
+		OwnerID:     userIdStr,
+		VideoID:     videoID,
+		Role:        guildMember.Role,
+		Content:     input.Content,
+		CommentType: commentType,
 	}
 
 	if commentErr == nil {
@@ -363,6 +397,7 @@ func AddReply(c *gin.Context) {
 	response := dtos.CommentType{
 		Id:          newReply.ID,
 		Content:     newReply.Content,
+		CommentType: newReply.CommentType,
 		OwnerName:   newReply.Owner.Fullname,
 		OwnerAvatar: newReply.Owner.Avatar,
 		Role:        newReply.Role,
@@ -421,6 +456,7 @@ func GetCommentReplies(c *gin.Context) {
 		response = append(response, dtos.CommentType{
 			Id:          reply.ID,
 			Content:     reply.Content,
+			CommentType: reply.CommentType,
 			OwnerName:   reply.Owner.Fullname,
 			OwnerAvatar: reply.Owner.Avatar,
 			Role:        reply.Role,

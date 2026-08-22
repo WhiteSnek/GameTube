@@ -5,8 +5,9 @@ import {
   ChevronDown,
   ChevronUp,
   EllipsisVertical,
+  ImagePlus,
   Smile,
-  Trash
+  Trash,
 } from "lucide-react";
 import { useComment } from "@/context/comment_provider";
 import { useUser } from "@/context/user_provider";
@@ -19,6 +20,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { DefaultAvatar } from "@/assets";
 import EmojiPicker, { Theme, EmojiStyle } from "emoji-picker-react";
+import GifPicker from "../gif";
+import { Gif } from "@/types/gif.types";
 
 interface CommentType {
   id: string;
@@ -26,11 +29,11 @@ interface CommentType {
   ownerName: string;
   role: string;
   content: string;
+  commentType: "text" | "gif";
   likes: number;
   replies: number;
 }
 
-// Falls back to DefaultAvatar whenever ownerAvatar is missing, null, or an empty/whitespace string
 const getAvatarSrc = (avatar?: string | null) =>
   avatar && avatar.trim() !== "" ? avatar : DefaultAvatar;
 
@@ -51,9 +54,7 @@ const Comment = ({
   const { getMultipleUserAvatars } = useUser();
   const { seekTo } = useVideo();
 
-  // regex matches hh:mm:ss or mm:ss
-  // capturing group so split() will include the matched timestamps in the array
-  const TIMESTAMP_REGEX = /(\b\d{1,2}:\d{2}(?::\d{2})?\b)/; // no global flag to avoid lastIndex side-effects
+  const TIMESTAMP_REGEX = /(\b\d{1,2}:\d{2}(?::\d{2})?\b)/; 
 
   const timestampToSeconds = (t: string): number => {
     const parts = t.split(":").map((p) => parseInt(p, 10));
@@ -87,11 +88,14 @@ const Comment = ({
       return <span key={idx}>{part}</span>;
     });
   };
+
   const [likes, setLikes] = useState<number>(comment.likes);
   const [liked, setLiked] = useState<boolean>(true);
   const { addLike, removeLike, getLike } = useUser();
   const entityType = depth > 0 ? "reply" : "comment";
   const [emojiOpen, setEmojiOpen] = useState<boolean>(false);
+  const [gifPickerOpen, setGifPickerOpen] = useState<boolean>(false);
+
   useEffect(() => {
     const handleIsLiked = async () => {
       const response = await getLike(comment.id, entityType);
@@ -99,18 +103,19 @@ const Comment = ({
     };
     handleIsLiked();
   }, []);
+
   const handleToggleLike = async () => {
-    let response;
     if (liked) {
-      response = await removeLike(comment.id, entityType);
+      await removeLike(comment.id, entityType);
       setLiked(false);
       setLikes((likes) => likes - 1);
     } else {
-      response = await addLike(comment.id, entityType);
+      await addLike(comment.id, entityType);
       setLiked(true);
       setLikes((likes) => likes + 1);
     }
   };
+
   useEffect(() => {
     const fetchReplies = async () => {
       const response = await getReplies(comment.id);
@@ -138,30 +143,42 @@ const Comment = ({
       })),
     );
   };
+
+  // Shared submit path for both typed text replies and GIF replies
+  const submitReply = async (content: string, type: "text" | "gif") => {
+    if (!content.trim()) return;
+    const response = await addReply(comment.id, content, type);
+    if (response) {
+      const avatarUrls = await getMultipleUserAvatars([response.ownerAvatar]);
+      if (!avatarUrls) return;
+      setReplies((prev) => [
+        ...prev,
+        {
+          ...response,
+          ownerAvatar: getAvatarSrc(avatarUrls[0] ?? response.ownerAvatar),
+        },
+      ]);
+      setReplyText("");
+      setReplyCount((replyCount) => replyCount + 1);
+      setShowReplies(true);
+      setShowReplyBox(false);
+      setEmojiOpen(false);
+      setGifPickerOpen(false);
+    }
+  };
+
   const addCommentReply = async (e: React.FormEvent) => {
     e.preventDefault();
     if (replyText.trim()) {
-      const response = await addReply(comment.id, replyText);
-      if (response) {
-        // Fetch avatar immediately after adding reply
-        const avatarUrls = await getMultipleUserAvatars([response.ownerAvatar]);
-        if (!avatarUrls) return;
-        setReplies([
-          ...replies,
-          {
-            ...response,
-            ownerAvatar: getAvatarSrc(avatarUrls[0] ?? response.ownerAvatar), // Update avatar for the new reply
-          },
-        ]);
-        setReplyText("");
-        setReplyCount((replyCount) => replyCount + 1);
-        setShowReplies(true);
-        setShowReplyBox(false);
-      }
+      await submitReply(replyText, "text");
     } else {
       // TODO: Error handling
       return;
     }
+  };
+
+  const handleGifReplySelect = async (gif: Gif) => {
+    await submitReply(gif.images.fixed_width.url, "gif");
   };
 
   const handleDeleteComment = async () => {
@@ -223,9 +240,20 @@ const Comment = ({
             </DropdownMenu>
           </div>
 
-          <p className="mt-0.5 text-sm text-zinc-800 dark:text-zinc-200 leading-snug break-words">
-            {renderContentWithTimestamps(comment.content)}
-          </p>
+          {/* Content: render a GIF image for gif-type comments, timestamp-aware text otherwise */}
+          {comment.commentType === "gif" ? (
+            <div className="mt-1.5">
+              <img
+                src={comment.content}
+                alt="GIF"
+                className="max-w-[220px] rounded-lg"
+              />
+            </div>
+          ) : (
+            <p className="mt-0.5 text-sm text-zinc-800 dark:text-zinc-200 leading-snug break-words">
+              {renderContentWithTimestamps(comment.content)}
+            </p>
+          )}
 
           <div className="flex items-center gap-4 mt-1.5 text-zinc-500 dark:text-zinc-400">
             <button
@@ -235,10 +263,7 @@ const Comment = ({
                 liked ? "text-orange-600 dark:text-orange-400" : ""
               }`}
             >
-              <ArrowBigUp
-                size={16}
-                fill={liked ? "currentColor" : "none"}
-              />
+              <ArrowBigUp size={16} fill={liked ? "currentColor" : "none"} />
               <span className="text-xs font-medium">{likes}</span>
             </button>
 
@@ -269,11 +294,25 @@ const Comment = ({
                 />
                 <button
                   type="button"
-                  className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-pointer"
-                  onClick={() => setEmojiOpen((prev) => !prev)}
+                  className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-pointer mr-2"
+                  onClick={() => {
+                    setGifPickerOpen(false);
+                    setEmojiOpen((prev) => !prev);
+                  }}
                   aria-label="Add emoji"
                 >
                   <Smile size={18} />
+                </button>
+                <button
+                  type="button"
+                  className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-pointer"
+                  onClick={() => {
+                    setEmojiOpen(false);
+                    setGifPickerOpen((prev) => !prev);
+                  }}
+                  aria-label="Add GIF"
+                >
+                  <ImagePlus size={18} />
                 </button>
                 {emojiOpen && (
                   <div className="absolute top-full mt-2 right-0 z-50">
@@ -286,12 +325,19 @@ const Comment = ({
                     />
                   </div>
                 )}
+                {gifPickerOpen && (
+                  <div className="absolute top-full mt-2 right-0 z-50">
+                    <GifPicker onSelect={handleGifReplySelect} />
+                  </div>
+                )}
               </div>
               <button
                 type="button"
                 onClick={() => {
                   setShowReplyBox(false);
                   setReplyText("");
+                  setEmojiOpen(false);
+                  setGifPickerOpen(false);
                 }}
                 className="text-xs font-semibold uppercase tracking-wide px-3 py-1.5 rounded-full text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
               >
@@ -338,7 +384,9 @@ const Comments = ({ videoId }: { videoId: string }) => {
   const [newComment, setNewComment] = useState<string>("");
   const { getComments, addComment } = useComment();
   const [emojiOpen, setEmojiOpen] = useState<boolean>(false);
+  const [gifPickerOpen, setGifPickerOpen] = useState<boolean>(false);
   const { getMultipleUserAvatars } = useUser();
+
   useEffect(() => {
     const fetchComments = async () => {
       const response = await getComments(videoId);
@@ -366,28 +414,39 @@ const Comments = ({ videoId }: { videoId: string }) => {
       })),
     );
   };
+
+  // Shared submit path for both typed text comments and GIF comments
+  const submitComment = async (content: string, type: "text" | "gif") => {
+    if (!content.trim()) return;
+    const response = await addComment(videoId, content, type);
+    if (response) {
+      const avatarUrls = await getMultipleUserAvatars([response.ownerAvatar]);
+      if (!avatarUrls) return;
+      setComments((prev) => [
+        ...prev,
+        {
+          ...response,
+          ownerAvatar: getAvatarSrc(avatarUrls[0] ?? response.ownerAvatar),
+        },
+      ]);
+      setNewComment("");
+      setEmojiOpen(false);
+      setGifPickerOpen(false);
+    }
+  };
+
   const addVideoComment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newComment.trim()) {
-      const response = await addComment(videoId, newComment);
-      console.log(response);
-      if (response) {
-        // Fetch avatar immediately after adding comment
-        const avatarUrls = await getMultipleUserAvatars([response.ownerAvatar]);
-        if (!avatarUrls) return;
-        setComments([
-          ...comments,
-          {
-            ...response,
-            ownerAvatar: getAvatarSrc(avatarUrls[0] ?? response.ownerAvatar), // Update avatar for the new comment
-          },
-        ]);
-        setNewComment("");
-      }
+      await submitComment(newComment, "text");
     } else {
       // TODO: Error handling
       return;
     }
+  };
+
+  const handleGifCommentSelect = async (gif: Gif) => {
+    await submitComment(gif.images.fixed_width.url, "gif");
   };
 
   return (
@@ -407,11 +466,25 @@ const Comments = ({ videoId }: { videoId: string }) => {
           />
           <button
             type="button"
-            className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-pointer"
-            onClick={() => setEmojiOpen((prev) => !prev)}
+            className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-pointer mr-2"
+            onClick={() => {
+              setGifPickerOpen(false);
+              setEmojiOpen((prev) => !prev);
+            }}
             aria-label="Add emoji"
           >
             <Smile size={20} />
+          </button>
+          <button
+            type="button"
+            className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-pointer"
+            onClick={() => {
+              setEmojiOpen(false);
+              setGifPickerOpen((prev) => !prev);
+            }}
+            aria-label="Add GIF"
+          >
+            <ImagePlus size={20} />
           </button>
           {emojiOpen && (
             <div className="absolute top-full mt-2 right-0 z-50">
@@ -422,6 +495,11 @@ const Comments = ({ videoId }: { videoId: string }) => {
                 theme={Theme.DARK}
                 emojiStyle={EmojiStyle.NATIVE}
               />
+            </div>
+          )}
+          {gifPickerOpen && (
+            <div className="absolute top-full mt-2 right-0 z-50">
+              <GifPicker onSelect={handleGifCommentSelect} />
             </div>
           )}
         </div>

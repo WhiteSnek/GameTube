@@ -5,7 +5,6 @@ import { useVideo } from "@/context/video_provider";
 import { VideoType } from "@/types/video.types";
 import { VideoGridSkeleton } from "@/components/skeletons";
 
-
 export default function Home() {
   const [videos, setVideos] = useState<VideoType[]>([]);
   const [isReady, setIsReady] = useState(false);
@@ -20,7 +19,7 @@ export default function Home() {
         setIsReady(true);
       }
     };
-  
+
     fetchVideos();
   }, []);
 
@@ -31,7 +30,6 @@ export default function Home() {
   return (
     <div>
       <VideoCards videos={videos} showAvatar />
-
     </div>
   );
 }

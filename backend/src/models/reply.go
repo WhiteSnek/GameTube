@@ -12,6 +12,7 @@ type Reply struct {
     ReplyID   *string
 
     Content string
+    CommentType CommentType `gorm:"type:smallint;not null;default:0;check:comment_type IN (0,1)"`
     CreatedAt time.Time
     VideoID string
 
